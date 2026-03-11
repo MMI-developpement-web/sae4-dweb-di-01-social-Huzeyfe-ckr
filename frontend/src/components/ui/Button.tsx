@@ -20,6 +20,7 @@ export const buttonVariants = cva(
                 gg: "text-[20px] px-28 py-2",
                 ggD: "text-[20px] pr-35 pl-35 py-2",
             },
+            
         },
         defaultVariants: {
             variant: "solid",
@@ -31,8 +32,8 @@ export const buttonVariants = cva(
 // Types et props
 interface ButtonDataProps {
     children?: ReactNode;
-    className?: string;
 }
+
 
 export interface ButtonProps
     extends ButtonDataProps,

@@ -1,4 +1,4 @@
-import React, { useId, useState } from "react";
+import React, { useState } from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../../lib/utils.ts";
 
@@ -25,134 +25,84 @@ export const inputVariants = cva(
 );
 
 // Data props
-export interface InputDataProps {
-  children?: React.ReactNode; // used as visible label when provided
-  showToggle?: boolean;
+interface InputProps extends VariantProps<typeof inputVariants> {
+  children?: React.ReactNode;
   className?: string;
-}
-
-// Props
-export interface InputProps
-  extends
-    InputDataProps,
-    VariantProps<typeof inputVariants>,
-    React.InputHTMLAttributes<HTMLInputElement> {
-  iconType?: "show" | "hide";
-}
-
-function IconEye({ name }: { name: NonNullable<InputProps["iconType"]> }) {
-  switch (name) {
-    case "hide":
-      return (
-        <svg
-          width="25"
-          height="25"
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-          aria-hidden
-        >
-          <path
-            d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <circle
-            cx="12"
-            cy="12"
-            r="3"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      );
-    case "show":
-      return (
-        <svg
-          width="25"
-          height="25"
-          viewBox="0 0 24 24"
-          xmlns="http://www.w3.org/2000/svg"
-          aria-hidden
-        >
-          <path
-            d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <circle
-            cx="12"
-            cy="12"
-            r="3"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-          <path
-            d="M3 3l18 18"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      );
-    default:
-      return null;
-  }
+  type?: "text" | "password" | "email";
+  placeholder?: string;
+  name?: string;
+  value?: string;
+  onChange?: (value: string) => void;
+  as?: "input" | "textarea";
+  showToggle?: boolean;
 }
 
 export default function Input({
   children,
-  type = "text",
   className = "",
+  type = "text",
+  placeholder,
+  name,
+  value,
+  onChange,
   variant,
   size,
+  as = "input",
   showToggle = true,
-  iconType = "show",
-  ...props
 }: InputProps) {
-  const id = useId();
   const [show, setShow] = useState(false);
-  const isPassword = type === "password";
-
   const classes = cn(inputVariants({ variant, size }), className);
 
+  function EyeIcon({ open }: { open: boolean }) {
+    return (
+      <svg width="30" height="30" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg" aria-hidden>
+        <path d="M1 12s4-7 11-7 11 7 11 7-4 7-11 7S1 12 1 12z" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+        <circle cx="12" cy="12" r="3" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+        {!open && <path d="M3 3l18 18" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" fill="none" />}
+      </svg>
+    );
+  }
+
+
+
+
+
   return (
-    <div className="w-full">
-      {children && (
-        <label
-          htmlFor={props.id ?? id}
-          className="mb-1 block text-md font-bold"
-        >
-          {children}
-        </label>
+    <div className="w-full">{children && (
+        <label className="mb-1 block text-md font-bold">{children}</label>
       )}
 
-      <div className="relative">
-        <input
-          id={props.id ?? id}
-          type={isPassword && show ? "text" : type}
+      {as === "textarea" ? (
+        <textarea
+          name={name}
+          value={value}
+          onChange={(e) => onChange?.(e.target.value)}
+          placeholder={placeholder}
           className={classes}
-          {...props}
         />
+      ) : (
+        <div className="relative">
+          <input
+            name={name}
+            type={type === "password" && show ? "text" : type}
+            value={value}
+            placeholder={placeholder}
+            onChange={(e) => onChange?.(e.target.value)}
+            className={classes}
+          />
 
-        {isPassword && showToggle && (
-          <button
-            type="button"
-            onClick={() => setShow((s) => !s)}
-            className="absolute top-1/2 right-3 -translate-y-1/2 text-gray-400 hover:text-gray-200"
-          >
-            <IconEye name={show ? "hide" : iconType} />
-          </button>
-        )}
-      </div>
+          {type === "password" && showToggle && (
+            <button
+              type="button"
+              onClick={() => setShow((s) => !s)}
+              className="absolute top-1/2 right-3 -translate-y-2/3 text-gray-400 hover:text-gray-200"
+              aria-label={show ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+            >
+              <EyeIcon open={show} />
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }

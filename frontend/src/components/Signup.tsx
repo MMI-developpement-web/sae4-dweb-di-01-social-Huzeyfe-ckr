@@ -22,10 +22,10 @@ export default function SignupComponent() {
           <h1 className="text-4xl font-extrabold mb-12">Créez votre compte</h1>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
-            <Input id="name" name="email" placeholder="Email" />
-            <Input id="email" name="name" type="email" placeholder="Nom d'utilisateur" />
-            <Input id="password" name="password" type="password" placeholder="Mot de passe" />
-            <Input id="confirm" name="confirm" type="password" placeholder="Confirmer le mot de passe" />
+            <Input  name="email" placeholder="Email" />
+            <Input  name="name" type="email" placeholder="Nom d'utilisateur" />
+            <Input  name="password" type="password" placeholder="Mot de passe" />
+            <Input  name="confirm" type="password" placeholder="Confirmer le mot de passe" />
 
             <Button variant="solid" size="lg" >Créer un compte</Button>
           </form>
@@ -36,9 +36,6 @@ export default function SignupComponent() {
         </div>
       </div>
 
-      <footer className="border-t border-gray-800 pt-6 text-center text-xs text-gray-500">
-        <div className="mt-3 pb-6">© 2026 X Corp.</div>
-      </footer>
     </div>
   );
 }

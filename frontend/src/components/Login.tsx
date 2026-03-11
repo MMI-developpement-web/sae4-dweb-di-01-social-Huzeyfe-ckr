@@ -1,9 +1,30 @@
-import React from 'react'
 import Input from './ui/Input'
 import Button from './ui/Button'
 import Header from './ui/Header'
+import { useNavigate } from 'react-router-dom'
+import { useState } from 'react'
 
-export default function Login(): JSX.Element {
+export default function Login() {
+
+  const navigate = useNavigate();
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+
+  const submit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!email || !password){ 
+      setError("Veuillez remplir l'email et le mot de passe");
+      return;
+    }
+    setError("");
+    navigate('/home');
+  };
+  
+
+
+
   return (
     <div className="bg-black min-h-screen flex flex-col items-center py-8 px-6 text-white">
         <Header />
@@ -12,14 +33,15 @@ export default function Login(): JSX.Element {
         <h1 className="text-5xl font-extrabold leading-tight text-left w-full mb-2">Ça se passe maintenant</h1>
         <h2 className="text-2xl font-black w-full m-16">Connectez-vous.</h2>
 
-        <form className="w-full" onSubmit={(e) => e.preventDefault()}>
+        <form className="w-full" onSubmit={submit}>
           <div className="space-y-4">
-            <Input variant="default" placeholder="Email"></Input>
-            <Input variant="default" type="password" placeholder="Mot de passe"></Input>
+            <Input variant="default" type="email" placeholder="Email" value={email} onChange={setEmail} />
+            <Input variant="default" type="password" placeholder="Mot de passe" value={password} onChange={setPassword} />
           </div>
+          {error && <p className="text-red-500 text-sm mt-2">{error}</p>}
 
-          <div className="w-full text-center mt-4">
-            <Button variant="solid" size="gg">
+          <div className="flex justify-center w-full  mt-4">
+            <Button type="submit" variant="solid" size="gg">
               Se connecter
             </Button>
           </div>

@@ -4,15 +4,14 @@ import Header from "./ui/Header";
 import Avatar from "./ui/Avatar";
 import Input from "./ui/Input";
 import Button from "./ui/Button";
+import Footer from "./ui/Footer";
 
-export default function PostPage(): JSX.Element {
+export default function PostPage() {
   const [content, setContent] = useState("");
   const navigate = useNavigate();
 
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: call API to post content
-    console.log("Post content:", content);
     navigate("/home");
   };
 
@@ -21,10 +20,10 @@ export default function PostPage(): JSX.Element {
       <Header />
 
       <main className="flex-grow max-w-md mx-auto px-4 pt-6 w-full">
-        <form onSubmit={submit} className="space-y-4">
-        <div className="flex flex-row  ">
-            <Button variant="dark" size="sm">Annuler </Button>
-            <Button className="">Post</Button>
+        <form  onSubmit={submit} className="space-y-4">
+        <div  className="flex flex-row  ">
+            <Button  variant="dark" size="sm">Annuler </Button>
+            <Button onSubmit={submit} className="">Post</Button>
         </div>
           <div className="flex items-start gap-3">
             <Avatar variant="mehmet" />
@@ -46,9 +45,7 @@ export default function PostPage(): JSX.Element {
         </form>
       </main>
 
-      <footer className="border-t border-gray-800 pt-4 text-center text-xs text-gray-500">
-        <div className="max-w-md mx-auto pb-4">© 2026 X Corp.</div>
-      </footer>
+      <Footer />
     </div>
   );
 }

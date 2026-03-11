@@ -1,6 +1,4 @@
-import React from "react";
 import { useNavigate } from "react-router-dom";
-import Button from './ui/Button'
 import Footer from './ui/Footer'
 import Post from './ui/Post'
 import Header from './ui/Header'
