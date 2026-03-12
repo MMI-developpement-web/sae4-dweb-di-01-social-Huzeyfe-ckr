@@ -1,14 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Input from "./Input";
 import Button from "./Button";
-
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  role: "user";
-  active: boolean;
-}
+import type { User } from "../../lib/api";
 
 interface EditUserProps {
   user: User | null;
@@ -18,10 +11,20 @@ interface EditUserProps {
 }
 
 export default function EditUser({ user, isOpen, onClose, onSave }: EditUserProps) {
-  const [firstName, setFirstName] = useState(user?.name.split(" ")[0] || "");
-  const [lastName, setLastName] = useState(user?.name.split(" ").slice(1).join(" ") || "");
-  const [email, setEmail] = useState(user?.email || "");
-  const [phone, setPhone] = useState("+33 6 12 34 56 78");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
+
+  useEffect(() => {
+    if (user) {
+      const nameParts = user.name.split(" ");
+      setFirstName(nameParts[0] || "");
+      setLastName(nameParts.slice(1).join(" ") || "");
+      setEmail(user.email || "");
+      setPhone(user.phone || "");
+    }
+  }, [user, isOpen]);
 
   const handleSave = () => {
     if (user) {
@@ -93,7 +96,7 @@ export default function EditUser({ user, isOpen, onClose, onSave }: EditUserProp
               type="text"
               value={phone}
               onChange={setPhone}
-              placeholder="Téléphone"
+              placeholder="Téléphone (optionnel)"
             />
           </div>
 

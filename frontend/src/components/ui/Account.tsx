@@ -1,14 +1,7 @@
 import Avatar from "./Avatar";
 import Button from "./Button";
 import editIcon from "../../assets/edit.svg";
-
-interface User {
-  id: number;
-  name: string;
-  email: string;
-  role: "user";
-  active: boolean;
-}
+import type { User } from "../../lib/api";
 
 interface AccountProps {
   user: User;

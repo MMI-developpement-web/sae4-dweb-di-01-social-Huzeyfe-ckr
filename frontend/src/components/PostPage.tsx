@@ -5,14 +5,17 @@ import Avatar from "./ui/Avatar";
 import Input from "./ui/Input";
 import Button from "./ui/Button";
 import Footer from "./ui/Footer";
+import { createPost, getCurrentUser } from "../lib/api";
 
 export default function PostPage() {
   const [content, setContent] = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
   const navigate = useNavigate();
 
   const MAX = 280;
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
     const length = content.trim().length;
     if (length === 0) return; // nothing to post
@@ -20,24 +23,54 @@ export default function PostPage() {
       alert(`Votre message dépasse la limite de ${MAX} caractères (${length}).`);
       return;
     }
-    navigate("/home");
+
+    setLoading(true);
+    setError("");
+
+    try {
+      const currentUser = getCurrentUser();
+      if (!currentUser) {
+        setError("Vous mustn'être connecté pour poster");
+        setLoading(false);
+        navigate("/login");
+        return;
+      }
+
+      const now = new Date().toISOString();
+      const success = await createPost(currentUser.id, content, now);
+
+      if (success) {
+        navigate("/home");
+      } else {
+        setError("Erreur lors de la création du post");
+      }
+    } catch (err) {
+      setError("Erreur lors de la création du post");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
     <div className="min-h-screen bg-bg-black text-text-white flex flex-col">
       <Header />
 
-      <main className="flex-grow max-w-md mx-auto px-4 pt-6 w-full">
+      <main className="grow max-w-md mx-auto px-4 pt-6 w-full">
         <form onSubmit={submit} className="space-y-4">
-        <div className="flex flex-row justify-between">
-          <Button variant="dark" size="sm">Annuler </Button>
-          <Button type="submit" variant="post" disabled={content.length === 0 || content.length > MAX}>Post</Button>
-        </div>
+          <div className="flex flex-row justify-between">
+            <Button variant="dark" size="sm" onClick={() => navigate("/home")}>Annuler</Button>
+            <Button type="submit" variant="post" disabled={content.length === 0 || content.length > MAX || loading}>
+              {loading ? "Publication..." : "Post"}
+            </Button>
+          </div>
+          
+          {error && <p className="text-error text-sm">{error}</p>}
+          
           <div className="flex items-start gap-3">
             <Avatar variant="mehmet" />
             <div className="flex-1">
               <Input
-              variant="textarea"
+                variant="textarea"
                 value={content}
                 onChange={setContent}
                 placeholder="Quoi de neuf ?"

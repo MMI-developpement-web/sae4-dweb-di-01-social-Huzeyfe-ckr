@@ -7,7 +7,7 @@ export default function FirstScreen() {
 
   return (
     <div className="min-h-screen bg-bg-black text-text-white flex flex-col">
-      <div className="flex-grow flex  justify-center">
+      <div className="grow flex  justify-center">
         <div className="max-w-md w-full px-6 py-12">
           <Header />
 

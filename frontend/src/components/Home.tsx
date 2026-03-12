@@ -1,39 +1,48 @@
 import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
 import Footer from './ui/Footer'
 import Post from './ui/Post'
 import Header from './ui/Header'
-
-
-const POST_IMG = "https://www.figma.com/api/mcp/asset/ef365f0c-1f67-46a3-abac-ee3ac9aeed23";
-
-const posts = [
-  {
-    id: 1,
-    name: "Huzeyfe",
-    handle: "@Huzeyfecakir",
-    time: "3h",
-    text: `Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.`,
-    image: POST_IMG,
-  },
-  {
-    id: 2,
-    name: "Huzeyfe",
-    handle: "@Huzeyfecakir",
-    time: "3min",
-    text: `Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.`,
-    image: POST_IMG,
-  },
-];
+import { getPosts, type Post as PostType } from "../lib/api";
 
 export default function Home() {
   const navigate = useNavigate();
+  const [posts, setPosts] = useState<PostType[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchPosts = async () => {
+      setLoading(true);
+      const data = await getPosts();
+      setPosts(data);
+      setLoading(false);
+    };
+
+    fetchPosts();
+    // Rafraîchir les posts toutes les 30 secondes
+    const interval = setInterval(fetchPosts, 30000);
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <div className="min-h-screen bg-bg-black text-text-white pb-24">
       <Header />
       <div className="max-w-md mx-auto px-4 pt-4">
-        {posts.map((p) => (
-          <Post key={p.id} name={p.name} handle={p.handle} time={p.time} text={p.text} image={p.image} />
-        ))}
+        {loading ? (
+          <p className="text-center text-text-muted py-8">Chargement...</p>
+        ) : posts.length === 0 ? (
+          <p className="text-center text-text-muted py-8">Aucun post pour le moment</p>
+        ) : (
+          posts.map((p) => (
+            <Post 
+              key={p.id} 
+              name={p.user.name} 
+              handle={`@${p.user.user}`} 
+              time={p.createdAt} 
+              text={p.content} 
+            />
+          ))
+        )}
       </div>
 
       {/* Floating action button */}

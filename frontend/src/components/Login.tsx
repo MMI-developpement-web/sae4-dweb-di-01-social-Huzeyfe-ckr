@@ -3,23 +3,42 @@ import Button from './ui/Button'
 import Header from './ui/Header'
 import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
+import { login, saveCurrentUser } from '../lib/api'
 
 export default function Login() {
 
   const navigate = useNavigate();
 
-  const [email, setEmail] = useState("");
+  const [user, setUser] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const submit = (e: React.FormEvent) => {
+  const submit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email || !password){ 
-      setError("Veuillez remplir l'email et le mot de passe");
+    if (!user || !password){ 
+      setError("Veuillez remplir l'identifiant et le mot de passe");
       return;
     }
+    
+    setLoading(true);
     setError("");
-    navigate('/home');
+    
+    const loggedInUser = await login(user, password);
+    
+    if (loggedInUser) {
+      saveCurrentUser(loggedInUser);
+      // Rediriger selon le rôle
+      if (loggedInUser.role === 'admin') {
+        navigate('/adminmanagement');
+      } else {
+        navigate('/home');
+      }
+    } else {
+      setError("Identifiant ou mot de passe incorrect");
+    }
+    
+    setLoading(false);
   };
   
 
@@ -35,14 +54,14 @@ export default function Login() {
 
         <form className="w-full" onSubmit={submit}>
           <div className="space-y-4">
-            <Input variant="default" type="email" placeholder="Email" value={email} onChange={setEmail} />
+            <Input variant="default" type="text" placeholder="Identifiant" value={user} onChange={setUser} />
             <Input variant="default" type="password" placeholder="Mot de passe" value={password} onChange={setPassword} />
           </div>
           {error && <p className="text-error text-sm mt-2">{error}</p>}
 
           <div className="flex justify-center w-full  mt-4">
-            <Button type="submit" variant="solid" size="gg">
-              Se connecter
+            <Button type="submit" variant="solid" size="gg" disabled={loading}>
+              {loading ? "Connexion..." : "Se connecter"}
             </Button>
           </div>
 
