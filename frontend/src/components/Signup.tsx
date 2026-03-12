@@ -14,7 +14,7 @@ export default function SignupComponent() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col">
+    <div className="min-h-screen bg-bg-black text-text-white flex flex-col">
       <div className="flex-grow flex  justify-center">
         <div className="max-w-md w-full px-6 py-12">
           <Header />
@@ -30,8 +30,8 @@ export default function SignupComponent() {
             <Button variant="solid" size="lg" >Créer un compte</Button>
           </form>
 
-          <p className="text-xs text-gray-400 mt-4">
-            En vous inscrivant, vous acceptez les <span className="text-sky-400">Conditions d'utilisation</span> et la <span className="text-sky-400">Politique de confidentialité</span>.
+          <p className="text-xs text-text-muted mt-4">
+            En vous inscrivant, vous acceptez les <span className="text-tick">Conditions d'utilisation</span> et la <span className="text-tick">Politique de confidentialité</span>.
           </p>
         </div>
       </div>

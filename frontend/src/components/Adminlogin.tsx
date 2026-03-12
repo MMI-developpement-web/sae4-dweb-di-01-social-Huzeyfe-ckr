@@ -4,7 +4,7 @@ import Header from './ui/Header'
 import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
 
-export default function Login() {
+export default function AdminLogin() {
 
   const navigate = useNavigate();
 
@@ -23,20 +23,17 @@ export default function Login() {
   };
   
 
-
-
   return (
     <div className="bg-bg-black min-h-screen flex flex-col items-center py-8 px-6 text-text-white">
         <Header />
 
       <main className="w-full max-w-sm flex-1 flex flex-col items-center">
-        <h1 className="text-5xl font-extrabold leading-tight text-left w-full mb-2">Ça se passe maintenant</h1>
-        <h2 className="text-2xl font-black w-full m-16">Connectez-vous.</h2>
+        <h1 className="flex text-5xl font-extrabold leading-tight mb-2">Administration</h1>
 
-        <form className="w-full" onSubmit={submit}>
-          <div className="space-y-4">
-            <Input variant="default" type="email" placeholder="Email" value={email} onChange={setEmail} />
-            <Input variant="default" type="password" placeholder="Mot de passe" value={password} onChange={setPassword} />
+        <form className="mt-20" onSubmit={submit}>
+          <div className="space-y-8">
+            <Input variant="default" type="email" placeholder="Email" className='py-5' value={email} onChange={setEmail} />
+            <Input variant="default" type="password" placeholder="Mot de passe" className='py-5' value={password} onChange={setPassword} />
           </div>
           {error && <p className="text-error text-sm mt-2">{error}</p>}
 
@@ -45,21 +42,9 @@ export default function Login() {
               Se connecter
             </Button>
           </div>
-
-          <div className="text-center mt-3">
-            <a className="text-tick text-md">Mot de passe oublié ?</a>
-          </div>
-
-          <p className="mt-6 text-text-muted text-md text-center">Vous n'avez pas de compte ? <a className="text-tick">Inscrivez-vous</a></p>
-        </form>
+          <p className="flex flex-row text-text-muted">email: admin@123 mdp:admin123</p>
+        </form>  
       </main>
-
-      <footer className="w-full max-w-sm mt-8 text-center text-text-muted text-xs">
-        <div className="border-t border-border-dark pt-4">
-          <p>© 2026 X Corp.</p>
-        </div>
-      </footer>
-
     </div>
   );
 }

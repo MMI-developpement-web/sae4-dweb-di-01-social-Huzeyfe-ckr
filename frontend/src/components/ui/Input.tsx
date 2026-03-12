@@ -3,13 +3,14 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../../lib/utils.ts";
 
 export const inputVariants = cva(
-  "w-full rounded border bg-transparent text-gray-200 placeholder-gray-500 focus:outline-none focus:ring-2",
+  "w-full rounded border bg-transparent text-text-white placeholder-text-muted focus:outline-none focus:ring-2",
   {
     variants: {
       variant: {
-        default: "border-gray-700 text-[16px] py-6 mb-4  ",
-        subtle: "border-gray-600 bg-[#0b0b0b]",
-        light: "border-gray-300 bg-white text-black",
+        default: "border-border-dark text-[16px] py-6 mb-4  ",
+        subtle: "border-border-dark bg-surface-dark",
+        light: "border-border bg-text-white text-text-dark",
+        textarea: "flex flex-col min-h-[220px]  rounded border border-border-dark bg-transparent text-text-white placeholder-text-muted   p-3 focus:outline-none",
       },
       size: {
         sm: "h-10 px-3",
@@ -24,9 +25,10 @@ export const inputVariants = cva(
   },
 );
 
-// Data props
-interface InputProps extends VariantProps<typeof inputVariants> {
-  children?: React.ReactNode;
+
+// Types et props
+interface InputDataProps extends VariantProps<typeof inputVariants>  {
+    children?: React.ReactNode;
   className?: string;
   type?: "text" | "password" | "email";
   placeholder?: string;
@@ -37,19 +39,23 @@ interface InputProps extends VariantProps<typeof inputVariants> {
   showToggle?: boolean;
 }
 
-export default function Input({
-  children,
-  className = "",
-  type = "text",
-  placeholder,
-  name,
-  value,
-  onChange,
-  variant,
-  size,
-  as = "input",
-  showToggle = true,
-}: InputProps) {
+interface InputViewProps {className?: string; }
+
+
+export default function Input({ className = "", ...rest }: InputDataProps & InputViewProps) {
+  const {
+    children,
+    type = "text",
+    placeholder,
+    name,
+    value,
+    onChange,
+    variant,
+    size,
+    as = "input",
+    showToggle = true,
+  } = rest as InputDataProps & InputViewProps;
+
   const [show, setShow] = useState(false);
   const classes = cn(inputVariants({ variant, size }), className);
 
@@ -63,14 +69,9 @@ export default function Input({
     );
   }
 
-
-
-
-
   return (
-    <div className="w-full">{children && (
-        <label className="mb-1 block text-md font-bold">{children}</label>
-      )}
+    <div className="w-full">
+      {children && <label className="mb-1 block text-md font-bold">{children}</label>}
 
       {as === "textarea" ? (
         <textarea
@@ -95,7 +96,7 @@ export default function Input({
             <button
               type="button"
               onClick={() => setShow((s) => !s)}
-              className="absolute top-1/2 right-3 -translate-y-2/3 text-gray-400 hover:text-gray-200"
+              className="absolute top-1/2 right-3 -translate-y-2/3 text-text-muted hover:text-text-white"
               aria-label={show ? "Masquer le mot de passe" : "Afficher le mot de passe"}
             >
               <EyeIcon open={show} />

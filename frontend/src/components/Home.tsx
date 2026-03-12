@@ -28,7 +28,7 @@ const posts = [
 export default function Home() {
   const navigate = useNavigate();
   return (
-    <div className="min-h-screen bg-black text-white pb-24">
+    <div className="min-h-screen bg-bg-black text-text-white pb-24">
       <Header />
       <div className="max-w-md mx-auto px-4 pt-4">
         {posts.map((p) => (
@@ -37,7 +37,7 @@ export default function Home() {
       </div>
 
       {/* Floating action button */}
-      <button onClick={() => navigate('/post')} className="fixed bottom-20 right-6 bg-sky-500 w-14 h-14 rounded-full flex items-center justify-center shadow-lg text-white">+</button>
+      <button onClick={() => navigate('/post')} className="fixed bottom-20 right-6 bg-tick w-14 h-14 rounded-full flex items-center justify-center shadow-lg text-text-white">+</button>
 
       {/* Footer (replaces bottom nav) */}
       <Footer />

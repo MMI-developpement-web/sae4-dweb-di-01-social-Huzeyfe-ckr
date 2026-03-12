@@ -10,37 +10,48 @@ export default function PostPage() {
   const [content, setContent] = useState("");
   const navigate = useNavigate();
 
+  const MAX = 280;
+
   const submit = (e: React.FormEvent) => {
     e.preventDefault();
+    const length = content.trim().length;
+    if (length === 0) return; // nothing to post
+    if (length > MAX) {
+      alert(`Votre message dépasse la limite de ${MAX} caractères (${length}).`);
+      return;
+    }
     navigate("/home");
   };
 
   return (
-    <div className="min-h-screen bg-black text-white flex flex-col">
+    <div className="min-h-screen bg-bg-black text-text-white flex flex-col">
       <Header />
 
       <main className="flex-grow max-w-md mx-auto px-4 pt-6 w-full">
-        <form  onSubmit={submit} className="space-y-4">
-        <div  className="flex flex-row  ">
-            <Button  variant="dark" size="sm">Annuler </Button>
-            <Button onSubmit={submit} className="">Post</Button>
+        <form onSubmit={submit} className="space-y-4">
+        <div className="flex flex-row justify-between">
+          <Button variant="dark" size="sm">Annuler </Button>
+          <Button type="submit" variant="post" disabled={content.length === 0 || content.length > MAX}>Post</Button>
         </div>
           <div className="flex items-start gap-3">
             <Avatar variant="mehmet" />
             <div className="flex-1">
-              <label htmlFor="post-content" className="sr-only">Quoi de neuf ?</label>
-              <textarea
-                id="post-content"
+              <Input
+              variant="textarea"
                 value={content}
-                onChange={(e) => setContent(e.target.value)}
+                onChange={setContent}
                 placeholder="Quoi de neuf ?"
-                className="w-full rounded border border-gray-700 bg-transparent p-3 text-white placeholder-gray-500 min-h-[120px] focus:outline-none"
               />
             </div>
           </div>
 
           <div className="flex items-center justify-between">
-            <div className="text-sm text-gray-400">140</div>
+            <p className={`text-sm ${content.length > MAX ? "text-error" : "text-text-muted"}`}>
+              {MAX - content.length}
+            </p>
+            {content.length > MAX && (
+              <p className="text-error text-sm">Limite dépassée de {content.length - MAX} caractères</p>
+            )}
           </div>
         </form>
       </main>

@@ -1,6 +1,5 @@
 import React from "react";
 import Avatar from "./Avatar";
-import Button from "./Button";
 
 export interface PostProps {
   id?: number | string;
@@ -19,12 +18,12 @@ export default function Post({ name, handle, time, text, image }: PostProps) {
 
         <div className="flex-1">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-white">{name}</span>
-            <span className="text-gray-400 text-sm">{handle} · {time}</span>
+            <span className="font-bold text-text-white">{name}</span>
+            <span className="text-text-muted text-sm">{handle} · {time}</span>
           </div>
 
           {text && (
-            <p className="mt-2 text-sm leading-6 text-gray-100 whitespace-pre-wrap">{text}</p>
+            <p className="mt-2 text-sm leading-6 text-text-white whitespace-pre-wrap">{text}</p>
           )}
 
           {/* {image && (

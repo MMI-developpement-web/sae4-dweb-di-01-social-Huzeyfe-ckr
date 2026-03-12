@@ -11,7 +11,7 @@ const imgEllipse21 = "https://www.figma.com/api/mcp/asset/666c5884-b856-4d38-93e
 const imgIntersect = "https://www.figma.com/api/mcp/asset/0cf28b02-58e7-47b6-b792-d3303496ffd3";
 
 export const AvatarVariants = cva(
-  "inline-block overflow-hidden rounded-full bg-gray-200",
+  "inline-block overflow-hidden rounded-full bg-text-muted",
   {
     variants: {
       size: {

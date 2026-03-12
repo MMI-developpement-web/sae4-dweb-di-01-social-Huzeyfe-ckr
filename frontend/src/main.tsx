@@ -9,6 +9,8 @@ import FirstScreen from "./routes/firstscreen"; // renamed from previous Home
 import Login from "./routes/login";
 import Signup from "./routes/signup";
 import Post from "./routes/post";
+import Adminlogin from "./routes/adminlogin";
+import Adminmanagement from "./routes/adminmanagement";
 
 import "./index.css";
 
@@ -37,6 +39,14 @@ const router = createBrowserRouter([
       {
         path: "signup",
         element: <Signup />,
+      },
+      {
+        path: "adminlogin",
+        element: <Adminlogin />,
+      },
+      {
+        path: "adminmanagement",
+        element: <Adminmanagement />,
       },
     ],
   },
