@@ -193,4 +193,16 @@ class User
         }
         return $this;
     }
+
+    public function __toString(): string
+    {
+        // Prefer the display name, fall back to username or id
+        if (!empty($this->name)) {
+            return $this->name;
+        }
+        if (!empty($this->user)) {
+            return $this->user;
+        }
+        return (string) $this->id;
+    }
 }
