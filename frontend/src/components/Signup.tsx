@@ -64,10 +64,13 @@ export default function SignupComponent() {
   };
 
   return (
-    <div className="min-h-screen bg-bg-black text-text-white flex flex-col">
-      <div className="grow flex justify-center">
-        <div className="max-w-md w-full px-6 py-12">
+    <div className="min-h-screen bg-gradient-to-b from-bg-black to-surface-dark flex items-center justify-center py-4">
+      {/* Mobile phone frame */}
+      <div className="w-full max-w-sm bg-bg-black text-text-white rounded-3xl shadow-2xl overflow-hidden border-4 border-surface-dark">
+        <div className="overflow-y-auto h-screen max-h-[812px] flex flex-col">
           <Header />
+
+          <div className="flex-1 flex flex-col px-6 py-8">
 
           <h1 className="text-4xl font-extrabold mb-12">Créez votre compte</h1>
 
@@ -166,6 +169,7 @@ export default function SignupComponent() {
           <p className="text-xs text-text-muted mt-4">
             En vous inscrivant, vous acceptez les <span className="text-tick">Conditions d'utilisation</span> et la <span className="text-tick">Politique de confidentialité</span>.
           </p>
+          </div>
         </div>
       </div>
     </div>
