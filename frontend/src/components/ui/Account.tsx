@@ -9,10 +9,17 @@ interface AccountProps {
 }
 
 export default function Account({ user, onModify }: AccountProps) {
+  const rawPp = user.pp;
+  const avatarSrc = rawPp && rawPp !== "null" ? rawPp : `https://picsum.photos/seed/${encodeURIComponent(user.user)}/200`;
+
   return (
     <div className="bg-surface-dark border border-border-dark rounded-2xl p-4">
       <div className="flex items-start gap-4">
-        <Avatar variant={user.id === 1 ? "mehmet" : "default"} />
+        <Avatar size="md" src={avatarSrc} alt={`${user.name} avatar`}>
+          <div className="flex items-center justify-center w-full h-full text-sm font-bold text-text-white">
+            {user.name?.charAt(0)?.toUpperCase() ?? user.user?.charAt(0)?.toUpperCase() ?? "U"}
+          </div>
+        </Avatar>
         <div className="flex-1">
           <div className="font-bold text-lg">{user.name}</div>
           <div className="text-sm text-text-muted mb-3">{user.email}</div>

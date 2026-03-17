@@ -49,6 +49,10 @@ class User
     #[Groups(['default', 'detail'])]
     private ?\DateTimeInterface $birthDate = null;
 
+    #[ORM\Column(length: 1000, nullable: true)]
+    #[Groups(['default', 'detail'])]
+    private ?string $pp = null;
+
     #[ORM\Column(type: 'datetime')]
     #[Groups(['default', 'detail'])]
     private \DateTimeInterface $createdAt;
@@ -153,6 +157,17 @@ class User
     public function setBirthDate(?\DateTimeInterface $birthDate): static
     {
         $this->birthDate = $birthDate;
+        return $this;
+    }
+
+    public function getPp(): ?string
+    {
+        return $this->pp;
+    }
+
+    public function setPp(?string $pp): static
+    {
+        $this->pp = $pp;
         return $this;
     }
 

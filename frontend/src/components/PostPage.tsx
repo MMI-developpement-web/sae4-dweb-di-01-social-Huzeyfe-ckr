@@ -67,7 +67,16 @@ export default function PostPage() {
           {error && <p className="text-error text-sm">{error}</p>}
           
           <div className="flex items-start gap-3">
-            <Avatar variant="mehmet" />
+            {(() => {
+              const current = getCurrentUser();
+              const rawPp = current?.pp;
+              const avatarSrc = rawPp && rawPp !== "null" ? rawPp : current ? `https://picsum.photos/seed/${encodeURIComponent(current.user)}/200` : undefined;
+              return (
+                <Avatar size="md" src={avatarSrc} alt={`${current?.name ?? "Utilisateur"} avatar`}>
+                  <div className="flex items-center justify-center w-full h-full text-sm font-bold text-text-white">{current?.name?.charAt(0)?.toUpperCase() ?? current?.user?.charAt(0)?.toUpperCase() ?? "U"}</div>
+                </Avatar>
+              );
+            })()}
             <div className="flex-1">
               <Input
                 variant="textarea"

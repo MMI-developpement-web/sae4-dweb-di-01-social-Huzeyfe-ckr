@@ -20,6 +20,7 @@
   --color-error: var(--color-error);
   --color-bg-black: var(--color-bg-black);
   --color-bg-input: var(--color-bg-input);
+  --color-green: var(--color-green);
 
 }
 
@@ -41,6 +42,7 @@
   --color-error: #ef4444;
   --color-bg-black: #000000;
   --color-bg-input: #000000;
+  --color-green: #4CAF50;
 }
 
 

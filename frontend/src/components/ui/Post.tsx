@@ -1,25 +1,48 @@
-import React from "react";
+
 import Avatar from "./Avatar";
+
+function formatRelativeTime(dateString?: string) {
+  if (!dateString) return "";
+  const d = new Date(dateString.replace(' ', 'T'));
+  if (isNaN(d.getTime())) return dateString;
+  const seconds = Math.floor((Date.now() - d.getTime()) / 1000);
+  if (seconds < 60) return `${seconds}s`;
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}min`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}j`;
+  const months = Math.floor(days / 30);
+  if (months < 12) return `${months}mois`;
+  const years = Math.floor(months / 12);
+  return `${years}an${years > 1 ? 's' : ''}`;
+}
 
 export interface PostProps {
   id?: number | string;
   name: string;
   handle: string;
+  avatar?: string;
   time?: string;
   text?: string;
   image?: string;
 }
 
-export default function Post({ name, handle, time, text, image }: PostProps) {
+export default function Post({ name, handle, avatar, time, text }: PostProps) {
+  const displayTime = formatRelativeTime(time);
+
   return (
     <article className="mb-6">
       <div className="flex items-start gap-3">
-        <Avatar variant="mehmet" />
+        <Avatar size="md" src={avatar} alt={`${name} avatar`}>
+          <div className="flex items-center justify-center w-full h-full text-sm font-bold text-text-white">{handle?.charAt(1)?.toUpperCase() ?? handle?.charAt(0)?.toUpperCase() ?? "U"}</div>
+        </Avatar>
 
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <span className="font-bold text-text-white">{name}</span>
-            <span className="text-text-muted text-sm">{handle} · {time}</span>
+            <span className="text-text-muted text-sm">{handle} · {displayTime}</span>
           </div>
 
           {text && (

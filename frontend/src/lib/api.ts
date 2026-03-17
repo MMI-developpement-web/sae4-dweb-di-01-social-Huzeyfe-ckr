@@ -10,6 +10,9 @@ export interface User {
   active: boolean;
   phone?: string;
   birthDate?: string;
+  /** photo de profil (champ 'pp' dans la base) */
+  pp?: string;
+  avatar?: string;
   createdAt: string;
   postsCount?: number;
 }
@@ -23,6 +26,7 @@ export interface Post {
     id: number;
     name: string;
     user: string;
+    pp?: string;
   };
 }
 

@@ -3,7 +3,9 @@ import { useNavigate } from "react-router-dom";
 import Button from "./ui/Button";
 import Input from "./ui/Input";
 import Header from "./ui/Header";
+import StrengthBar from "./ui/StrengthBar";
 import { register } from "../lib/api";
+import { validatePasswordStrength } from "../lib/passwordValidator";
 
 export default function SignupComponent() {
   const navigate = useNavigate();
@@ -14,6 +16,16 @@ export default function SignupComponent() {
   const [confirm, setConfirm] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+
+  const passwordStrength = validatePasswordStrength(password);
+
+  const lengthOk = password.length >= 8;
+  const upperOk = /[A-Z]/.test(password);
+  const lowerOk = /[a-z]/.test(password);
+  const digitOk = /\d/.test(password);
+  const specialOk = /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password);
+
+
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -29,8 +41,8 @@ export default function SignupComponent() {
       return;
     }
 
-    if (password.length < 6) {
-      setError("Le mot de passe doit contenir au moins 6 caractères");
+    if (!passwordStrength.isValid) {
+      setError("Le mot de passe ne respecte pas les critères de sécurité");
       return;
     }
 
@@ -40,12 +52,11 @@ export default function SignupComponent() {
     try {
       const success = await register({ user: username, email, password, name: username });
       if (success) {
-        // Redirect to login after successful registration
         navigate("/login");
       } else {
         setError("Erreur lors de l'inscription. Veuillez réessayer.");
       }
-    } catch (err) {
+    } catch {
       setError("Erreur lors de l'inscription. Veuillez réessayer.");
     } finally {
       setLoading(false);
@@ -75,13 +86,63 @@ export default function SignupComponent() {
               value={username}
               onChange={setUsername}
             />
-            <Input
-              name="password"
-              type="password"
-              placeholder="Mot de passe"
-              value={password}
-              onChange={setPassword}
-            />
+            
+            {/* Password input with strength indicator */}
+            <div>
+              <Input
+                name="password"
+                type="password"
+                placeholder="Mot de passe"
+                value={password}
+                onChange={setPassword}
+              />
+              
+              {password && (
+                <div className="mt-3 space-y-2">
+                  {/* Strength bar */}
+                  <StrengthBar passwordStrength={passwordStrength} />
+
+                  <div className="bg-surface-dark rounded-lg p-3 space-y-1">
+                    <div className={`text-xs flex items-start gap-2 ${lengthOk ? 'text-green' : 'text-text-muted'}`}>
+                      <span className={`${lengthOk ? 'text-green' : 'text-error'} mt-0.5`}>{lengthOk ? '✓' : '●'}</span>
+                      <span>Minimum 8 caractères</span>
+                    </div>
+                    <div className={`text-xs flex items-start gap-2 ${upperOk ? 'text-green' : 'text-text-muted'}`}>
+                      <span className={`${upperOk ? 'text-green' : 'text-error'} mt-0.5`}>{upperOk ? '✓' : '●'}</span>
+                      <span>Au moins une majuscule</span>
+                    </div>
+                    <div className={`text-xs flex items-start gap-2 ${lowerOk ? 'text-green' : 'text-text-muted'}`}>
+                      <span className={`${lowerOk ? 'text-green' : 'text-error'} mt-0.5`}>{lowerOk ? '✓' : '●'}</span>
+                      <span>Au moins une minuscule</span>
+                    </div>
+                    <div className={`text-xs flex items-start gap-2 ${digitOk ? 'text-green' : 'text-text-muted'}`}>
+                      <span className={`${digitOk ? 'text-green' : 'text-error'} mt-0.5`}>{digitOk ? '✓' : '●'}</span>
+                      <span>Au moins un chiffre</span>
+                    </div>
+                    <div className={`text-xs flex items-start gap-2 ${specialOk ? 'text-green' : 'text-text-muted'}`}>
+                      <span className={`${specialOk ? 'text-green' : 'text-error'} mt-0.5`}>{specialOk ? '✓' : '●'}</span>
+                      <span>Au moins un caractère spécial (!@#$...)</span>
+                    </div>
+                  </div>
+
+                  <div className="text-xs text-green flex items-center gap-2">
+                    <span>{passwordStrength.isValid ? '✓' : ''}</span>
+                    <span>{passwordStrength.isValid ? 'Mot de passe sécurisé' : ''}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+
+
+
+
+
+
+
+
+
+
+
             <Input
               name="confirm"
               type="password"
@@ -92,7 +153,12 @@ export default function SignupComponent() {
 
             {error && <p className="text-error text-sm">{error}</p>}
 
-            <Button variant="solid" size="lg" type="submit" disabled={loading}>
+            <Button 
+              variant="solid" 
+              size="lg" 
+              type="submit" 
+              disabled={loading || !passwordStrength.isValid}
+            >
               {loading ? "Création..." : "Créer un compte"}
             </Button>
           </form>

@@ -31,11 +31,12 @@ class PostController extends AbstractController
                 'id' => $p->getId(),
                 'content' => $p->getContent(),
                 'time' => $p->getTime()?->format('Y-m-d'),
-                'createdAt' => $p->getCreatedAt()->format('Y-m-d H:i:s'),
+                'createdAt' => $p->getCreatedAt()->format(\DateTime::ATOM),
                 'user' => $p->getUser() ? [
                     'id' => $p->getUser()->getId(),
                     'name' => $p->getUser()->getName(),
                     'user' => $p->getUser()->getUser(),
+                    'pp' => $p->getUser()->getPp(),
                 ] : null,
             ];
         }, $posts);
@@ -54,11 +55,12 @@ class PostController extends AbstractController
             'id' => $post->getId(),
             'content' => $post->getContent(),
             'time' => $post->getTime()?->format('Y-m-d'),
-            'createdAt' => $post->getCreatedAt()->format('Y-m-d H:i:s'),
+            'createdAt' => $post->getCreatedAt()->format(\DateTime::ATOM),
             'user' => $post->getUser() ? [
                 'id' => $post->getUser()->getId(),
                 'name' => $post->getUser()->getName(),
                 'user' => $post->getUser()->getUser(),
+                'pp' => $post->getUser()->getPp(),
             ] : null,
         ];
 
@@ -99,11 +101,12 @@ class PostController extends AbstractController
             'id' => $post->getId(),
             'content' => $post->getContent(),
             'time' => $post->getTime()?->format('Y-m-d'),
-            'createdAt' => $post->getCreatedAt()->format('Y-m-d H:i:s'),
+            'createdAt' => $post->getCreatedAt()->format(\DateTime::ATOM),
             'user' => $post->getUser() ? [
                 'id' => $post->getUser()->getId(),
                 'name' => $post->getUser()->getName(),
                 'user' => $post->getUser()->getUser(),
+                'pp' => $post->getUser()->getPp(),
             ] : null,
         ];
 
