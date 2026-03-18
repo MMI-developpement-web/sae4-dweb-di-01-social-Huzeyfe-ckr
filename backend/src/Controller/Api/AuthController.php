@@ -9,58 +9,37 @@ use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
-use Symfony\Component\Serializer\SerializerInterface;
+use Symfony\Component\Security\Http\Attribute\CurrentUser;
 use Doctrine\ORM\EntityManagerInterface;
 
 #[Route('/auth')]
 class AuthController extends AbstractController
 {
     /**
-     * Login - vérifie les identifiants et retourne l'utilisateur
+     * Login - Endpoint that receives JSON credentials and returns JWT token
+     * This route is handled by the JSON Login authenticator configured in security.yaml
      * POST /api/auth/login
+     * 
+     * Note: This endpoint is intercepted by the firewall's JSON Login authenticator.
+     * The authenticator validates credentials and calls LoginSuccessHandler to generate JWT.
+     * This action exists primarily for routing/documentation purposes.
      */
-    #[Route('/login', name: 'auth_login', methods: ['POST'])]
-    public function login(Request $request, UserRepository $userRepository): JsonResponse
+    #[Route('/login', name: 'auth_login', methods: ['POST'], format: 'json')]
+    public function login(): Response
     {
-        $data = json_decode($request->getContent(), true);
-
-        if (!isset($data['user']) || !isset($data['password'])) {
-            return $this->json(['error' => 'user et password sont requis'], Response::HTTP_BAD_REQUEST);
-        }
-
-        $user = $userRepository->findOneBy(['user' => $data['user']]);
-
-        if (!$user) {
-            return $this->json(['error' => 'Utilisateur ou mot de passe incorrect'], Response::HTTP_UNAUTHORIZED);
-        }
-
-        // Vérifier le mot de passe (en production, utiliser password_verify)
-        if ($user->getPassword() !== $data['password']) {
-            return $this->json(['error' => 'Utilisateur ou mot de passe incorrect'], Response::HTTP_UNAUTHORIZED);
-        }
-
-        if (!$user->isActive()) {
-            return $this->json(['error' => 'Compte désactivé'], Response::HTTP_FORBIDDEN);
-        }
-
+        // This method should never actually execute because the Security firewall intercepts the request
+        // before it reaches this controller action and handles it via JSON Login.
+        // If we get here, just return a 200 OK - the real response is handled by LoginSuccessHandler.
         return $this->json([
-            'id' => $user->getId(),
-            'user' => $user->getUser(),
-            'email' => $user->getEmail(),
-            'name' => $user->getName(),
-            'role' => $user->getRole(),
-            'active' => $user->isActive(),
-            'phone' => $user->getPhone(),
-            'birthDate' => $user->getBirthDate()?->format('Y-m-d'),
-            'createdAt' => $user->getCreatedAt()->format('Y-m-d H:i:s'),
+            'message' => 'Login successful - handled by security firewall'
         ]);
     }
 
     /**
-     * Register - crée un nouvel utilisateur
+     * Register - Creates a new user account
      * POST /api/auth/register
      */
-    #[Route('/register', name: 'auth_register', methods: ['POST'])]
+    #[Route('/register', name: 'auth_register', methods: ['POST'], format: 'json')]
     public function register(Request $request, UserRepository $userRepository, EntityManagerInterface $em): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
@@ -114,9 +93,6 @@ class AuthController extends AbstractController
             'name' => $user->getName(),
             'role' => $user->getRole(),
             'active' => $user->isActive(),
-            'phone' => $user->getPhone(),
-            'birthDate' => $user->getBirthDate()?->format('Y-m-d'),
-            'createdAt' => $user->getCreatedAt()->format('Y-m-d H:i:s'),
         ], Response::HTTP_CREATED);
     }
 }

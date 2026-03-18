@@ -14,10 +14,15 @@ export default function Profile({ name: propName, handle: propHandle, image: pro
   const current = getCurrentUser() as User | null;
 
   const name = propName ?? current?.name ?? "Invité";
-  const handle = propHandle ?? current?.user ?? "guest";
+  // Handle both 'user' and 'username' fields from API
+  const handle = propHandle ?? current?.username ?? current?.user ?? "guest";
 
   const rawPp = current?.pp || undefined;
-  const avatarSrc = propImage ?? (rawPp && rawPp !== "null" ? rawPp : `https://picsum.photos/seed/${encodeURIComponent(handle)}/200`);
+  const avatarSrc = propImage ?? (rawPp && rawPp !== "null" ? rawPp : `https://picsum.photos/seed/${encodeURIComponent(String(handle))}/200`);
+
+  // Ensure handle is a string and get first character
+  const handleStr = typeof handle === 'string' ? handle : String(handle);
+  const initials = handleStr?.charAt(0).toUpperCase() ?? "U";
 
 
 
@@ -32,7 +37,7 @@ export default function Profile({ name: propName, handle: propHandle, image: pro
       <div className="flex items-start gap-3">
         <div className="flex-shrink-0">
           <Avatar size="md" src={avatarSrc} alt={`${name} avatar`}>
-            <div className="flex items-center justify-center w-full h-full text-sm font-bold text-text-white">{handle?.charAt(0).toUpperCase() ?? "U"}</div>
+            <div className="flex items-center justify-center w-full h-full text-sm font-bold text-text-white">{initials}</div>
           </Avatar>
         </div>
 
@@ -40,7 +45,7 @@ export default function Profile({ name: propName, handle: propHandle, image: pro
           <div className="flex items-center gap-1">
             <span className="font-bold text-white text-xl">{name}</span>
             <div className="ml-2 flex items-center gap-1 text-gray-500 text-lg">
-              <span>@{handle}</span>
+              <span>@{handleStr}</span>
             </div>
           </div>
         </div>

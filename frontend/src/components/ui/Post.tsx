@@ -31,18 +31,21 @@ export interface PostProps {
 
 export default function Post({ name, handle, avatar, time, text }: PostProps) {
   const displayTime = formatRelativeTime(time);
+  // Ensure handle is a string
+  const handleStr = typeof handle === 'string' ? handle : String(handle);
+  const initials = handleStr?.charAt(1)?.toUpperCase() ?? handleStr?.charAt(0)?.toUpperCase() ?? "U";
 
   return (
     <article className="mb-6">
       <div className="flex items-start gap-3">
         <Avatar size="md" src={avatar} alt={`${name} avatar`}>
-          <div className="flex items-center justify-center w-full h-full text-sm font-bold text-text-white">{handle?.charAt(1)?.toUpperCase() ?? handle?.charAt(0)?.toUpperCase() ?? "U"}</div>
+          <div className="flex items-center justify-center w-full h-full text-sm font-bold text-text-white">{initials}</div>
         </Avatar>
 
         <div className="flex-1">
           <div className="flex items-center gap-2">
             <span className="font-bold text-text-white">{name}</span>
-            <span className="text-text-muted text-sm">{handle} · {displayTime}</span>
+            <span className="text-text-muted text-sm">{handleStr} · {displayTime}</span>
           </div>
 
           {text && (

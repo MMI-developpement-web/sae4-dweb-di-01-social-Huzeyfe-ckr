@@ -3,7 +3,8 @@ const API_BASE = 'http://localhost:8080/api';
 
 export interface User {
   id: number;
-  user: string;
+  username?: string;  // From login endpoint
+  user?: string;      // From other endpoints (backward compat)
   email: string;
   name: string;
   role: 'user' | 'admin';
@@ -13,7 +14,7 @@ export interface User {
   /** photo de profil (champ 'pp' dans la base) */
   pp?: string;
   avatar?: string;
-  createdAt: string;
+  createdAt?: string;
   postsCount?: number;
 }
 
@@ -39,7 +40,18 @@ export async function login(username: string, password: string): Promise<User | 
       body: JSON.stringify({ user: username, password }),
     });
     if (!res.ok) throw new Error('Login failed');
-    return res.json();
+    const data = await res.json();
+    
+    // Extract token and user from response
+    const { token, user: userData } = data;
+    
+    // Store token in localStorage for API requests
+    if (token) {
+      localStorage.setItem('authToken', token);
+    }
+    
+    // Return only the user data (matching User interface)
+    return userData as User;
   } catch (err) {
     console.error('Login error:', err);
     return null;
@@ -54,7 +66,15 @@ export async function register(data: any): Promise<User | null> {
       body: JSON.stringify(data),
     });
     if (!res.ok) throw new Error('Register failed');
-    return res.json();
+    const responseData = await res.json();
+    
+    // Extract token and user from response (if register also returns them)
+    if (responseData.token) {
+      localStorage.setItem('authToken', responseData.token);
+      return responseData.user || responseData;
+    }
+    
+    return responseData;
   } catch (err) {
     console.error('Register error:', err);
     return null;
@@ -64,7 +84,9 @@ export async function register(data: any): Promise<User | null> {
 // Users
 export async function getUsers(): Promise<User[]> {
   try {
-    const res = await fetch(`${API_BASE}/users`);
+    const res = await fetch(`${API_BASE}/users`, {
+      headers: getAuthHeaders(),
+    });
     if (!res.ok) throw new Error('Fetch users failed');
     const data = await res.json();
     return data.users || [];
@@ -76,7 +98,9 @@ export async function getUsers(): Promise<User[]> {
 
 export async function getUser(id: number): Promise<User | null> {
   try {
-    const res = await fetch(`${API_BASE}/users/${id}`);
+    const res = await fetch(`${API_BASE}/users/${id}`, {
+      headers: getAuthHeaders(),
+    });
     if (!res.ok) throw new Error('Fetch user failed');
     return res.json();
   } catch (err) {
@@ -89,7 +113,7 @@ export async function updateUser(id: number, data: Partial<User>): Promise<boole
   try {
     const res = await fetch(`${API_BASE}/users/${id}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify(data),
     });
     return res.ok;
@@ -103,6 +127,7 @@ export async function deleteUser(id: number): Promise<boolean> {
   try {
     const res = await fetch(`${API_BASE}/users/${id}`, {
       method: 'DELETE',
+      headers: getAuthHeaders(),
     });
     return res.ok;
   } catch (err) {
@@ -114,7 +139,9 @@ export async function deleteUser(id: number): Promise<boolean> {
 // Posts
 export async function getPosts(): Promise<Post[]> {
   try {
-    const res = await fetch(`${API_BASE}/posts`);
+    const res = await fetch(`${API_BASE}/posts`, {
+      headers: getAuthHeaders(),
+    });
     if (!res.ok) throw new Error('Fetch posts failed');
     const data = await res.json();
     return data.posts || [];
@@ -126,7 +153,9 @@ export async function getPosts(): Promise<Post[]> {
 
 export async function getPost(id: number): Promise<Post | null> {
   try {
-    const res = await fetch(`${API_BASE}/posts/${id}`);
+    const res = await fetch(`${API_BASE}/posts/${id}`, {
+      headers: getAuthHeaders(),
+    });
     if (!res.ok) throw new Error('Fetch post failed');
     return res.json();
   } catch (err) {
@@ -139,7 +168,7 @@ export async function createPost(userId: number, content: string, time?: string)
   try {
     const res = await fetch(`${API_BASE}/posts`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ userId, content, time }),
     });
     if (!res.ok) throw new Error('Create post failed');
@@ -192,4 +221,28 @@ export function getCurrentUser(): User | null {
 
 export function clearCurrentUser() {
   localStorage.removeItem('currentUser');
+}
+
+// Token management
+export function getAuthToken(): string | null {
+  return localStorage.getItem('authToken');
+}
+
+export function clearAuthToken() {
+  localStorage.removeItem('authToken');
+}
+
+// Helper to get headers with auth token
+export function getAuthHeaders(): HeadersInit {
+  const token = getAuthToken();
+  const headers: HeadersInit = { 'Content-Type': 'application/json' };
+  if (token) {
+    (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
+  }
+  return headers;
+}
+
+export function logout(): void {
+  clearCurrentUser();
+  clearAuthToken();
 }

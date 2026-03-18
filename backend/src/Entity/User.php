@@ -6,11 +6,13 @@ use App\Repository\UserRepository;
 use Doctrine\Common\Collections\ArrayCollection;
 use Doctrine\Common\Collections\Collection;
 use Doctrine\ORM\Mapping as ORM;
+use Symfony\Component\Security\Core\User\PasswordAuthenticatedUserInterface;
+use Symfony\Component\Security\Core\User\UserInterface;
 use Symfony\Component\Serializer\Annotation\Groups;
 
 #[ORM\Entity(repositoryClass: UserRepository::class)]
 #[ORM\Table(name: '`user`')]
-class User
+class User implements UserInterface, PasswordAuthenticatedUserInterface
 {
     #[ORM\Id]
     #[ORM\GeneratedValue]
@@ -61,6 +63,9 @@ class User
     #[Groups(['detail'])]
     private Collection $posts;
 
+    #[ORM\OneToOne(targetEntity: AccessToken::class, mappedBy: 'user', orphanRemoval: true)]
+    private ?AccessToken $accessToken = null;
+
     public function __construct()
     {
         $this->posts = new ArrayCollection();
@@ -92,11 +97,6 @@ class User
     {
         $this->email = $email;
         return $this;
-    }
-
-    public function getPassword(): string
-    {
-        return $this->password;
     }
 
     public function setPassword(string $password): static
@@ -219,5 +219,50 @@ class User
             return $this->user;
         }
         return (string) $this->id;
+    }
+
+    // ============ UserInterface implementation ============
+
+    /**
+     * A visual identifier that represents this User.
+     */
+    public function getUserIdentifier(): string
+    {
+        return $this->user;
+    }
+
+    /**
+     * @return string[]
+     */
+    public function getRoles(): array
+    {
+        $roles = [$this->role];
+        // guarantee every user at least has ROLE_USER
+        $roles[] = 'ROLE_USER';
+        return array_unique($roles);
+    }
+
+    /**
+     * Erases sensitive data from the user.
+     */
+    public function eraseCredentials(): void
+    {
+        // If you store any temporary, sensitive data on the user, clear it here
+    }
+
+    public function getAccessToken(): ?AccessToken
+    {
+        return $this->accessToken;
+    }
+
+    public function setAccessToken(?AccessToken $accessToken): self
+    {
+        $this->accessToken = $accessToken;
+        return $this;
+    }
+
+    public function getPassword(): string
+    {
+        return $this->password;
     }
 }

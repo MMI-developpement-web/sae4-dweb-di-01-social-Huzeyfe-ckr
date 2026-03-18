@@ -10,14 +10,16 @@ interface AccountProps {
 
 export default function Account({ user, onModify }: AccountProps) {
   const rawPp = user.pp;
-  const avatarSrc = rawPp && rawPp !== "null" ? rawPp : `https://picsum.photos/seed/${encodeURIComponent(user.user)}/200`;
+  const username = user.username ?? user.user ?? "guest";
+  const avatarSrc = rawPp && rawPp !== "null" ? rawPp : `https://picsum.photos/seed/${encodeURIComponent(username)}/200`;
+  const initials = user.name?.charAt(0)?.toUpperCase() ?? "U";
 
   return (
     <div className="bg-surface-dark border border-border-dark rounded-2xl p-4">
       <div className="flex items-start gap-4">
         <Avatar size="md" src={avatarSrc} alt={`${user.name} avatar`}>
           <div className="flex items-center justify-center w-full h-full text-sm font-bold text-text-white">
-            {user.name?.charAt(0)?.toUpperCase() ?? user.user?.charAt(0)?.toUpperCase() ?? "U"}
+            {initials}
           </div>
         </Avatar>
         <div className="flex-1">
