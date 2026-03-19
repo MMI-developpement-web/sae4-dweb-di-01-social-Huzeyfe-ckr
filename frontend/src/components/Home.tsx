@@ -11,6 +11,7 @@ export default function Home() {
   const [posts, setPosts] = useState<PostType[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // le useEffect pour récupérer les posts et les rafraîchir toutes les 30 secondes
   useEffect(() => {
     const fetchPosts = async () => {
       setLoading(true);

@@ -10,6 +10,7 @@ use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\Response;
 use Symfony\Component\Routing\Attribute\Route;
 use Symfony\Component\Security\Http\Attribute\CurrentUser;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use Doctrine\ORM\EntityManagerInterface;
 
 #[Route('/auth')]
@@ -40,7 +41,7 @@ class AuthController extends AbstractController
      * POST /api/auth/register
      */
     #[Route('/register', name: 'auth_register', methods: ['POST'], format: 'json')]
-    public function register(Request $request, UserRepository $userRepository, EntityManagerInterface $em): JsonResponse
+    public function register(Request $request, UserRepository $userRepository, EntityManagerInterface $em, UserPasswordHasherInterface $passwordHasher): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
 
@@ -68,7 +69,9 @@ class AuthController extends AbstractController
         $user = new User();
         $user->setUser($data['user']);
         $user->setEmail($data['email']);
-        $user->setPassword($data['password']); // En production, utiliser password_hash
+        // Hacher le mot de passe de manière sécurisée
+        $hashedPassword = $passwordHasher->hashPassword($user, $data['password']);
+        $user->setPassword($hashedPassword);
         $user->setName($data['name']);
         $user->setRole('user'); // Par défaut, nouveau utilisateur = user
         $user->setActive(true);
