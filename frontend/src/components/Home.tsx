@@ -1,31 +1,91 @@
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Post from './ui/Post'
 import Footer from './ui/Footer'
 import SideBar from './ui/SideBar'
-import { getPosts, type Post as PostType } from "../lib/api";
+import { getPosts, getCurrentUser, type Post as PostType } from "../lib/api";
 import Header from "./ui/Header";
 import Profile from "./ui/Profile";
 
 export default function Home() {
   const navigate = useNavigate();
+  const currentUser = getCurrentUser();
   const [posts, setPosts] = useState<PostType[]>([]);
   const [loading, setLoading] = useState(true);
+  const [refreshing, setRefreshing] = useState(false);
+  const [newPostsCount, setNewPostsCount] = useState(0);
+  const [filter, setFilter] = useState<'all' | 'following'>('all');
+  const postsRef = useRef<PostType[]>([]);
 
-  // Récupérer les posts
+  // Check if user is authenticated
+  if (!currentUser) {
+    console.warn('User not authenticated - redirecting to login');
+    navigate('/login');
+    return (
+      <div className="min-h-screen bg-bg-black flex items-center justify-center">
+        <p className="text-text-white">Redirection vers la connexion...</p>
+      </div>
+    );
+  }
+
+  // Charger les posts au démarrage
   useEffect(() => {
-    const fetchPosts = async () => {
+    const loadInitialPosts = async () => {
       setLoading(true);
-      const data = await getPosts();
+      const filterParam = filter === 'following' ? 'following' : undefined;
+      const data = await getPosts(filterParam);
       const sorted = [...data].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
       setPosts(sorted);
+      postsRef.current = sorted;
       setLoading(false);
     };
 
-    fetchPosts();
-    const interval = setInterval(fetchPosts, 30000);
+    loadInitialPosts();
+  }, [filter]);
+
+
+
+
+  // Rafraîchissement automatique toutes les 30 secondes
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const filterParam = filter === 'following' ? 'following' : undefined;
+      const data = await getPosts(filterParam);
+      const sorted = [...data].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      
+      // Comparer les nouveaux posts avec les anciens
+      if (sorted.length > postsRef.current.length) {
+        const newCount = sorted.length - postsRef.current.length;
+        setNewPostsCount(newCount);
+      }
+    }, 30000);
+
     return () => clearInterval(interval);
-  }, []);
+  }, [filter]);
+
+  const handlePostDeleted = (deletedPostId: number) => {
+    const filtered = posts.filter(p => p.id !== deletedPostId);
+    setPosts(filtered);
+    postsRef.current = filtered;
+  };
+
+
+
+  const handleRefresh = async () => {
+    setRefreshing(true);
+    try {
+      const filterParam = filter === 'following' ? 'following' : undefined;
+      const data = await getPosts(filterParam);
+      const sorted = [...data].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+      setPosts(sorted);
+      postsRef.current = sorted;
+      setNewPostsCount(0);
+    } catch (error) {
+      console.error('Error refreshing posts:', error);
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
 
 
@@ -42,9 +102,48 @@ export default function Home() {
 
         
         <div className="w-full max-w-2xl border-r border-border-dark md:border-l md:border-border-dark">
-        <Header/>
+        <Header showLogout={true} />
         <Profile/>
 
+        {/* Refresh Button - Toujours visible */}
+        <div className=" top-0 z-10 bg-bg-black border-b border-border-dark">
+          {/* Tabs */}
+          <div className="flex">
+            <button
+              onClick={() => setFilter('all')}
+              className={`flex-1 py-4 text-center font-bold transition border-b-2 ${
+                filter === 'all'
+                  ? 'text-tick border-tick'
+                  : 'text-text-muted border-transparent hover:bg-surface-dark/20'
+              }`}
+            >
+              Pour toi
+            </button>
+            <button
+              onClick={() => setFilter('following')}
+              className={`flex-1 py-4 text-center font-bold transition border-b-2 ${
+                filter === 'following'
+                  ? 'text-tick border-tick'
+                  : 'text-text-muted border-transparent hover:bg-surface-dark/20'
+              }`}
+            >
+              Abonnements
+            </button>
+          </div>
+
+          {/* Refresh Button */}
+          <button
+            onClick={handleRefresh}
+            disabled={refreshing}
+            className="w-full py-3 text-tick font-bold text-center hover:bg-surface-dark transition disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {refreshing ? 'Chargement...' : (
+              newPostsCount > 0 
+                ? `SHOW ${newPostsCount} ${newPostsCount === 1 ? 'TWEET' : 'TWEETS'}`
+                : 'Rafraîchir la fil d\'actualité'
+            )}
+          </button>
+        </div>
 
           {/* Posts Feed */}
           <div className="divide-y divide-border-dark pb-24 md:pb-0">
@@ -66,11 +165,24 @@ export default function Home() {
                     className="hover:bg-surface-dark/20 transition cursor-pointer p-4 md:p-6"
                   >
                     <Post
+                      id={p.id}
                       name={p.user.name}
                       handle={`@${p.user.user}`}
                       avatar={avatar}
                       time={p.createdAt}
                       text={p.content}
+                      userId={p.user.id}
+                      currentUserId={currentUser?.id}
+                      likes={p.likes || 0}
+                      liked={p.liked || false}
+                      onDelete={() => handlePostDeleted(p.id)}
+                      onLikeChange={(liked, likeCount) => {
+                        const updatedPosts = posts.map(post =>
+                          post.id === p.id ? { ...post, likes: likeCount, liked } : post
+                        );
+                        setPosts(updatedPosts);
+                        postsRef.current = updatedPosts;
+                      }}
                     />
                   </div>
                 );

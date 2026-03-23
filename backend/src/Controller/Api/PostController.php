@@ -4,8 +4,11 @@ namespace App\Controller\Api;
 
 use App\Entity\Post;
 use App\Entity\User;
+use App\Entity\Like;
 use App\Repository\PostRepository;
 use App\Repository\UserRepository;
+use App\Repository\LikeRepository;
+use App\Repository\FollowRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -19,14 +22,36 @@ class PostController extends AbstractController
 {
     /**
      * Récupère tous les posts avec les infos utilisateur
-     * GET /api/posts
+     * GET /api/posts?filter=following (optionnel: retourne seulement les posts des utilisateurs suivis)
      */
     #[Route('', name: 'posts.all', methods: ['GET'])]
-    public function all(PostRepository $postRepository): JsonResponse
+    public function all(Request $request, PostRepository $postRepository, LikeRepository $likeRepository, FollowRepository $followRepository): JsonResponse
     {
+        $currentUser = $this->getUser();
+        $filter = $request->query->get('filter', 'all');
+
         $posts = $postRepository->findAll();
 
-        $result = array_map(function(Post $p) {
+        // Filtrer par "following" si demandé
+        if ($filter === 'following' && $currentUser instanceof User) {
+            $followingIds = $followRepository->getFollowingIds($currentUser->getId());
+            $posts = array_filter($posts, function(Post $p) use ($followingIds) {
+                return in_array($p->getUser()->getId(), $followingIds);
+            });
+        }
+
+        // Trier par date décroissante
+        usort($posts, function(Post $a, Post $b) {
+            return $b->getCreatedAt()->getTimestamp() - $a->getCreatedAt()->getTimestamp();
+        });
+
+        $result = array_map(function(Post $p) use ($likeRepository, $currentUser) {
+            $likeCount = $likeRepository->countByPost($p->getId());
+            $userLiked = false;
+            if ($currentUser) {
+                $userLiked = (bool) $likeRepository->findByUserAndPost($currentUser->getId(), $p->getId());
+            }
+
             return [
                 'id' => $p->getId(),
                 'content' => $p->getContent(),
@@ -38,6 +63,8 @@ class PostController extends AbstractController
                     'user' => $p->getUser()->getUser(),
                     'pp' => $p->getUser()->getPp(),
                 ] : null,
+                'likes' => $likeCount,
+                'liked' => $userLiked,
             ];
         }, $posts);
 
@@ -49,8 +76,15 @@ class PostController extends AbstractController
      * GET /api/posts/{id}
      */
     #[Route('/{id}', name: 'posts.get', methods: ['GET'])]
-    public function get(Post $post): JsonResponse
+    public function get(Post $post, LikeRepository $likeRepository): JsonResponse
     {
+        $currentUser = $this->getUser();
+        $likeCount = $likeRepository->countByPost($post->getId());
+        $userLiked = false;
+        if ($currentUser) {
+            $userLiked = (bool) $likeRepository->findByUserAndPost($currentUser->getId(), $post->getId());
+        }
+
         $data = [
             'id' => $post->getId(),
             'content' => $post->getContent(),
@@ -62,6 +96,8 @@ class PostController extends AbstractController
                 'user' => $post->getUser()->getUser(),
                 'pp' => $post->getUser()->getPp(),
             ] : null,
+            'likes' => $likeCount,
+            'liked' => $userLiked,
         ];
 
         return $this->json($data);
@@ -170,5 +206,64 @@ class PostController extends AbstractController
         $em->flush();
 
         return $this->json(['message' => 'Post supprimé'], Response::HTTP_NO_CONTENT);
+    }
+
+    /**
+     * Aime un post
+     * POST /api/posts/{id}/like
+     */
+    #[Route('/{id}/like', name: 'posts.like', methods: ['POST'])]
+    public function like(Post $post, UserRepository $userRepository, LikeRepository $likeRepository, EntityManagerInterface $em, Request $request): JsonResponse
+    {
+        $user = $this->getUser();
+        if (!$user) {
+            return $this->json(['error' => 'Utilisateur non authentifié'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        // Vérifier si l'utilisateur a déjà liké ce post
+        $existingLike = $likeRepository->findByUserAndPost($user->getId(), $post->getId());
+        if ($existingLike) {
+            return $this->json(['error' => 'Vous avez déjà liké ce post'], Response::HTTP_CONFLICT);
+        }
+
+        // Créer un nouveau like
+        $like = new Like();
+        $like->setUser($user);
+        $like->setPost($post);
+
+        $em->persist($like);
+        $em->flush();
+
+        // Compter les likes du post
+        $likeCount = $likeRepository->countByPost($post->getId());
+
+        return $this->json(['message' => 'Post liké', 'likes' => $likeCount], Response::HTTP_CREATED);
+    }
+
+    /**
+     * Retire un like d'un post
+     * DELETE /api/posts/{id}/like
+     */
+    #[Route('/{id}/like', name: 'posts.unlike', methods: ['DELETE'])]
+    public function unlike(Post $post, LikeRepository $likeRepository, EntityManagerInterface $em): JsonResponse
+    {
+        $user = $this->getUser();
+        if (!$user) {
+            return $this->json(['error' => 'Utilisateur non authentifié'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        // Trouver le like à supprimer
+        $like = $likeRepository->findByUserAndPost($user->getId(), $post->getId());
+        if (!$like) {
+            return $this->json(['error' => 'Vous n\'avez pas liké ce post'], Response::HTTP_NOT_FOUND);
+        }
+
+        $em->remove($like);
+        $em->flush();
+
+        // Compter les likes du post
+        $likeCount = $likeRepository->countByPost($post->getId());
+
+        return $this->json(['message' => 'Like supprimé', 'likes' => $likeCount], Response::HTTP_OK);
     }
 }

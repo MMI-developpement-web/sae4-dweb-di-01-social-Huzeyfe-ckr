@@ -64,7 +64,7 @@ export default function SignupComponent() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-bg-black to-surface-dark flex items-center justify-center py-4">
+    <div className="min-h-screen bg-linear-to-b from-bg-black to-surface-dark flex items-center justify-center py-4">
       {/* Mobile phone frame */}
       <div className="w-full max-w-sm bg-bg-black text-text-white rounded-3xl shadow-2xl overflow-hidden border-4 border-surface-dark">
         <div className="overflow-y-auto h-screen max-h-[812px] flex flex-col">
@@ -165,6 +165,7 @@ export default function SignupComponent() {
               {loading ? "Création..." : "Créer un compte"}
             </Button>
           </form>
+          <p className="mt-4">Avez-vous déjà un compte ? <button className="text-tick hover:underline" onClick={() => navigate("/login")}>Se connecter</button></p>
 
           <p className="text-xs text-text-muted mt-4">
             En vous inscrivant, vous acceptez les <span className="text-tick">Conditions d'utilisation</span> et la <span className="text-tick">Politique de confidentialité</span>.

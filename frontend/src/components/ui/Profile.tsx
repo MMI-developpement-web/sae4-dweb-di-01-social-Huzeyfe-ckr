@@ -2,6 +2,7 @@
 import Avatar from "./Avatar";
 import { getCurrentUser } from "../../lib/api";
 import type { User } from "../../lib/api";
+import { useNavigate } from "react-router-dom";
 
 export interface ProfileProps {
   // optional override props in case caller wants to force values
@@ -11,6 +12,7 @@ export interface ProfileProps {
 }
 
 export default function Profile({ name: propName, handle: propHandle, image: propImage }: ProfileProps) {
+  const navigate = useNavigate();
   const current = getCurrentUser() as User | null;
 
   const name = propName ?? current?.name ?? "Invité";
@@ -24,6 +26,10 @@ export default function Profile({ name: propName, handle: propHandle, image: pro
   const handleStr = typeof handle === 'string' ? handle : String(handle);
   const initials = handleStr?.charAt(0).toUpperCase() ?? "U";
 
+  const handleClick = () => {
+    navigate('/profile');
+  };
+
 
 
 
@@ -33,9 +39,9 @@ export default function Profile({ name: propName, handle: propHandle, image: pro
 
 
   return (
-    <article className="bg-black p-4"> 
+    <article className="bg-black p-4 hover:bg-surface-dark transition cursor-pointer" onClick={handleClick}> 
       <div className="flex items-start gap-3">
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           <Avatar size="md" src={avatarSrc} alt={`${name} avatar`}>
             <div className="flex items-center justify-center w-full h-full text-sm font-bold text-text-white">{initials}</div>
           </Avatar>

@@ -30,7 +30,10 @@ class JsonLoginAuthenticator extends AbstractAuthenticator
 
     public function supports(Request $request): ?bool
     {
-        return $request->getPathInfo() === '/api/auth/login' && $request->isMethod('POST');
+        // Check if it's a POST request to /api/auth/login (with more flexible path matching)
+        $pathInfo = $request->getPathInfo();
+        $isLoginPath = str_ends_with($pathInfo, '/api/auth/login') || $pathInfo === '/api/auth/login';
+        return $isLoginPath && $request->isMethod('POST');
     }
 
     public function authenticate(Request $request): SelfValidatingPassport

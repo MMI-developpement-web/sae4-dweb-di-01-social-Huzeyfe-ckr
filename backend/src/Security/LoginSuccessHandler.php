@@ -27,7 +27,7 @@ class LoginSuccessHandler implements AuthenticationSuccessHandlerInterface
             'token' => $accessToken,
             'user' => [
                 'id' => $user->getId(),
-                'username' => $user->getUser(),
+                'user' => $user->getUser(),
                 'email' => $user->getEmail(),
                 'name' => $user->getName(),
                 'role' => $user->getRole(),

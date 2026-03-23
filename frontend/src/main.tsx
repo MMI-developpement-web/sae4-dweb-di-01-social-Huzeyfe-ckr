@@ -9,8 +9,8 @@ import FirstScreen from "./routes/firstscreen";
 import Login from "./routes/login";
 import Signup from "./routes/signup";
 import Post from "./routes/post";
-import Adminlogin from "./routes/adminlogin";
-import Adminmanagement from "./routes/adminmanagement";
+import Profile from "./routes/profile";
+import UserProfile from "./components/UserProfile";
 
 import "./index.css";
 
@@ -23,11 +23,11 @@ const router = createBrowserRouter(
         { index: true, element: <FirstScreen /> },
         { path: "firstscreen", element: <FirstScreen /> },
         { path: "home", element: <Home /> },
+        { path: "profile", element: <Profile /> },
+        { path: "profile/:id", element: <UserProfile /> },
         { path: "post", element: <Post /> },
         { path: "login", element: <Login /> },
         { path: "signup", element: <Signup /> },
-        { path: "adminlogin", element: <Adminlogin /> },
-        { path: "adminmanagement", element: <Adminmanagement /> },
       ],
     },
   ],

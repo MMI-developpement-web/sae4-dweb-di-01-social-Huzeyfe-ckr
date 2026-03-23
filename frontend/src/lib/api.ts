@@ -11,11 +11,13 @@ export interface User {
   active: boolean;
   phone?: string;
   birthDate?: string;
-  /** photo de profil (champ 'pp' dans la base) */
   pp?: string;
   avatar?: string;
   createdAt?: string;
   postsCount?: number;
+  followers?: number;
+  following?: number;
+  isFollowing?: boolean;
 }
 
 export interface Post {
@@ -23,6 +25,8 @@ export interface Post {
   content: string;
   time?: string;
   createdAt: string;
+  likes?: number;
+  liked?: boolean;
   user: {
     id: number;
     name: string;
@@ -137,9 +141,10 @@ export async function deleteUser(id: number): Promise<boolean> {
 }
 
 // Posts
-export async function getPosts(): Promise<Post[]> {
+export async function getPosts(filter?: string): Promise<Post[]> {
   try {
-    const res = await fetch(`${API_BASE}/posts`, {
+    const url = filter ? `${API_BASE}/posts?filter=${filter}` : `${API_BASE}/posts`;
+    const res = await fetch(url, {
       headers: getAuthHeaders(),
     });
     if (!res.ok) throw new Error('Fetch posts failed');
@@ -197,10 +202,65 @@ export async function deletePost(id: number): Promise<boolean> {
   try {
     const res = await fetch(`${API_BASE}/posts/${id}`, {
       method: 'DELETE',
+      headers: getAuthHeaders(),
     });
     return res.ok;
   } catch (err) {
     console.error('Delete post error:', err);
+    return false;
+  }
+}
+
+// Likes
+export async function likePost(postId: number): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/posts/${postId}/like`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+    });
+    return res.ok;
+  } catch (err) {
+    console.error('Like post error:', err);
+    return false;
+  }
+}
+
+export async function unlikePost(postId: number): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/posts/${postId}/like`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    return res.ok;
+  } catch (err) {
+    console.error('Unlike post error:', err);
+    return false;
+  }
+}
+
+// Follow
+export async function followUser(userId: number): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/users/${userId}/follow`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+    });
+    return res.ok || res.status === 201;
+  } catch (err) {
+    console.error('Follow user error:', err);
+    return false;
+  }
+}
+
+export async function unfollowUser(userId: number): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/users/${userId}/follow`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    return res.ok;
+  } catch (err) {
+    console.error('Unfollow user error:', err);
     return false;
   }
 }
@@ -225,7 +285,8 @@ export function clearCurrentUser() {
 
 // Token management
 export function getAuthToken(): string | null {
-  return localStorage.getItem('authToken');
+  const token = localStorage.getItem('authToken');
+  return token;
 }
 
 export function clearAuthToken() {

@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import Footer from './Footer'
-import { getUser, getCurrentUser, saveCurrentUser } from "../../lib/api";
+import { getUser, getCurrentUser, saveCurrentUser, logout } from "../../lib/api";
 import Button from "./Button";
 import Avatar from "./Avatar";
 
@@ -42,10 +42,16 @@ export default function SideBar({ className = "" }: SideBarDataProps & SideBarVi
     return `https://picsum.photos/seed/${encodeURIComponent(currentUser?.user || "default")}/200`;
   };
 
+  const handleLogout = () => {
+    logout();
+    alert('Déconnexion réussie');
+    navigate('/login');
+  };
+
   return (
     <aside className={cn("hidden md:flex md:flex-col md:w-72 md:border-r md:border-border-dark md:p-6 md:fixed md:h-screen md:left-0 md:top-0 md:overflow-y-auto", className)}>
 
-      {/* Navigation from Footer - Vertical */}
+     
       <Footer vertical={true} />
 
       {/* Publish Button */}
@@ -56,6 +62,16 @@ export default function SideBar({ className = "" }: SideBarDataProps & SideBarVi
         onClick={() => navigate('/post')}
       >
         Publier
+      </Button>
+
+    {/* log Out Button */}
+      <Button 
+        variant="solid" 
+        size="lg" 
+        className="w-full bg-error hover:bg-red/90 text-white font-bold mb-6"
+        onClick={handleLogout}
+      >
+        Se déconnecter
       </Button>
 
     
