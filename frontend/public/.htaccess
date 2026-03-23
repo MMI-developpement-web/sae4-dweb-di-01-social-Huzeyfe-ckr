@@ -1,0 +1,13 @@
+<IfModule mod_rewrite.c>
+    Options -MultiViews
+    RewriteEngine On
+    RewriteBase /~cakir4/sae4-dweb-di-01-social-Huzeyfe-ckr/frontend/
+
+    # Si la ressource existe, la servir normalement
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^ - [L]
+
+    # Sinon, renvoyer index.html (SPA fallback)
+    RewriteRule ^ index.html [L]
+</IfModule>

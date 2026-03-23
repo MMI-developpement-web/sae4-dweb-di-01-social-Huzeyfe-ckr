@@ -12,17 +12,20 @@ use Symfony\Component\Security\Core\Exception\CustomUserMessageAuthenticationExc
 use Symfony\Component\Security\Http\Authenticator\AbstractAuthenticator;
 use Symfony\Component\Security\Http\Authenticator\Passport\Badge\UserBadge;
 use Symfony\Component\Security\Http\Authenticator\Passport\SelfValidatingPassport;
+use Symfony\Component\PasswordHasher\Hasher\UserPasswordHasherInterface;
 use App\Repository\UserRepository;
 
 class JsonLoginAuthenticator extends AbstractAuthenticator
 {
     private UserRepository $userRepository;
     private LoginSuccessHandler $loginSuccessHandler;
+    private UserPasswordHasherInterface $passwordHasher;
 
-    public function __construct(UserRepository $userRepository, LoginSuccessHandler $loginSuccessHandler)
+    public function __construct(UserRepository $userRepository, LoginSuccessHandler $loginSuccessHandler, UserPasswordHasherInterface $passwordHasher)
     {
         $this->userRepository = $userRepository;
         $this->loginSuccessHandler = $loginSuccessHandler;
+        $this->passwordHasher = $passwordHasher;
     }
 
     public function supports(Request $request): ?bool
@@ -47,8 +50,8 @@ class JsonLoginAuthenticator extends AbstractAuthenticator
             throw new CustomUserMessageAuthenticationException('Invalid credentials.');
         }
 
-        // Verify plaintext password (TODO: implement password hashing in production)
-        if ($user->getPassword() !== $data['password']) {
+        // Verify password using the password hasher
+        if (!$this->passwordHasher->isPasswordValid($user, $data['password'])) {
             throw new CustomUserMessageAuthenticationException('Invalid credentials.');
         }
 

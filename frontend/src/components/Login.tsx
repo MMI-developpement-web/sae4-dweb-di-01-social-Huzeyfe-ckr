@@ -69,7 +69,7 @@ export default function Login() {
             <a className="text-tick text-md">Mot de passe oublié ?</a>
           </div>
 
-          <p className="mt-6 text-text-muted text-md text-center">Vous n'avez pas de compte ? <a className="text-tick">Inscrivez-vous</a></p>
+          <p className="mt-6 text-text-muted text-md text-center">Vous n'avez pas de compte ? <a className="text-tick cursor-pointer" onClick={() => navigate('/firstscreen')}>Inscrivez-vous</a></p>
         </form>
       </main>
 

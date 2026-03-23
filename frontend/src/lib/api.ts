@@ -1,5 +1,5 @@
 // API utility for calling backend endpoints
-const API_BASE = 'http://localhost:8080/api';
+const API_BASE = import.meta.env.VITE_API_URL;
 
 export interface User {
   id: number;

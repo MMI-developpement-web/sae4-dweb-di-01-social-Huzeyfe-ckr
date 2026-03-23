@@ -16,6 +16,16 @@ security:
             pattern: ^/(_profiler|_wdt|assets|build)/
             security: false
 
+        # Admin firewall - session-based authentication
+        admin:
+            pattern: ^/admin
+            provider: app_user_provider
+            custom_authenticators:
+                - App\Security\AdminLoginAuthenticator
+            logout:
+                path: admin_logout
+                target: /
+
         # Firewall for login endpoint - validates credentials and generates access token
         api_login:
             pattern: ^/api/auth/login$
@@ -34,6 +44,8 @@ security:
 
     # Note: Only the *first* matching rule is applied
     access_control:
+        - { path: ^/admin/login$, roles: PUBLIC_ACCESS }
+        - { path: ^/admin, roles: ROLE_ADMIN }
         - { path: ^/api/auth/login$, roles: PUBLIC_ACCESS }
         - { path: ^/api/auth/register$, roles: PUBLIC_ACCESS }
         - { path: ^/api, roles: ROLE_USER }

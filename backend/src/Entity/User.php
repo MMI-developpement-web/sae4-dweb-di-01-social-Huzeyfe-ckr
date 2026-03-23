@@ -236,7 +236,14 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
      */
     public function getRoles(): array
     {
-        $roles = [$this->role];
+        $role = $this->role;
+        
+        // Add ROLE_ prefix if not already present
+        if (!str_starts_with($role, 'ROLE_')) {
+            $role = 'ROLE_' . strtoupper($role);
+        }
+        
+        $roles = [$role];
         // guarantee every user at least has ROLE_USER
         $roles[] = 'ROLE_USER';
         return array_unique($roles);
