@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import Footer from './Footer'
-import { getUser, getCurrentUser, saveCurrentUser, logout } from "../../lib/api";
+import { getUser, getCurrentUser, getAuthToken, saveCurrentUser, logout } from "../../lib/api";
 import Button from "./Button";
 import Avatar from "./Avatar";
 
@@ -19,9 +19,22 @@ interface SideBarViewProps {
 export default function SideBar({ className = "" }: SideBarDataProps & SideBarViewProps) {
   const navigate = useNavigate();
   const currentUser = getCurrentUser();
+  const authToken = getAuthToken();
+
+  // Check if we have auth token - if not, redirect to login
+  useEffect(() => {
+    if (!currentUser || !authToken) {
+      console.warn('SideBar: Missing authentication. Redirecting to login');
+      logout();
+      navigate('/login');
+      return;
+    }
+  }, [authToken, currentUser, navigate]);
 
   // Rafraîchir les données utilisateur
   useEffect(() => {
+    if (!currentUser?.id || !authToken) return;
+    
     const refreshCurrentUser = async () => {
       const current = getCurrentUser();
       if (current?.id) {
@@ -32,7 +45,7 @@ export default function SideBar({ className = "" }: SideBarDataProps & SideBarVi
       }
     };
     refreshCurrentUser();
-  }, []);
+  }, [authToken]);
 
 
   const getAvatarUrl = () => {

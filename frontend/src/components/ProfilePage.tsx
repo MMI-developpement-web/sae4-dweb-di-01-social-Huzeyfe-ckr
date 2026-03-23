@@ -46,6 +46,36 @@ export default function ProfilePage() {
     loadProfileData();
   }, [navigate]);
 
+  // Rafraîchissement automatique toutes les 30 secondes
+  useEffect(() => {
+    const interval = setInterval(async () => {
+      const currentUser = getCurrentUser();
+      
+      if (!currentUser?.id) {
+        return;
+      }
+
+      try {
+        // Charger les données utilisateur mises à jour
+        const user = await getUser(currentUser.id);
+        if (user) {
+          setUserData(user);
+        }
+
+        // Charger les posts de l'utilisateur
+        const allPosts = await getPosts();
+        const userPosts = allPosts
+          .filter((post: PostType) => post.user.id === currentUser.id)
+          .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        setPosts(userPosts);
+      } catch (error) {
+        console.error("Erreur lors du rafraîchissement du profil:", error);
+      }
+    }, 30000); // 30 secondes
+
+    return () => clearInterval(interval);
+  }, []);
+
   const handlePostDeleted = (deletedPostId: number) => {
     setPosts(posts.filter(p => p.id !== deletedPostId));
   };
@@ -103,11 +133,11 @@ export default function ProfilePage() {
                 <p className="text-text-muted text-sm">Tweets</p>
               </div>
               <div>
-                <span className="font-bold">0</span>
+                <span className="font-bold">{userData?.followers || 0}</span>
                 <p className="text-text-muted text-sm">Abonnés</p>
               </div>
               <div>
-                <span className="font-bold">0</span>
+                <span className="font-bold">{userData?.following || 0}</span>
                 <p className="text-text-muted text-sm">Abonnements</p>
               </div>
             </div>

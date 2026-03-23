@@ -33,7 +33,7 @@ class AccessTokenHandler implements AccessTokenHandlerInterface
         }
 
         if (!$user->isActive()) {
-            throw new CustomUserMessageAuthenticationException('User account is disabled.');
+            throw new CustomUserMessageAuthenticationException('Ce compte a été désactivé');
         }
 
         // Retourner le UserBadge avec l'identifiant de l'utilisateur (username ou email)

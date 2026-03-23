@@ -4,7 +4,7 @@ import Button from "./ui/Button";
 import Input from "./ui/Input";
 import Header from "./ui/Header";
 import StrengthBar from "./ui/StrengthBar";
-import { register } from "../lib/api";
+import { register, saveCurrentUser } from "../lib/api";
 import { validatePasswordStrength } from "../lib/passwordValidator";
 
 export default function SignupComponent() {
@@ -50,14 +50,34 @@ export default function SignupComponent() {
     setError("");
 
     try {
-      const success = await register({ user: username, email, password, name: username });
-      if (success) {
-        navigate("/login");
+      console.log('Starting registration for user:', username);
+      const response = await register({ user: username, email, password, name: username });
+      console.log('Registration response:', response);
+      
+      // Check for error response
+      if (response.error) {
+        console.log('Registration failed with error:', response.error);
+        setError(response.error);
+        setLoading(false);
+        return;
+      }
+
+      // Check for successful registration with user
+      if (response.user) {
+        console.log('Saving current user and redirecting to', response.user.role === 'admin' ? '/adminmanagement' : '/home');
+        saveCurrentUser(response.user);
+        if (response.user.role === 'admin') {
+          navigate("/adminmanagement");
+        } else {
+          navigate("/home");
+        }
       } else {
+        console.log('Registration failed - no user data returned');
         setError("Erreur lors de l'inscription. Veuillez réessayer.");
       }
-    } catch {
-      setError("Erreur lors de l'inscription. Veuillez réessayer.");
+    } catch (err){
+      console.error('Registration exception:', err);
+      setError("Erreur de connexion au serveur. Veuillez réessayer.");
     } finally {
       setLoading(false);
     }

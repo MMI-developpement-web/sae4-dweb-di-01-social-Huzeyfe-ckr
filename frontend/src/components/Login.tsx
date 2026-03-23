@@ -24,18 +24,29 @@ export default function Login() {
     setLoading(true);
     setError("");
     
-    const loggedInUser = await login(user, password);
+    console.log('Starting login with user:', user);
+    const response = await login(user, password);
     
-    if (loggedInUser) {
-      saveCurrentUser(loggedInUser);
+    if (response.error) {
+      console.log('Login failed with error:', response.error);
+      setError(response.error);
+      setLoading(false);
+      return;
+    }
+
+    if (response.user) {
+      console.log('Login successful, user ID=' + response.user.id);
+      console.log('Saving current user and redirecting to', response.user.role === 'admin' ? '/adminmanagement' : '/home');
+      saveCurrentUser(response.user);
       // Rediriger selon le rôle
-      if (loggedInUser.role === 'admin') {
+      if (response.user.role === 'admin') {
         navigate('/adminmanagement');
       } else {
         navigate('/home');
       }
     } else {
-      setError("Identifiant ou mot de passe incorrect");
+      console.log('Login failed - no user or error returned');
+      setError("Une erreur s'est produite");
     }
     
     setLoading(false);
@@ -54,7 +65,7 @@ export default function Login() {
 
         <form className="w-full" onSubmit={submit}>
           <div className="space-y-4">
-            <Input variant="default" type="text" placeholder="Identifiant" value={user} onChange={setUser} />
+            <Input variant="default" type="text" placeholder="Nom d'utilisateur" value={user} onChange={setUser} />
             <Input variant="default" type="password" placeholder="Mot de passe" value={password} onChange={setPassword} />
           </div>
           {error && <p className="text-error text-sm mt-2">{error}</p>}

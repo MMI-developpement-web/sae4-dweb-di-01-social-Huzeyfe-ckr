@@ -34,11 +34,12 @@ export interface PostProps {
   currentUserId?: number;
   likes?: number;
   liked?: boolean;
+  blocked?: boolean;
   onDelete?: () => void;
   onLikeChange?: (liked: boolean, likeCount: number) => void;
 }
 
-export default function Post({ id, name, handle, avatar, time, text, userId, currentUserId, likes: initialLikes = 0, liked: initialLiked = false, onDelete, onLikeChange }: PostProps) {
+export default function Post({ id, name, handle, avatar, time, text, userId, currentUserId, likes: initialLikes = 0, liked: initialLiked = false, blocked = false, onDelete, onLikeChange }: PostProps) {
   const navigate = useNavigate();
   const displayTime = formatRelativeTime(time);
   const handleStr = typeof handle === 'string' ? handle : String(handle);
@@ -176,7 +177,9 @@ export default function Post({ id, name, handle, avatar, time, text, userId, cur
             </div>
           </div>
 
-          {text && (
+          {blocked ? (
+            <p className="mt-2 text-sm leading-6 text-text-muted italic">Ce compte a été bloqué pour non respect des conditions d'utilisation</p>
+          ) : text && (
             <p className="mt-2 text-sm leading-6 text-text-white whitespace-pre-wrap">{text}</p>
           )}
         </div>

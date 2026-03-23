@@ -9,6 +9,7 @@ export interface User {
   name: string;
   role: 'user' | 'admin';
   active: boolean;
+  blocked?: boolean;
   phone?: string;
   birthDate?: string;
   pp?: string;
@@ -36,52 +37,69 @@ export interface Post {
 }
 
 // Auth
-export async function login(username: string, password: string): Promise<User | null> {
+export async function login(username: string, password: string): Promise<{user?: User, error?: string}> {
   try {
     const res = await fetch(`${API_BASE}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ user: username, password }),
     });
-    if (!res.ok) throw new Error('Login failed');
+    
     const data = await res.json();
+    
+    if (!res.ok) {
+      const errorMessage = data.message || data.error || 'Erreur lors de la connexion';
+      console.error('Login API error:', errorMessage);
+      return { error: errorMessage };
+    }
     
     // Extract token and user from response
     const { token, user: userData } = data;
     
     // Store token in localStorage for API requests
     if (token) {
+      console.log('✓ Token received from login:', token.substring(0, 20) + '...');
       localStorage.setItem('authToken', token);
+      console.log('✓ Token saved to localStorage');
     }
     
     // Return only the user data (matching User interface)
-    return userData as User;
+    return { user: userData as User };
   } catch (err) {
     console.error('Login error:', err);
-    return null;
+    return { error: 'Erreur de connexion au serveur' };
   }
 }
 
-export async function register(data: any): Promise<User | null> {
+export async function register(data: any): Promise<{user?: User, error?: string}> {
   try {
     const res = await fetch(`${API_BASE}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
     });
-    if (!res.ok) throw new Error('Register failed');
+    
     const responseData = await res.json();
     
-    // Extract token and user from response (if register also returns them)
-    if (responseData.token) {
-      localStorage.setItem('authToken', responseData.token);
-      return responseData.user || responseData;
+    if (!res.ok) {
+      // Return error message from backend (e.g., "Cet utilisateur existe déjà", "Cet email est déjà utilisé")
+      const errorMessage = responseData.error || 'Erreur lors de l\'inscription';
+      console.error('Register API error:', errorMessage);
+      return { error: errorMessage };
     }
     
-    return responseData;
+    // Extract token and user from response
+    if (responseData.token) {
+      console.log('✓ Token received from register:', responseData.token.substring(0, 20) + '...');
+      localStorage.setItem('authToken', responseData.token);
+      console.log('✓ Token saved to localStorage');
+      return { user: responseData.user || responseData };
+    }
+    
+    return { user: responseData };
   } catch (err) {
     console.error('Register error:', err);
-    return null;
+    return { error: 'Erreur de connexion au serveur' };
   }
 }
 

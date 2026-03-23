@@ -56,7 +56,7 @@ class TokenAuthenticator extends AbstractAuthenticator
         }
 
         if (!$user->isActive()) {
-            throw new CustomUserMessageAuthenticationException('User account is disabled');
+            throw new CustomUserMessageAuthenticationException('Ce compte a été désactivé');
         }
 
         return new SelfValidatingPassport(

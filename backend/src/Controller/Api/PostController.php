@@ -40,6 +40,11 @@ class PostController extends AbstractController
             });
         }
 
+        // Filtrer les posts des utilisateurs bloqués
+        $posts = array_filter($posts, function(Post $p) {
+            return !$p->getUser()->isBlocked();
+        });
+
         // Trier par date décroissante
         usort($posts, function(Post $a, Post $b) {
             return $b->getCreatedAt()->getTimestamp() - $a->getCreatedAt()->getTimestamp();
@@ -78,6 +83,14 @@ class PostController extends AbstractController
     #[Route('/{id}', name: 'posts.get', methods: ['GET'])]
     public function get(Post $post, LikeRepository $likeRepository): JsonResponse
     {
+        // Si l'utilisateur du post est bloqué, retourner une erreur
+        if ($post->getUser()->isBlocked()) {
+            return $this->json(
+                ['error' => 'Ce compte a été bloqué pour non respect des conditions d\'utilisation'],
+                Response::HTTP_FORBIDDEN
+            );
+        }
+
         $currentUser = $this->getUser();
         $likeCount = $likeRepository->countByPost($post->getId());
         $userLiked = false;
@@ -119,6 +132,11 @@ class PostController extends AbstractController
         $user = $userRepository->find($data['userId']);
         if (!$user) {
             return $this->json(['error' => 'Utilisateur non trouvé'], Response::HTTP_NOT_FOUND);
+        }
+
+        // Empêcher les utilisateurs bloqués de publier
+        if ($user->isBlocked()) {
+            return $this->json(['error' => 'Cet utilisateur est bloqué'], Response::HTTP_FORBIDDEN);
         }
 
         $post = new Post();
@@ -218,6 +236,11 @@ class PostController extends AbstractController
         $user = $this->getUser();
         if (!$user) {
             return $this->json(['error' => 'Utilisateur non authentifié'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        // Empêcher les likes sur les posts des utilisateurs bloqués
+        if ($post->getUser()->isBlocked()) {
+            return $this->json(['error' => 'Impossible de liker ce post'], Response::HTTP_FORBIDDEN);
         }
 
         // Vérifier si l'utilisateur a déjà liké ce post

@@ -43,23 +43,27 @@ class JsonLoginAuthenticator extends AbstractAuthenticator
         $data = json_decode($content, true);
 
         if (!$data || !isset($data['user']) || !isset($data['password'])) {
-            throw new CustomUserMessageAuthenticationException('Invalid credentials.');
+            throw new CustomUserMessageAuthenticationException('Identifiant ou mot de passe incorrect');
         }
 
         // Load user from database
         $user = $this->userRepository->findOneBy(['user' => $data['user']]);
 
         if (!$user) {
-            throw new CustomUserMessageAuthenticationException('Invalid credentials.');
+            throw new CustomUserMessageAuthenticationException('Identifiant ou mot de passe incorrect');
         }
 
         // Verify password using the password hasher
         if (!$this->passwordHasher->isPasswordValid($user, $data['password'])) {
-            throw new CustomUserMessageAuthenticationException('Invalid credentials.');
+            throw new CustomUserMessageAuthenticationException('Identifiant ou mot de passe incorrect');
         }
 
         if (!$user->isActive()) {
-            throw new CustomUserMessageAuthenticationException('User account is disabled.');
+            throw new CustomUserMessageAuthenticationException('Ce compte a été désactivé');
+        }
+
+        if ($user->isBlocked()) {
+            throw new CustomUserMessageAuthenticationException('Votre compte a été bloqué pour non-respect des conditions d\'utilisation');
         }
 
         // Return self-validating passport (we already validated)
@@ -77,9 +81,15 @@ class JsonLoginAuthenticator extends AbstractAuthenticator
 
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception): ?Response
     {
+        // Utiliser le message complet de l'exception pour afficher des messages d'erreur spécifiques
+        $message = $exception->getMessage();
+        if (empty($message) || $message === 'Invalid credentials.') {
+            $message = 'Identifiant ou mot de passe incorrect';
+        }
+        
         return new \Symfony\Component\HttpFoundation\JsonResponse([
-            'error' => 'Invalid credentials.',
-            'message' => $exception->getMessage(),
+            'error' => $message,
+            'message' => $message,
         ], Response::HTTP_UNAUTHORIZED);
     }
 }

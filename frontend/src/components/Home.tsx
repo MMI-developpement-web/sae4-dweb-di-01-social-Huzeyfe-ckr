@@ -3,13 +3,14 @@ import { useState, useEffect, useRef } from "react";
 import Post from './ui/Post'
 import Footer from './ui/Footer'
 import SideBar from './ui/SideBar'
-import { getPosts, getCurrentUser, type Post as PostType } from "../lib/api";
+import { getPosts, getCurrentUser, getAuthToken, type Post as PostType } from "../lib/api";
 import Header from "./ui/Header";
 import Profile from "./ui/Profile";
 
 export default function Home() {
   const navigate = useNavigate();
   const currentUser = getCurrentUser();
+  const authToken = getAuthToken();
   const [posts, setPosts] = useState<PostType[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -17,9 +18,11 @@ export default function Home() {
   const [filter, setFilter] = useState<'all' | 'following'>('all');
   const postsRef = useRef<PostType[]>([]);
 
-  // Check if user is authenticated
-  if (!currentUser) {
-    console.warn('User not authenticated - redirecting to login');
+  // Check if user is authenticated - BOTH currentUser AND authToken must exist
+  if (!currentUser || !authToken) {
+    console.warn('Missing authentication - No user or token found. Redirecting to login');
+    console.log('currentUser:', currentUser ? 'exists' : 'missing');
+    console.log('authToken:', authToken ? 'exists' : 'missing');
     navigate('/login');
     return (
       <div className="min-h-screen bg-bg-black flex items-center justify-center">
@@ -175,6 +178,7 @@ export default function Home() {
                       currentUserId={currentUser?.id}
                       likes={p.likes || 0}
                       liked={p.liked || false}
+                      blocked={false}
                       onDelete={() => handlePostDeleted(p.id)}
                       onLikeChange={(liked, likeCount) => {
                         const updatedPosts = posts.map(post =>

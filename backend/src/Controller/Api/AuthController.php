@@ -42,16 +42,16 @@ class AuthController extends AbstractController
         $user = $userRepository->findOneBy(['user' => $data['user']]);
 
         if (!$user) {
-            return $this->json(['error' => 'Invalid credentials.'], Response::HTTP_UNAUTHORIZED);
+            return $this->json(['error' => 'Identifiant ou mot de passe incorrect'], Response::HTTP_UNAUTHORIZED);
         }
 
         // Verify password
         if (!$passwordHasher->isPasswordValid($user, $data['password'])) {
-            return $this->json(['error' => 'Invalid credentials.'], Response::HTTP_UNAUTHORIZED);
+            return $this->json(['error' => 'Identifiant ou mot de passe incorrect'], Response::HTTP_UNAUTHORIZED);
         }
 
         if (!$user->isActive()) {
-            return $this->json(['error' => 'User account is disabled.'], Response::HTTP_UNAUTHORIZED);
+            return $this->json(['error' => 'Ce compte a été désactivé'], Response::HTTP_UNAUTHORIZED);
         }
 
         // Generate access token (7 days expiration)
@@ -76,7 +76,7 @@ class AuthController extends AbstractController
      * POST /api/auth/register
      */
     #[Route('/register', name: 'auth_register', methods: ['POST'], format: 'json')]
-    public function register(Request $request, UserRepository $userRepository, EntityManagerInterface $em, UserPasswordHasherInterface $passwordHasher): JsonResponse
+    public function register(Request $request, UserRepository $userRepository, EntityManagerInterface $em, UserPasswordHasherInterface $passwordHasher, TokenService $tokenService): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
 
@@ -124,13 +124,20 @@ class AuthController extends AbstractController
         $em->persist($user);
         $em->flush();
 
+        // Generate access token (7 days expiration) like in login
+        $expiresAt = (new \DateTimeImmutable())->modify('+7 days');
+        $accessToken = $tokenService->generateToken($user, $expiresAt);
+
         return $this->json([
-            'id' => $user->getId(),
-            'user' => $user->getUser(),
-            'email' => $user->getEmail(),
-            'name' => $user->getName(),
-            'role' => $user->getRole(),
-            'active' => $user->isActive(),
+            'token' => $accessToken,
+            'user' => [
+                'id' => $user->getId(),
+                'user' => $user->getUser(),
+                'email' => $user->getEmail(),
+                'name' => $user->getName(),
+                'role' => $user->getRole(),
+                'active' => $user->isActive(),
+            ],
         ], Response::HTTP_CREATED);
     }
 }

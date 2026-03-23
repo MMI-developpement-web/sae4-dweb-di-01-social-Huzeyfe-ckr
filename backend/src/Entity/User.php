@@ -43,6 +43,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(['default', 'detail'])]
     private bool $active = true;
 
+    #[ORM\Column(type: 'boolean')]
+    #[Groups(['default', 'detail'])]
+    private bool $blocked = false;
+
     #[ORM\Column(length: 20, nullable: true)]
     #[Groups(['default', 'detail'])]
     private ?string $phone = null;
@@ -147,6 +151,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setActive(bool $active): static
     {
         $this->active = $active;
+        return $this;
+    }
+
+    public function isBlocked(): bool
+    {
+        return $this->blocked;
+    }
+
+    public function setBlocked(bool $blocked): static
+    {
+        $this->blocked = $blocked;
         return $this;
     }
 

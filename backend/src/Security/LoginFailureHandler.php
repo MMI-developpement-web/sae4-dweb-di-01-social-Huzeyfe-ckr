@@ -12,9 +12,15 @@ class LoginFailureHandler implements AuthenticationFailureHandlerInterface
 {
     public function onAuthenticationFailure(Request $request, AuthenticationException $exception): Response
     {
+        // Retourner le message d'erreur complet pour affichage au client
+        $message = $exception->getMessage();
+        if (empty($message)) {
+            $message = $exception->getMessageKey();
+        }
+        
         return new JsonResponse([
-            'error' => 'Invalid credentials.',
-            'message' => $exception->getMessageKey(),
+            'error' => $message ?: 'Identifiant ou mot de passe incorrect',
+            'message' => $message ?: $exception->getMessageKey(),
         ], Response::HTTP_UNAUTHORIZED);
     }
 }

@@ -32,19 +32,19 @@ class AdminLoginAuthenticator extends AbstractAuthenticator
         $password = $request->request->get('password');
 
         if (!$username || !$password) {
-            throw new CustomUserMessageAuthenticationException('Username and password are required.');
+            throw new CustomUserMessageAuthenticationException('Identifiant et mot de passe requis');
         }
 
         // Load user by username
         $user = $this->userRepository->findOneBy(['user' => $username]);
 
         if (!$user) {
-            throw new CustomUserMessageAuthenticationException('Invalid credentials.');
+            throw new CustomUserMessageAuthenticationException('Identifiant ou mot de passe incorrect');
         }
 
         // Check if user is admin
         if (!in_array('ROLE_ADMIN', $user->getRoles())) {
-            throw new CustomUserMessageAuthenticationException('Access denied. Admin only.');
+            throw new CustomUserMessageAuthenticationException('Accès refusé. Admin uniquement');
         }
 
         // Return passport with password credentials to validate

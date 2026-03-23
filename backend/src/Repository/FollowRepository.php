@@ -62,7 +62,8 @@ class FollowRepository extends ServiceEntityRepository
     public function getFollowingIds(int $userId): array
     {
         $result = $this->createQueryBuilder('f')
-            ->select('f.following as id')
+            ->select('u.id')
+            ->leftJoin('f.following', 'u')
             ->andWhere('f.follower = :user_id')
             ->setParameter('user_id', $userId)
             ->getQuery()
