@@ -92,7 +92,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="bg-bg-black min-h-screen text-text-white flex flex-col">
+    <div className="bg-bg-black min-h-screen text-text-white flex flex-col md:flex-row">
       {/* Desktop: Sidebar */}
       <SideBar />
 
@@ -101,49 +101,49 @@ export default function ProfilePage() {
 
       {/* Main Content */}
       <main className="flex-1 md:ml-72 flex flex-col items-center w-full">
-        <div className="w-full max-w-2xl border-r border-border-dark md:border-l md:border-border-dark">
+        <div className="w-full max-w-2xl border-r border-border-dark md:border-l md:border-border-dark pb-24 md:pb-0">
           
           {/* Bannière */}
-          <div className="h-48 bg-linear-to-r from-tick to-text-muted"></div>
+          <div className="h-32 md:h-48 bg-linear-to-r from-tick to-text-muted"></div>
 
           {/* Info utilisateur */}
-          <div className="px-6 pb-6">
+          <div className="px-4 md:px-6 pb-4 md:pb-6">
             {/* Avatar et boutons */}
-            <div className="flex justify-between items-start -mt-20 mb-4">
+            <div className="flex justify-between items-start -mt-16 md:-mt-20 mb-4">
               <Avatar size="lg" src={getAvatarUrl()} alt={userData?.name || "User"}>
-                <div className="text-2xl font-bold">{userData?.name?.charAt(0) || "U"}</div>
+                <div className="text-xl md:text-2xl font-bold">{userData?.name?.charAt(0) || "U"}</div>
               </Avatar>
             </div>
 
             {/* Informations du profil */}
             <div className="mb-4">
-              <h1 className="text-2xl font-bold">{userData?.name}</h1>
-              <p className="text-text-muted">@{userData?.user}</p>
+              <h1 className="text-xl md:text-2xl font-bold">{userData?.name}</h1>
+              <p className="text-text-muted text-xs md:text-sm">@{userData?.user}</p>
             </div>
 
             {/* Bio / Description */}
-            <div className="text-base mb-4">
+            <div className="text-sm md:text-base mb-4">
               <p>Mon bio ici</p>
             </div>
 
             {/* Stats */}
-            <div className="flex gap-6 border-t border-b border-border-dark py-3 mb-4">
+            <div className="flex gap-4 md:gap-6 border-t border-b border-border-dark py-3 mb-4">
               <div>
-                <span className="font-bold">{posts.length}</span>
-                <p className="text-text-muted text-sm">Tweets</p>
+                <span className="font-bold text-sm md:text-base">{posts.length}</span>
+                <p className="text-text-muted text-xs md:text-sm">Tweets</p>
               </div>
               <div>
-                <span className="font-bold">{userData?.followers || 0}</span>
-                <p className="text-text-muted text-sm">Abonnés</p>
+                <span className="font-bold text-sm md:text-base">{userData?.followers || 0}</span>
+                <p className="text-text-muted text-xs md:text-sm">Abonnés</p>
               </div>
               <div>
-                <span className="font-bold">{userData?.following || 0}</span>
-                <p className="text-text-muted text-sm">Abonnements</p>
+                <span className="font-bold text-sm md:text-base">{userData?.following || 0}</span>
+                <p className="text-text-muted text-xs md:text-sm">Abonnements</p>
               </div>
             </div>
 
             {/* Texte informations */}
-            <div className="text-sm text-text-muted space-y-2">
+            <div className="text-xs md:text-sm text-text-muted space-y-2">
               <p>📧 {userData?.email}</p>
               <p>Inscrit depuis le {userData?.createdAt ? new Date(userData.createdAt).toLocaleDateString("fr-FR") : "N/A"}</p>
             </div>
@@ -152,10 +152,10 @@ export default function ProfilePage() {
           {/* Separator */}
           <div className="border-t border-border-dark"></div>
 
-          {/* Posts de l'utilisateur */}
-          <div className="divide-y divide-border-dark pb-24 md:pb-0">
+        
+          <div className="divide-y divide-border-dark">
             {posts.length === 0 ? (
-              <div className="px-6 py-10 text-center text-text-muted">
+              <div className="px-4 md:px-6 py-10 text-center text-text-muted">
                 <p>Aucun tweet pour le moment</p>
               </div>
             ) : (
@@ -166,7 +166,7 @@ export default function ProfilePage() {
                 return (
                   <div
                     key={post.id}
-                    className="px-6 py-4 hover:bg-surface-dark transition p-4 md:p-6"
+                    className="px-4 md:px-6 py-4 hover:bg-surface-dark transition"
                   >
                     <Post
                       id={post.id}

@@ -102,31 +102,34 @@ export default function Post({ id, name, handle, avatar, time, text, userId, cur
   };
 
   return (
-    <article className="mb-6">
-      <div className="flex items-start gap-3">
+    <article className="w-full">
+      <div className="flex items-start gap-2 md:gap-3">
         <button
           onClick={() => userId && navigate(`/profile/${userId}`)}
-          className="hover:opacity-80 transition"
+          className="hover:opacity-80 transition shrink-0"
           aria-label={`View ${name}'s profile`}
         >
           <Avatar size="md" src={avatar} alt={`${name} avatar`}>
-            <div className="flex items-center justify-center w-full h-full text-sm font-bold text-text-white">{initials}</div>
+            <div className="flex items-center justify-center w-full h-full text-xs md:text-sm font-bold text-text-white">{initials}</div>
           </Avatar>
         </button>
 
-        <div className="flex-1">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span className="font-bold text-text-white">{name}</span>
-              <span className="text-text-muted text-sm">{handleStr} · {displayTime}</span>
+        <div className="flex-1 min-w-0">
+          <div className="flex items-start justify-between gap-2">
+            <div className="flex flex-col gap-1 min-w-0">
+              <div className="flex items-center gap-1 flex-wrap">
+                <span className="font-bold text-text-white text-sm md:text-base truncate">{name}</span>
+                <span className="text-text-muted text-xs md:text-sm shrink-0">{handleStr}</span>
+              </div>
+              <span className="text-text-muted text-xs md:text-sm">{displayTime}</span>
             </div>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-1 md:gap-3 shrink-0">
               {/* Like Button - Cœur à droite */}
               <button
                 onClick={handleLikeClick}
                 disabled={likingLoading}
-                className={`flex items-center gap-1 transition disabled:opacity-50 ${
+                className={`flex items-center gap-1 transition disabled:opacity-50 text-xs md:text-sm ${
                   liked 
                     ? 'text-error hover:text-error/90' 
                     : 'text-text-muted hover:text-error'
@@ -140,10 +143,11 @@ export default function Post({ id, name, handle, avatar, time, text, userId, cur
                   fill={liked ? "currentColor" : "none"}
                   stroke="currentColor"
                   strokeWidth="2"
+                  className="md:w-4 md:h-4"
                 >
                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                 </svg>
-                <span className="text-sm">{likeCount}</span>
+                <span className="text-xs md:text-sm">{likeCount}</span>
               </button>
 
               {/* Menu Button - 3 dots en horizontales */}
@@ -151,10 +155,10 @@ export default function Post({ id, name, handle, avatar, time, text, userId, cur
                 <div className="relative">
                   <button
                     onClick={() => setShowMenu(!showMenu)}
-                    className=" text-text-muted hover:text-tick transition p-2 rounded-full hover:bg-tick/10"
+                    className="text-text-muted hover:text-tick transition p-1.5 md:p-2 rounded-full hover:bg-tick/10"
                     aria-label="Options du tweet"
                   >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="md:w-4 md:h-4">
                       <circle cx="5" cy="12" r="2" />
                       <circle cx="12" cy="12" r="2" />
                       <circle cx="19" cy="12" r="2" />
@@ -163,10 +167,10 @@ export default function Post({ id, name, handle, avatar, time, text, userId, cur
 
                   {/* Dropdown Menu */}
                   {showMenu && (
-                    <div className="absolute right-0 top-8 bg-bg-dark border border-border-dark rounded-lg shadow-lg z-50 min-w-48">
+                    <div className="absolute right-0 top-8 bg-bg-dark border border-border-dark rounded-lg shadow-lg z-50 min-w-40 md:min-w-48">
                       <button
                         onClick={() => setConfirmDelete(true)}
-                        className="w-full text-left px-4 py-3 text-error hover:bg-surface-dark transition border rounded border-white"
+                        className="w-full text-left px-3 md:px-4 py-2 md:py-3 text-error text-xs md:text-sm hover:bg-surface-dark transition border rounded border-white"
                       >
                         Supprimer le tweet
                       </button>
@@ -178,33 +182,33 @@ export default function Post({ id, name, handle, avatar, time, text, userId, cur
           </div>
 
           {blocked ? (
-            <p className="mt-2 text-sm leading-6 text-text-muted italic">Ce compte a été bloqué pour non respect des conditions d'utilisation</p>
+            <p className="mt-2 text-xs md:text-sm leading-6 text-text-muted italic">Ce compte a été bloqué pour non respect des conditions d'utilisation</p>
           ) : text && (
-            <p className="mt-2 text-sm leading-6 text-text-white whitespace-pre-wrap">{text}</p>
+            <p className="mt-2 text-sm md:text-base leading-6 text-text-white whitespace-pre-wrap">{text}</p>
           )}
         </div>
       </div>
 
       {/* Delete Confirmation Modal */}
       {confirmDelete && (
-        <div className="fixed inset-0 bg-black flex items-center justify-center z-50">
-          <div className="bg-bg-dark border border-white rounded-2xl p-6 max-w-sm mx-4">
-            <h2 className="text-xl font-bold mb-2">Supprimer le tweet ?</h2>
-            <p className="text-text-muted mb-6">
+        <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50">
+          <div className="bg-bg-dark border border-white rounded-2xl p-4 md:p-6 max-w-sm mx-4">
+            <h2 className="text-lg md:text-xl font-bold mb-2">Supprimer le tweet ?</h2>
+            <p className="text-text-muted mb-6 text-xs md:text-sm">
               Cette action est irréversible. Le tweet sera définitivement supprimé.
             </p>
             <div className="flex gap-3">
               <button
                 onClick={() => setConfirmDelete(false)}
                 disabled={deleting}
-                className="flex-1 px-4 py-2 border border-border-dark rounded-full hover:bg-surface-dark transition disabled:opacity-50"
+                className="flex-1 px-4 py-2 border border-border-dark rounded-full text-xs md:text-sm hover:bg-surface-dark transition disabled:opacity-50"
               >
                 Annuler
               </button>
               <button
                 onClick={handleDeleteClick}
                 disabled={deleting}
-                className="flex-1 px-4 py-2 bg-error text-text-white rounded-full hover:bg-error/90 transition disabled:opacity-50"
+                className="flex-1 px-4 py-2 bg-error text-text-white rounded-full text-xs md:text-sm hover:bg-error/90 transition disabled:opacity-50"
               >
                 {deleting ? "Suppression..." : "Supprimer"}
               </button>
