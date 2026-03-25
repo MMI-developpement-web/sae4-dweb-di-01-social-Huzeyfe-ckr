@@ -1,7 +1,7 @@
 <IfModule mod_rewrite.c>
     Options -MultiViews
     RewriteEngine On
-    RewriteBase /~cakir4/sae4-dweb-di-01-social-Huzeyfe-ckr/frontend/
+    RewriteBase /
 
     # Si la ressource existe, la servir normalement
     RewriteCond %{REQUEST_FILENAME} -f [OR]

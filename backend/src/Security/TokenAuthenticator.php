@@ -55,7 +55,7 @@ class TokenAuthenticator extends AbstractAuthenticator
             throw new CustomUserMessageAuthenticationException('User not found');
         }
 
-        if (!$user->isActive()) {
+        if ($user->isBlocked()) {
             throw new CustomUserMessageAuthenticationException('Ce compte a été désactivé');
         }
 

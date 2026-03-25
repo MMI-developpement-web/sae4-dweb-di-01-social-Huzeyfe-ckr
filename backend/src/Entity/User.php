@@ -41,10 +41,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(type: 'boolean')]
     #[Groups(['default', 'detail'])]
-    private bool $active = true;
-
-    #[ORM\Column(type: 'boolean')]
-    #[Groups(['default', 'detail'])]
     private bool $blocked = false;
 
     #[ORM\Column(length: 20, nullable: true)]
@@ -140,17 +136,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setRole(string $role): static
     {
         $this->role = $role;
-        return $this;
-    }
-
-    public function isActive(): bool
-    {
-        return $this->active;
-    }
-
-    public function setActive(bool $active): static
-    {
-        $this->active = $active;
         return $this;
     }
 

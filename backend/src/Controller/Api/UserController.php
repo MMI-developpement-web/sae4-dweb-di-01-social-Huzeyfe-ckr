@@ -37,7 +37,7 @@ class UserController extends AbstractController
                 'email' => $u->getEmail(),
                 'name' => $u->getName(),
                 'role' => $u->getRole(),
-                'active' => $u->isActive(),
+                'blocked' => $u->isBlocked(),
                 'phone' => $u->getPhone(),
                 'birthDate' => $u->getBirthDate() ? $u->getBirthDate()->format('Y-m-d') : null,
                 'createdAt' => $u->getCreatedAt() ? $u->getCreatedAt()->format(DATE_ATOM) : null,
@@ -61,7 +61,7 @@ class UserController extends AbstractController
             'email' => $user->getEmail(),
             'name' => $user->getName(),
             'role' => $user->getRole(),
-            'active' => $user->isActive(),
+            'blocked' => $user->isBlocked(),
             'phone' => $user->getPhone(),
             'birthDate' => $user->getBirthDate() ? $user->getBirthDate()->format('Y-m-d') : null,
             'createdAt' => $user->getCreatedAt() ? $user->getCreatedAt()->format(DATE_ATOM) : null,
@@ -105,7 +105,7 @@ class UserController extends AbstractController
         $user->setPassword($data['password']);
         $user->setName($data['name']);
         $user->setRole($data['role'] ?? 'user');
-        $user->setActive($data['active'] ?? true);
+        $user->setBlocked($data['blocked'] ?? false);
         $user->setCreatedAt(new \DateTime());
 
         if (isset($data['phone'])) {
@@ -140,7 +140,7 @@ class UserController extends AbstractController
         $user->setPassword($data['password']);
         $user->setName($data['name']);
         $user->setRole($data['role'] ?? $user->getRole());
-        $user->setActive($data['active'] ?? $user->isActive());
+        $user->setBlocked($data['blocked'] ?? $user->isBlocked());
 
         $user->setPhone($data['phone'] ?? null);
         $user->setBirthDate(isset($data['birthDate']) ? new \DateTime($data['birthDate']) : null);
@@ -153,7 +153,7 @@ class UserController extends AbstractController
             'email' => $user->getEmail(),
             'name' => $user->getName(),
             'role' => $user->getRole(),
-            'active' => $user->isActive(),
+            'blocked' => $user->isBlocked(),
             'phone' => $user->getPhone(),
             'birthDate' => $user->getBirthDate() ? $user->getBirthDate()->format('Y-m-d') : null,
             'createdAt' => $user->getCreatedAt() ? $user->getCreatedAt()->format(DATE_ATOM) : null,
@@ -180,8 +180,8 @@ class UserController extends AbstractController
         if (isset($data['birthDate'])) {
             $user->setBirthDate(new \DateTime($data['birthDate']));
         }
-        if (isset($data['active'])) {
-            $user->setActive($data['active']);
+        if (isset($data['blocked'])) {
+            $user->setBlocked($data['blocked']);
         }
         if (isset($data['role'])) {
             $user->setRole($data['role']);
@@ -195,7 +195,7 @@ class UserController extends AbstractController
             'email' => $user->getEmail(),
             'name' => $user->getName(),
             'role' => $user->getRole(),
-            'active' => $user->isActive(),
+            'blocked' => $user->isBlocked(),
             'phone' => $user->getPhone(),
             'birthDate' => $user->getBirthDate() ? $user->getBirthDate()->format('Y-m-d') : null,
             'createdAt' => $user->getCreatedAt() ? $user->getCreatedAt()->format(DATE_ATOM) : null,

@@ -50,8 +50,8 @@ class AuthController extends AbstractController
             return $this->json(['error' => 'Identifiant ou mot de passe incorrect'], Response::HTTP_UNAUTHORIZED);
         }
 
-        if (!$user->isActive()) {
-            return $this->json(['error' => 'Ce compte a été désactivé'], Response::HTTP_UNAUTHORIZED);
+        if ($user->isBlocked()) {
+            return $this->json(['error' => 'Ce compte a été bloqué'], Response::HTTP_UNAUTHORIZED);
         }
 
         // Generate access token (7 days expiration)
@@ -66,7 +66,7 @@ class AuthController extends AbstractController
                 'email' => $user->getEmail(),
                 'name' => $user->getName(),
                 'role' => $user->getRole(),
-                'active' => $user->isActive(),
+                'blocked' => $user->isBlocked(),
             ],
         ]);
     }
@@ -109,7 +109,7 @@ class AuthController extends AbstractController
         $user->setPassword($hashedPassword);
         $user->setName($data['name']);
         $user->setRole('user'); // Par défaut, nouveau utilisateur = user
-        $user->setActive(true);
+        $user->setBlocked(false);
         $user->setCreatedAt(new \DateTime());
 
         // Champs optionnels
@@ -136,7 +136,7 @@ class AuthController extends AbstractController
                 'email' => $user->getEmail(),
                 'name' => $user->getName(),
                 'role' => $user->getRole(),
-                'active' => $user->isActive(),
+                'blocked' => $user->isBlocked(),
             ],
         ], Response::HTTP_CREATED);
     }

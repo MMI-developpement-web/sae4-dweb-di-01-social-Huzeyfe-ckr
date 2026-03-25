@@ -59,4 +59,17 @@ class LikeRepository extends ServiceEntityRepository
             ->getQuery()
             ->getSingleScalarResult();
     }
+
+    public function countByPostExcludingBlocked(int $postId): int
+    {
+        return (int) $this->createQueryBuilder('l')
+            ->select('COUNT(l.id)')
+            ->join('l.user', 'u')
+            ->andWhere('l.post = :postId')
+            ->andWhere('u.blocked = :blocked')
+            ->setParameter('postId', $postId)
+            ->setParameter('blocked', false)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
 }

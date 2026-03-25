@@ -30,7 +30,6 @@ class UserCrudController extends AbstractCrudController
                     'Utilisateur' => 'user',
                     'Administrateur' => 'admin',
                 ]),
-            BooleanField::new('active', 'Compte actif'),
             BooleanField::new('blocked', 'Compte bloqué'),
         ];
     }

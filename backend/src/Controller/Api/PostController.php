@@ -51,7 +51,7 @@ class PostController extends AbstractController
         });
 
         $result = array_map(function(Post $p) use ($likeRepository, $currentUser) {
-            $likeCount = $likeRepository->countByPost($p->getId());
+            $likeCount = $likeRepository->countByPostExcludingBlocked($p->getId());
             $userLiked = false;
             if ($currentUser) {
                 $userLiked = (bool) $likeRepository->findByUserAndPost($currentUser->getId(), $p->getId());
@@ -92,7 +92,7 @@ class PostController extends AbstractController
         }
 
         $currentUser = $this->getUser();
-        $likeCount = $likeRepository->countByPost($post->getId());
+        $likeCount = $likeRepository->countByPostExcludingBlocked($post->getId());
         $userLiked = false;
         if ($currentUser) {
             $userLiked = (bool) $likeRepository->findByUserAndPost($currentUser->getId(), $post->getId());
@@ -238,6 +238,11 @@ class PostController extends AbstractController
             return $this->json(['error' => 'Utilisateur non authentifié'], Response::HTTP_UNAUTHORIZED);
         }
 
+        // Empêcher les utilisateurs bloqués de liker
+        if ($user->isBlocked()) {
+            return $this->json(['error' => 'Impossible de liker ce post'], Response::HTTP_FORBIDDEN);
+        }
+
         // Empêcher les likes sur les posts des utilisateurs bloqués
         if ($post->getUser()->isBlocked()) {
             return $this->json(['error' => 'Impossible de liker ce post'], Response::HTTP_FORBIDDEN);
@@ -257,8 +262,8 @@ class PostController extends AbstractController
         $em->persist($like);
         $em->flush();
 
-        // Compter les likes du post
-        $likeCount = $likeRepository->countByPost($post->getId());
+        // Compter les likes du post (excluant les utilisateurs bloqués)
+        $likeCount = $likeRepository->countByPostExcludingBlocked($post->getId());
 
         return $this->json(['message' => 'Post liké', 'likes' => $likeCount], Response::HTTP_CREATED);
     }
@@ -275,6 +280,11 @@ class PostController extends AbstractController
             return $this->json(['error' => 'Utilisateur non authentifié'], Response::HTTP_UNAUTHORIZED);
         }
 
+        // Empêcher les utilisateurs bloqués de retirer des likes
+        if ($user->isBlocked()) {
+            return $this->json(['error' => 'Impossible de retirer ce like'], Response::HTTP_FORBIDDEN);
+        }
+
         // Trouver le like à supprimer
         $like = $likeRepository->findByUserAndPost($user->getId(), $post->getId());
         if (!$like) {
@@ -284,8 +294,8 @@ class PostController extends AbstractController
         $em->remove($like);
         $em->flush();
 
-        // Compter les likes du post
-        $likeCount = $likeRepository->countByPost($post->getId());
+        // Compter les likes du post (excluant les utilisateurs bloqués)
+        $likeCount = $likeRepository->countByPostExcludingBlocked($post->getId());
 
         return $this->json(['message' => 'Like supprimé', 'likes' => $likeCount], Response::HTTP_OK);
     }

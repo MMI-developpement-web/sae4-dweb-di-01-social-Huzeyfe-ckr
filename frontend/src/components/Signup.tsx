@@ -64,13 +64,9 @@ export default function SignupComponent() {
 
       // Check for successful registration with user
       if (response.user) {
-        console.log('Saving current user and redirecting to', response.user.role === 'admin' ? '/adminmanagement' : '/home');
+        console.log('Saving current user and redirecting to /home');
         saveCurrentUser(response.user);
-        if (response.user.role === 'admin') {
-          navigate("/adminmanagement");
-        } else {
-          navigate("/home");
-        }
+        navigate("/home");
       } else {
         console.log('Registration failed - no user data returned');
         setError("Erreur lors de l'inscription. Veuillez réessayer.");

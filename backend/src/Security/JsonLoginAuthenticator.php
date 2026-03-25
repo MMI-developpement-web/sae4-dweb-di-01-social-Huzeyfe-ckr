@@ -58,7 +58,7 @@ class JsonLoginAuthenticator extends AbstractAuthenticator
             throw new CustomUserMessageAuthenticationException('Identifiant ou mot de passe incorrect');
         }
 
-        if (!$user->isActive()) {
+        if ($user->isBlocked()) {
             throw new CustomUserMessageAuthenticationException('Ce compte a été désactivé');
         }
 

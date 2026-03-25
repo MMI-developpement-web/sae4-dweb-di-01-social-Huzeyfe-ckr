@@ -32,7 +32,7 @@ class AccessTokenHandler implements AccessTokenHandlerInterface
             throw new CustomUserMessageAuthenticationException('Invalid token.');
         }
 
-        if (!$user->isActive()) {
+        if ($user->isBlocked()) {
             throw new CustomUserMessageAuthenticationException('Ce compte a été désactivé');
         }
 

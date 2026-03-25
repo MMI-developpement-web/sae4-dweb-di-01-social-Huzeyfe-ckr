@@ -36,14 +36,9 @@ export default function Login() {
 
     if (response.user) {
       console.log('Login successful, user ID=' + response.user.id);
-      console.log('Saving current user and redirecting to', response.user.role === 'admin' ? '/adminmanagement' : '/home');
+      console.log('Saving current user and redirecting to /home');
       saveCurrentUser(response.user);
-      // Rediriger selon le rôle
-      if (response.user.role === 'admin') {
-        navigate('/adminmanagement');
-      } else {
-        navigate('/home');
-      }
+      navigate('/home');
     } else {
       console.log('Login failed - no user or error returned');
       setError("Une erreur s'est produite");
