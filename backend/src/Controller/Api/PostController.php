@@ -9,6 +9,7 @@ use App\Repository\PostRepository;
 use App\Repository\UserRepository;
 use App\Repository\LikeRepository;
 use App\Repository\FollowRepository;
+use App\Repository\BlockedUserRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -46,6 +47,27 @@ class PostController extends AbstractController
         });
 
         $result = array_map(function(Post $p) use ($likeRepository, $currentUser) {
+            // Si le post est censuré, retourner une structure minimale
+            if ($p->isCensored()) {
+                return [
+                    'id' => $p->getId(),
+                    'content' => 'Ce message enfreint les conditions d\'utilisation de la plateforme',
+                    'time' => $p->getTime()?->format('Y-m-d'),
+                    'createdAt' => $p->getCreatedAt()->format(\DateTime::ATOM),
+                    'mediaUrl' => $p->getMediaUrl(),
+                    'user' => $p->getUser() ? [
+                        'id' => $p->getUser()->getId(),
+                        'name' => $p->getUser()->getName(),
+                        'user' => $p->getUser()->getUser(),
+                        'pp' => $p->getUser()->getPp(),
+                        'blocked' => $p->getUser()->isBlocked(),
+                    ] : null,
+                    'likes' => 0,
+                    'liked' => false,
+                    'censored' => true,
+                ];
+            }
+
             $likeCount = $likeRepository->countByPostExcludingBlocked($p->getId());
             $userLiked = false;
             if ($currentUser) {
@@ -57,6 +79,7 @@ class PostController extends AbstractController
                 'content' => $p->getContent(),
                 'time' => $p->getTime()?->format('Y-m-d'),
                 'createdAt' => $p->getCreatedAt()->format(\DateTime::ATOM),
+                'mediaUrl' => $p->getMediaUrl(),
                 'user' => $p->getUser() ? [
                     'id' => $p->getUser()->getId(),
                     'name' => $p->getUser()->getName(),
@@ -66,6 +89,7 @@ class PostController extends AbstractController
                 ] : null,
                 'likes' => $likeCount,
                 'liked' => $userLiked,
+                'censored' => false,
             ];
         }, $posts);
 
@@ -80,6 +104,28 @@ class PostController extends AbstractController
     public function get(Post $post, LikeRepository $likeRepository): JsonResponse
     {
         $currentUser = $this->getUser();
+
+        // Si le post est censuré, retourner une structure minimale
+        if ($post->isCensored()) {
+            return $this->json([
+                'id' => $post->getId(),
+                'content' => 'Ce message enfreint les conditions d\'utilisation de la plateforme',
+                'time' => $post->getTime()?->format('Y-m-d'),
+                'createdAt' => $post->getCreatedAt()->format(\DateTime::ATOM),
+                'mediaUrl' => $post->getMediaUrl(),
+                'user' => $post->getUser() ? [
+                    'id' => $post->getUser()->getId(),
+                    'name' => $post->getUser()->getName(),
+                    'user' => $post->getUser()->getUser(),
+                    'pp' => $post->getUser()->getPp(),
+                    'blocked' => $post->getUser()->isBlocked(),
+                ] : null,
+                'likes' => 0,
+                'liked' => false,
+                'censored' => true,
+            ]);
+        }
+
         $likeCount = $likeRepository->countByPostExcludingBlocked($post->getId());
         $userLiked = false;
         if ($currentUser) {
@@ -91,6 +137,7 @@ class PostController extends AbstractController
             'content' => $post->getContent(),
             'time' => $post->getTime()?->format('Y-m-d'),
             'createdAt' => $post->getCreatedAt()->format(\DateTime::ATOM),
+            'mediaUrl' => $post->getMediaUrl(),
             'user' => $post->getUser() ? [
                 'id' => $post->getUser()->getId(),
                 'name' => $post->getUser()->getName(),
@@ -100,6 +147,7 @@ class PostController extends AbstractController
             ] : null,
             'likes' => $likeCount,
             'liked' => $userLiked,
+            'censored' => false,
         ];
 
         return $this->json($data);
@@ -137,6 +185,11 @@ class PostController extends AbstractController
             $post->setTime(new \DateTime($data['time']));
         }
 
+        // Ajouter mediaUrl s'il est fourni
+        if (isset($data['mediaUrl']) && !empty($data['mediaUrl'])) {
+            $post->setMediaUrl($data['mediaUrl']);
+        }
+
         $em->persist($post);
         $em->flush();
 
@@ -145,6 +198,7 @@ class PostController extends AbstractController
             'content' => $post->getContent(),
             'time' => $post->getTime()?->format('Y-m-d'),
             'createdAt' => $post->getCreatedAt()->format(\DateTime::ATOM),
+            'mediaUrl' => $post->getMediaUrl(),
             'user' => $post->getUser() ? [
                 'id' => $post->getUser()->getId(),
                 'name' => $post->getUser()->getName(),
@@ -220,21 +274,21 @@ class PostController extends AbstractController
      * POST /api/posts/{id}/like
      */
     #[Route('/{id}/like', name: 'posts.like', methods: ['POST'])]
-    public function like(Post $post, UserRepository $userRepository, LikeRepository $likeRepository, EntityManagerInterface $em, Request $request): JsonResponse
+    public function like(Post $post, UserRepository $userRepository, LikeRepository $likeRepository, BlockedUserRepository $blockedUserRepository, EntityManagerInterface $em, Request $request): JsonResponse
     {
         $user = $this->getUser();
         if (!$user) {
             return $this->json(['error' => 'Utilisateur non authentifié'], Response::HTTP_UNAUTHORIZED);
         }
 
-        // Empêcher les utilisateurs bloqués de liker
-        if ($user->isBlocked()) {
-            return $this->json(['error' => 'Impossible de liker ce post'], Response::HTTP_FORBIDDEN);
+        // Vérifier si l'utilisateur actuel est bloqué par l'auteur du post
+        if ($blockedUserRepository->isUserBlocked($post->getUser()->getId(), $user->getId())) {
+            return $this->json(['error' => 'Vous êtes bloqué par l\'auteur de ce post'], Response::HTTP_FORBIDDEN);
         }
 
-        // Empêcher les likes sur les posts des utilisateurs bloqués
-        if ($post->getUser()->isBlocked()) {
-            return $this->json(['error' => 'Impossible de liker ce post'], Response::HTTP_FORBIDDEN);
+        // Vérifier si l'utilisateur actuel bloque l'auteur du post
+        if ($blockedUserRepository->isUserBlocked($user->getId(), $post->getUser()->getId())) {
+            return $this->json(['error' => 'Vous avez bloqué l\'auteur de ce post'], Response::HTTP_FORBIDDEN);
         }
 
         // Vérifier si l'utilisateur a déjà liké ce post
@@ -262,16 +316,21 @@ class PostController extends AbstractController
      * DELETE /api/posts/{id}/like
      */
     #[Route('/{id}/like', name: 'posts.unlike', methods: ['DELETE'])]
-    public function unlike(Post $post, LikeRepository $likeRepository, EntityManagerInterface $em): JsonResponse
+    public function unlike(Post $post, LikeRepository $likeRepository, BlockedUserRepository $blockedUserRepository, EntityManagerInterface $em): JsonResponse
     {
         $user = $this->getUser();
         if (!$user) {
             return $this->json(['error' => 'Utilisateur non authentifié'], Response::HTTP_UNAUTHORIZED);
         }
 
-        // Empêcher les utilisateurs bloqués de retirer des likes
-        if ($user->isBlocked()) {
-            return $this->json(['error' => 'Impossible de retirer ce like'], Response::HTTP_FORBIDDEN);
+        // Vérifier si l'utilisateur actuel est bloqué par l'auteur du post
+        if ($blockedUserRepository->isUserBlocked($post->getUser()->getId(), $user->getId())) {
+            return $this->json(['error' => 'Vous êtes bloqué par l\'auteur de ce post'], Response::HTTP_FORBIDDEN);
+        }
+
+        // Vérifier si l'utilisateur actuel bloque l'auteur du post
+        if ($blockedUserRepository->isUserBlocked($user->getId(), $post->getUser()->getId())) {
+            return $this->json(['error' => 'Vous avez bloqué l\'auteur de ce post'], Response::HTTP_FORBIDDEN);
         }
 
         // Trouver le like à supprimer

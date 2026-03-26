@@ -6,6 +6,7 @@ use App\Entity\User;
 use App\Entity\Follow;
 use App\Repository\UserRepository;
 use App\Repository\FollowRepository;
+use App\Repository\BlockedUserRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -249,7 +250,7 @@ class UserController extends AbstractController
      * POST /api/users/{id}/follow
      */
     #[Route('/{id}/follow', name: 'users.follow', methods: ['POST'])]
-    public function follow(User $userToFollow, FollowRepository $followRepository, EntityManagerInterface $em): JsonResponse
+    public function follow(User $userToFollow, FollowRepository $followRepository, BlockedUserRepository $blockedUserRepository, EntityManagerInterface $em): JsonResponse
     {
         $currentUser = $this->getUser();
 
@@ -259,6 +260,16 @@ class UserController extends AbstractController
 
         if ($currentUser->getId() === $userToFollow->getId()) {
             return $this->json(['error' => 'Vous ne pouvez pas vous suivre vous-même'], Response::HTTP_BAD_REQUEST);
+        }
+
+        // Vérifier si l'utilisateur actuel est bloqué par l'utilisateur à suivre
+        if ($blockedUserRepository->isUserBlocked($userToFollow->getId(), $currentUser->getId())) {
+            return $this->json(['error' => 'Vous êtes bloqué par cet utilisateur'], Response::HTTP_FORBIDDEN);
+        }
+
+        // Vérifier si l'utilisateur actuel bloque l'utilisateur à suivre
+        if ($blockedUserRepository->isUserBlocked($currentUser->getId(), $userToFollow->getId())) {
+            return $this->json(['error' => 'Vous avez bloqué cet utilisateur'], Response::HTTP_FORBIDDEN);
         }
 
         // Vérifier si déjà suivi

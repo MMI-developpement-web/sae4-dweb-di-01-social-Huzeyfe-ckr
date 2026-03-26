@@ -76,7 +76,6 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     private \DateTimeInterface $createdAt;
 
     #[ORM\OneToMany(targetEntity: Post::class, mappedBy: 'user', orphanRemoval: true)]
-    #[Groups(['detail'])]
     private Collection $posts;
 
     #[ORM\OneToOne(targetEntity: AccessToken::class, mappedBy: 'user', orphanRemoval: true)]
@@ -91,12 +90,16 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Follow::class, mappedBy: 'following', orphanRemoval: true)]
     private Collection $followers;
 
+    #[ORM\OneToMany(targetEntity: BlockedUser::class, mappedBy: 'user', orphanRemoval: true)]
+    private Collection $blockedUsers;
+
     public function __construct()
     {
         $this->posts = new ArrayCollection();
         $this->likes = new ArrayCollection();
         $this->following = new ArrayCollection();
         $this->followers = new ArrayCollection();
+        $this->blockedUsers = new ArrayCollection();
         $this->createdAt = new \DateTime();
     }
 

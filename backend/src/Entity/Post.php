@@ -35,6 +35,14 @@ class Post
     #[Groups(['default', 'detail'])]
     private \DateTimeInterface $createdAt;
 
+    #[ORM\Column(type: 'boolean', options: ['default' => false])]
+    #[Groups(['default', 'detail'])]
+    private bool $censored = false;
+
+    #[ORM\Column(type: Types::STRING, nullable: true)]
+    #[Groups(['default', 'detail'])]
+    private ?string $mediaUrl = null;
+
     #[ORM\OneToMany(targetEntity: Like::class, mappedBy: 'post', orphanRemoval: true)]
     private Collection $likes;
 
@@ -117,6 +125,28 @@ class Post
                 $like->setPost(null);
             }
         }
+        return $this;
+    }
+
+    public function isCensored(): bool
+    {
+        return $this->censored;
+    }
+
+    public function setCensored(bool $censored): static
+    {
+        $this->censored = $censored;
+        return $this;
+    }
+
+    public function getMediaUrl(): ?string
+    {
+        return $this->mediaUrl;
+    }
+
+    public function setMediaUrl(?string $mediaUrl): static
+    {
+        $this->mediaUrl = $mediaUrl;
         return $this;
     }
 }
