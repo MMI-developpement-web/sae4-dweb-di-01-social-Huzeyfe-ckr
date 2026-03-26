@@ -12,9 +12,9 @@ interface EditUserProfileProps {
   onCancel?: () => void;
 }
 
-export default function EditUserProfile({ user, onSave, onCancel }: EditUserProfileProps) {
+export default function EditUserProfile({ user, onSave: _onSave, onCancel }: EditUserProfileProps) {
   const navigate = useNavigate();
-  const [loading, setLoading] = useState(false);
+  const [_loading, _setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");

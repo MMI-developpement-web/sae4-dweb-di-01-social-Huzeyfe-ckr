@@ -1,8 +1,10 @@
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Avatar from "./Avatar";
-import { deletePost, likePost, unlikePost } from "../../lib/api";
+import { deletePost, likePost, unlikePost, getReplies, type Reply as ReplyType } from "../../lib/api";
+import { Reply } from "./Reply";
+import { ReplyForm } from "./ReplyForm";
 
 function formatRelativeTime(dateString?: string) {
   if (!dateString) return "";
@@ -35,11 +37,14 @@ export interface PostProps {
   likes?: number;
   liked?: boolean;
   userBlocked?: boolean;
+  censored?: boolean;
+  isAdmin?: boolean;
   onDelete?: () => void;
+  onCensored?: (censored: boolean) => void;
   onLikeChange?: (liked: boolean, likeCount: number) => void;
 }
 
-export default function Post({ id, name, handle, avatar, time, text, userId, currentUserId, likes: initialLikes = 0, liked: initialLiked = false, userBlocked = false, onDelete, onLikeChange }: PostProps) {
+export default function Post({ id, name, handle, avatar, time, text, image, userId, currentUserId, likes: initialLikes = 0, liked: initialLiked = false, userBlocked = false, censored = false, isAdmin = false, onDelete, onCensored, onLikeChange }: PostProps) {
   const navigate = useNavigate();
   const displayTime = formatRelativeTime(time);
   const handleStr = typeof handle === 'string' ? handle : String(handle);
@@ -48,11 +53,78 @@ export default function Post({ id, name, handle, avatar, time, text, userId, cur
   const [showMenu, setShowMenu] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [censoringPost, setCensoringPost] = useState(false);
+  const [isCensored, setIsCensored] = useState(censored);
   const [liked, setLiked] = useState(initialLiked);
   const [likeCount, setLikeCount] = useState(initialLikes);
   const [likingLoading, setLikingLoading] = useState(false);
+  const [likeError, setLikeError] = useState<string | null>(null);
+  
+  const [showReplies, setShowReplies] = useState(false);
+  const [replies, setReplies] = useState<ReplyType[]>([]);
+  const [repliesCount, setRepliesCount] = useState(0);
+  const [loadingReplies, setLoadingReplies] = useState(false);
+  const [showReplyForm, setShowReplyForm] = useState(false);
 
   const isOwnPost = userId === currentUserId;
+
+  // Load replies count on mount
+  useEffect(() => {
+    const loadRepliesCount = async () => {
+      if (!id) return;
+      try {
+        const loadedReplies = await getReplies(Number(id));
+        setRepliesCount(loadedReplies.length);
+        setReplies(loadedReplies);
+      } catch (error) {
+        console.error("Error loading replies count:", error);
+      }
+    };
+    
+    loadRepliesCount();
+  }, [id]);
+
+  // Auto-clear like error after 5 seconds
+  useEffect(() => {
+    if (likeError) {
+      const timer = setTimeout(() => {
+        setLikeError(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [likeError]);
+
+  const loadReplies = async () => {
+    if (!id) return;
+    setLoadingReplies(true);
+    try {
+      const loadedReplies = await getReplies(Number(id));
+      setReplies(loadedReplies);
+      setRepliesCount(loadedReplies.length);
+    } catch (error) {
+      console.error("Error loading replies:", error);
+    } finally {
+      setLoadingReplies(false);
+    }
+  };
+
+  const handleShowReplies = async () => {
+    if (!showReplies && replies.length === 0 && !loadingReplies) {
+      await loadReplies();
+    }
+    setShowReplies(!showReplies);
+  };
+
+  const handleReplyCreated = (newReply: ReplyType) => {
+    setReplies([newReply, ...replies]);
+    setRepliesCount(repliesCount + 1);
+    setShowReplyForm(false);
+  };
+
+  const handleReplyDeleted = (replyId: number) => {
+    setReplies(replies.filter(r => r.id !== replyId));
+    setRepliesCount(Math.max(0, repliesCount - 1));
+  };
 
   const handleDeleteClick = async () => {
     setDeleting(true);
@@ -76,30 +148,60 @@ export default function Post({ id, name, handle, avatar, time, text, userId, cur
   const handleLikeClick = async () => {
     if (!id) return;
     setLikingLoading(true);
+    setLikeError(null);
     try {
       if (liked) {
-        const success = await unlikePost(Number(id));
-        if (success) {
+        const result = await unlikePost(Number(id));
+        if (result.success) {
           setLiked(false);
           const newCount = Math.max(0, likeCount - 1);
           setLikeCount(newCount);
           onLikeChange?.(false, newCount);
+        } else {
+          setLikeError(result.error || 'Erreur lors du retrait du like. Veuillez réessayer.');
         }
       } else {
-        const success = await likePost(Number(id));
-        if (success) {
+        const result = await likePost(Number(id));
+        if (result.success) {
           setLiked(true);
           const newCount = likeCount + 1;
           setLikeCount(newCount);
           onLikeChange?.(true, newCount);
+        } else {
+          setLikeError(result.error || 'Erreur lors du like. Veuillez réessayer.');
         }
       }
     } catch (error) {
       console.error("Error toggling like:", error);
+      setLikeError('Erreur lors du like. Veuillez réessayer.');
     } finally {
       setLikingLoading(false);
     }
   };
+
+  const handleCensorPost = async () => {
+    if (!id || !isAdmin) return;
+    setCensoringPost(true);
+    try {
+      const method = isCensored ? 'DELETE' : 'POST';
+      const res = await fetch(`/api/admin/posts/${id}/censor`, {
+        method,
+        headers: {
+          'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+        },
+      });
+      if (res.ok) {
+        setIsCensored(!isCensored);
+        onCensored?.(!isCensored);
+      }
+    } catch (error) {
+      console.error('Error censoring post:', error);
+    } finally {
+      setCensoringPost(false);
+    }
+  };
+
+
 
   return (
     <article className="w-full">
@@ -131,6 +233,28 @@ export default function Post({ id, name, handle, avatar, time, text, userId, cur
             </div>
 
             <div className="flex items-center gap-1 md:gap-3 shrink-0">
+              {/* Bouton Réponse */}
+              <button
+                onClick={() => setShowReplyForm(!showReplyForm)}
+                className="flex items-center gap-1 transition text-text-muted hover:text-primary text-xs md:text-sm"
+                aria-label="Répondre"
+              >
+                <svg 
+                  width="16" 
+                  height="16" 
+                  viewBox="0 0 24 24" 
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="md:w-4 md:h-4"
+                >
+                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <span className="text-xs md:text-sm">{repliesCount}</span>
+              </button>
+
               {/* Like Button - Cœur à droite */}
               <button
                 onClick={handleLikeClick}
@@ -174,12 +298,25 @@ export default function Post({ id, name, handle, avatar, time, text, userId, cur
                   {/* Dropdown Menu */}
                   {showMenu && (
                     <div className="absolute right-0 top-8 bg-bg-dark border border-border-dark rounded-lg shadow-lg z-50 min-w-40 md:min-w-48">
-                      <button
-                        onClick={() => setConfirmDelete(true)}
-                        className="w-full text-left px-3 md:px-4 py-2 md:py-3 text-error text-xs md:text-sm hover:bg-surface-dark transition border rounded border-white"
-                      >
-                        Supprimer le tweet
-                      </button>
+                      {isAdmin && (
+                        <button
+                          onClick={handleCensorPost}
+                          disabled={censoringPost}
+                          className={`w-full text-left px-3 md:px-4 py-2 md:py-3 text-xs md:text-sm hover:bg-surface-dark transition border rounded border-white ${
+                            isCensored ? 'text-green-500' : 'text-red-500'
+                          }`}
+                        >
+                          {censoringPost ? '...' : isCensored ? '✓ Désactiver la censure' : '⛔ Censurer'}
+                        </button>
+                      )}
+                      {isOwnPost && (
+                        <button
+                          onClick={() => setConfirmDelete(true)}
+                          className="w-full text-left px-3 md:px-4 py-2 md:py-3 text-error text-xs md:text-sm hover:bg-surface-dark transition border rounded border-white"
+                        >
+                          Supprimer le tweet
+                        </button>
+                      )}
                     </div>
                   )}
                 </div>
@@ -187,13 +324,77 @@ export default function Post({ id, name, handle, avatar, time, text, userId, cur
             </div>
           </div>
 
-          {userBlocked ? (
+          {isCensored ? (
+            <div className="mt-3 bg-red-900/40 border-2 border-red-600 rounded-lg p-4 md:p-5">
+              <p className="text-red-300 font-bold text-base md:text-lg">🚫 CONTENU CENSURÉ </p>
+              <p className="text-red-200 text-sm md:text-base mt-2">Ce message enfreint les conditions d'utilisation de la plateforme</p>
+            </div>
+          ) : userBlocked ? (
             <div className="mt-3 bg-red-100 border border-red-400 rounded-lg p-3 md:p-4">
               <p className="text-red-800 font-semibold text-sm md:text-base">⛔ Cet utilisateur a été banni</p>
               <p className="text-red-700 text-xs md:text-sm italic mt-1">son compte a été suspendu pour non respect des conditions d'utilisation</p>
             </div>
           ) : text && (
             <p className="mt-2 text-sm md:text-base leading-6 text-text-white whitespace-pre-wrap">{text}</p>
+          )}
+
+          {/* Media Display */}
+          {!isCensored && image && (
+            <div className="mt-3 rounded-lg overflow-hidden bg-surface-dark max-h-96">
+              {image.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+                <img src={image} alt="Post" className="w-full h-auto object-cover" />
+              ) : (
+                <video src={image} controls className="w-full h-auto" />
+              )}
+            </div>
+          )}
+
+          {/* Like Error Message */}
+          {likeError && (
+            <div className="mt-3 bg-red-100 border border-red-400 rounded-lg p-2 md:p-3">
+              <p className="text-red-800 text-xs md:text-sm">{likeError}</p>
+            </div>
+          )}
+
+          {/* Reply Form - Show when toggled */}
+          {!isCensored && showReplyForm && (
+            <ReplyForm 
+              postId={Number(id) || 0}
+              onReplyCreated={handleReplyCreated}
+              onCancel={() => setShowReplyForm(false)}
+            />
+          )}
+
+          {/* Section des réponses */}
+          {!isCensored && repliesCount > 0 && (
+            <div className="mt-4 border-t border-border-dark pt-4">
+              <button
+                onClick={handleShowReplies}
+                className="flex items-center gap-2 text-primary hover:underline text-xs md:text-sm mb-3"
+              >
+                {showReplies ? '▼' : '▶'} {repliesCount} {repliesCount === 1 ? 'réponse' : 'réponses'}
+              </button>
+
+              {showReplies && (
+                <div className="space-y-3">
+                  {loadingReplies ? (
+                    <div className="text-center text-text-muted text-xs md:text-sm py-4">Chargement des réponses...</div>
+                  ) : replies.length === 0 ? (
+                    <div className="text-center text-text-muted text-xs md:text-sm py-4">Aucune réponse pour l'instant</div>
+                  ) : (
+                    replies.map((reply) => (
+                      <Reply 
+                        key={reply.id}
+                        reply={reply}
+                        onDelete={handleReplyDeleted}
+                        isOwner={reply.user?.id === currentUserId}
+                        isAdmin={false} // You might want to get this from current user context
+                      />
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>

@@ -1,6 +1,9 @@
 // API utility for calling backend endpoints
 const API_BASE = import.meta.env.VITE_API_URL;
 
+// Extract backend origin from API_BASE (e.g., "http://localhost:8080/api" -> "http://localhost:8080")
+const BACKEND_ORIGIN = API_BASE.replace(/\/api$/, '');
+
 export interface User {
   id: number;
   username?: string;  // From login endpoint
@@ -30,12 +33,30 @@ export interface Post {
   content: string;
   time?: string;
   createdAt: string;
+  mediaUrl?: string;
   likes?: number;
   liked?: boolean;
+  repliesCount?: number;
+  censored?: boolean;
   user: {
     id: number;
     name: string;
     user: string;
+    pp?: string;
+    blocked?: boolean;
+  };
+}
+
+export interface Reply {
+  id: number;
+  postId: number;
+  content: string;
+  createdAt: string;
+  canDelete?: boolean;
+  user: {
+    id: number;
+    username: string;
+    displayName: string;
     pp?: string;
     blocked?: boolean;
   };
@@ -172,7 +193,15 @@ export async function getPosts(filter?: string): Promise<Post[]> {
     });
     if (!res.ok) throw new Error('Fetch posts failed');
     const data = await res.json();
-    return data.posts || [];
+    const posts = data.posts || [];
+    
+    // Normaliser les URLs des médias avec l'origine du backend
+    return posts.map((post: Post) => ({
+      ...post,
+      mediaUrl: post.mediaUrl && !post.mediaUrl.startsWith('http')
+        ? `${BACKEND_ORIGIN}${post.mediaUrl}`
+        : post.mediaUrl,
+    }));
   } catch (err) {
     console.error('Get posts error:', err);
     return [];
@@ -185,19 +214,27 @@ export async function getPost(id: number): Promise<Post | null> {
       headers: getAuthHeaders(),
     });
     if (!res.ok) throw new Error('Fetch post failed');
-    return res.json();
+    const post = await res.json();
+    
+    // Normaliser l'URL du média avec l'origine du backend
+    return {
+      ...post,
+      mediaUrl: post.mediaUrl && !post.mediaUrl.startsWith('http')
+        ? `${BACKEND_ORIGIN}${post.mediaUrl}`
+        : post.mediaUrl,
+    };
   } catch (err) {
     console.error('Get post error:', err);
     return null;
   }
 }
 
-export async function createPost(userId: number, content: string, time?: string): Promise<Post | null> {
+export async function createPost(userId: number, content: string, time?: string, mediaUrl?: string): Promise<Post | null> {
   try {
     const res = await fetch(`${API_BASE}/posts`, {
       method: 'POST',
       headers: getAuthHeaders(),
-      body: JSON.stringify({ userId, content, time }),
+      body: JSON.stringify({ userId, content, time, ...(mediaUrl && { mediaUrl }) }),
     });
     if (!res.ok) throw new Error('Create post failed');
     return res.json();
@@ -235,29 +272,47 @@ export async function deletePost(id: number): Promise<boolean> {
 }
 
 // Likes
-export async function likePost(postId: number): Promise<boolean> {
+export async function likePost(postId: number): Promise<{success: boolean, error?: string}> {
   try {
     const res = await fetch(`${API_BASE}/posts/${postId}/like`, {
       method: 'POST',
       headers: getAuthHeaders(),
     });
-    return res.ok;
+    if (res.ok) {
+      return { success: true };
+    } else {
+      try {
+        const data = await res.json();
+        return { success: false, error: data.error || 'Erreur lors du like. Veuillez réessayer.' };
+      } catch {
+        return { success: false, error: 'Erreur lors du like. Veuillez réessayer.' };
+      }
+    }
   } catch (err) {
     console.error('Like post error:', err);
-    return false;
+    return { success: false, error: 'Erreur lors du like. Veuillez réessayer.' };
   }
 }
 
-export async function unlikePost(postId: number): Promise<boolean> {
+export async function unlikePost(postId: number): Promise<{success: boolean, error?: string}> {
   try {
     const res = await fetch(`${API_BASE}/posts/${postId}/like`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
     });
-    return res.ok;
+    if (res.ok) {
+      return { success: true };
+    } else {
+      try {
+        const data = await res.json();
+        return { success: false, error: data.error || 'Erreur lors du retrait du like. Veuillez réessayer.' };
+      } catch {
+        return { success: false, error: 'Erreur lors du retrait du like. Veuillez réessayer.' };
+      }
+    }
   } catch (err) {
     console.error('Unlike post error:', err);
-    return false;
+    return { success: false, error: 'Erreur lors du retrait du like. Veuillez réessayer.' };
   }
 }
 
@@ -285,6 +340,143 @@ export async function unfollowUser(userId: number): Promise<boolean> {
   } catch (err) {
     console.error('Unfollow user error:', err);
     return false;
+  }
+}
+
+// Replies
+export async function getReplies(postId: number): Promise<Reply[]> {
+  try {
+    const res = await fetch(`${API_BASE}/posts/${postId}/replies`, {
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) throw new Error('Fetch replies failed');
+    const data = await res.json();
+    return Array.isArray(data) ? data : [];
+  } catch (err) {
+    console.error('Get replies error:', err);
+    return [];
+  }
+}
+
+export async function createReply(postId: number, content: string): Promise<{reply: Reply | null, error?: string}> {
+  try {
+    const res = await fetch(`${API_BASE}/posts/${postId}/replies`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ content }),
+    });
+    if (!res.ok) {
+      try {
+        const error = await res.json();
+        return { reply: null, error: error.error || 'Erreur lors de la création de la réponse. Veuillez réessayer.' };
+      } catch {
+        return { reply: null, error: 'Erreur lors de la création de la réponse. Veuillez réessayer.' };
+      }
+    }
+    const reply = await res.json();
+    return { reply };
+  } catch (err) {
+    console.error('Create reply error:', err);
+    return { reply: null, error: 'Erreur lors de la création de la réponse. Veuillez réessayer.' };
+  }
+}
+
+export async function deleteReply(replyId: number): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/replies/${replyId}`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    return res.ok;
+  } catch (err) {
+    console.error('Delete reply error:', err);
+    return false;
+  }
+}
+
+// Blocking functions
+export async function blockUser(userId: number): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/users/${userId}/block`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+    });
+    return res.ok;
+  } catch (err) {
+    console.error('Block user error:', err);
+    return false;
+  }
+}
+
+export async function unblockUser(userId: number): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/users/${userId}/block`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    return res.ok;
+  } catch (err) {
+    console.error('Unblock user error:', err);
+    return false;
+  }
+}
+
+export async function getBlockedUsers(userId: number): Promise<User[]> {
+  try {
+    const res = await fetch(`${API_BASE}/users/${userId}/blocked-users`, {
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) {
+      return [];
+    }
+    return await res.json();
+  } catch (err) {
+    console.error('Get blocked users error:', err);
+    return [];
+  }
+}
+
+export async function isUserBlocked(userId: number): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/users/${userId}/is-blocked`, {
+      headers: getAuthHeaders(),
+    });
+    if (!res.ok) {
+      return false;
+    }
+    const data = await res.json();
+    return data.isBlocked || false;
+  } catch (err) {
+    console.error('Check blocked user error:', err);
+    return false;
+  }
+}
+
+// Media upload
+export async function uploadMedia(file: File): Promise<{mediaUrl?: string, error?: string}> {
+  try {
+    const formData = new FormData();
+    formData.append('file', file);
+
+    const res = await fetch(`${API_BASE}/media/upload`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${getAuthToken()}`,
+      },
+      body: formData,
+    });
+
+    if (!res.ok) {
+      const errorData = await res.json();
+      return { error: errorData.error || 'Upload failed' };
+    }
+
+    const data = await res.json();
+    // Retourner le chemin relatif (sans ajouter /api)
+    return { mediaUrl: data.mediaUrl };
+  } catch (err) {
+    console.error('Upload media error:', err);
+    return { error: 'Erreur lors du téléchargement du fichier' };
   }
 }
 

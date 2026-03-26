@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getUser, followUser, unfollowUser, getCurrentUser, getPosts, type User, type Post as PostType } from "../lib/api";
+import { getUser, followUser, unfollowUser, getCurrentUser, getPosts, isUserBlocked, type User, type Post as PostType } from "../lib/api";
 import Header from "./ui/Header";
 import SideBar from "./ui/SideBar";
 import Avatar from "./ui/Avatar";
@@ -8,6 +8,7 @@ import Button from "./ui/Button";
 import Post from "./ui/Post";
 import Footer from "./ui/Footer";
 import EditUserProfile from "./ui/EditUserProfile";
+import BlockButton from "./ui/BlockButton";
 
 export default function UserProfile() {
   const { id } = useParams<{ id: string }>();
@@ -17,6 +18,7 @@ export default function UserProfile() {
   const [user, setUser] = useState<User | null>(null);
   const [posts, setPosts] = useState<PostType[]>([]);
   const [isFollowing, setIsFollowing] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false);
   const [loading, setLoading] = useState(true);
   const [followLoading, setFollowLoading] = useState(false);
   const [isEditing, setIsEditing] = useState(false);
@@ -28,6 +30,10 @@ export default function UserProfile() {
         const userData = await getUser(Number(id));
         setUser(userData);
         setIsFollowing(userData?.isFollowing || false);
+
+        // Charger l'état de blocage
+        const blocked = await isUserBlocked(Number(id));
+        setIsBlocked(blocked);
 
         // Charger les posts de l'utilisateur
         const allPosts = await getPosts();
@@ -168,19 +174,26 @@ export default function UserProfile() {
                   Éditer le profil
                 </Button>
               ) : (
-                <Button
-                  onClick={handleFollowToggle}
-                  disabled={followLoading || user?.blocked}
-                  variant={isFollowing ? "dark" : "solid"}
-                  size="sm"
-                  className={isFollowing ? "" : "bg-tick hover:bg-tick/90 shrink-0"}
-                >
-                  {followLoading
-                    ? "..."
-                    : isFollowing
-                    ? "Ne plus suivre"
-                    : "Suivre"}
-                </Button>
+                <div className="flex gap-2 shrink-0">
+                  <Button
+                    onClick={handleFollowToggle}
+                    disabled={followLoading || user?.blocked}
+                    variant={isFollowing ? "dark" : "solid"}
+                    size="sm"
+                    className={isFollowing ? "" : "bg-tick hover:bg-tick/90"}
+                  >
+                    {followLoading
+                      ? "..."
+                      : isFollowing
+                      ? "Ne plus suivre"
+                      : "Suivre"}
+                  </Button>
+                  <BlockButton 
+                    userId={user?.id || 0}
+                    isBlocked={isBlocked}
+                    onBlockChange={setIsBlocked}
+                  />
+                </div>
               )}
             </div>
 
@@ -262,11 +275,13 @@ export default function UserProfile() {
                       avatar={avatar}
                       time={post.createdAt}
                       text={post.content}
+                      image={post.mediaUrl}
                       userId={post.user.id}
                       currentUserId={currentUser?.id}
                       likes={post.likes || 0}
                       liked={post.liked || false}
                       userBlocked={post.user.blocked || false}
+                      censored={post.censored || false}
                       onDelete={handlePostDeleted}
                       onLikeChange={(liked, likeCount) => {
                         const updatedPosts = posts.map(p =>

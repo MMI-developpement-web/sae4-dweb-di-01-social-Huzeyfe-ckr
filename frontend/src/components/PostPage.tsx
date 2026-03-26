@@ -6,15 +6,63 @@ import Avatar from "./ui/Avatar";
 import Input from "./ui/Input";
 import Button from "./ui/Button";
 import Footer from "./ui/Footer";
-import { createPost, getCurrentUser } from "../lib/api";
+import { createPost, getCurrentUser, uploadMedia } from "../lib/api";
 
 export default function PostPage() {
   const [content, setContent] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [mediaUrl, setMediaUrl] = useState<string | null>(null);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploading, setUploading] = useState(false);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const MAX = 280;
+
+  // Handle file selection
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setSelectedFile(file);
+      setError("");
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setPreviewUrl(event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Upload  media
+  const handleMediaUpload = async () => {
+    if (!selectedFile) return;
+    
+    setUploading(true);
+    setError("");
+    try {
+      const result = await uploadMedia(selectedFile);
+      if (result.mediaUrl) {
+        setMediaUrl(result.mediaUrl);
+        setSelectedFile(null);
+        //setPreviewUrl(null); // Keep preview visible
+      } else {
+        setError(result.error || "Erreur lors du téléchargement");
+      }
+    } catch (err) {
+      setError("Erreur lors du téléchargement");
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  // Remove media
+  const handleRemoveMedia = () => {
+    setMediaUrl(null);
+    setSelectedFile(null);
+    setPreviewUrl(null);
+  };
 
   // Check if user is authenticated
   const currentUser = getCurrentUser();
@@ -49,7 +97,7 @@ export default function PostPage() {
       }
 
       const now = new Date().toISOString();
-      const success = await createPost(currentUser.id, content, now);
+      const success = await createPost(currentUser.id, content, now, mediaUrl || undefined);
 
       if (success) {
         navigate("/home");
@@ -107,9 +155,76 @@ export default function PostPage() {
             </div>
 
             <div className="flex items-center justify-between gap-2">
+              <div className="flex items-center gap-2">
+                <label className="cursor-pointer">
+                  <input
+                    type="file"
+                    accept="image/jpeg,image/png,image/gif,image/webp,video/mp4,video/mpeg,video/quicktime,video/x-msvideo,video/webm"
+                    onChange={handleFileSelect}
+                    disabled={uploading || !!mediaUrl}
+                    className="hidden"
+                  />
+                  <span className="text-tick hover:text-tick/80 disabled:opacity-50 text-sm md:text-base cursor-pointer inline-block">
+                    📎 Ajouter média
+                  </span>
+                </label>
+      
+                {selectedFile && !mediaUrl && (
+                  <Button
+                    onClick={handleMediaUpload}
+                    disabled={uploading}
+                    variant="post"
+                    size="sm"
+                  >
+                    {uploading ? "Envoi..." : "Envoyer"}
+                  </Button>
+                )}
+              </div>
+
               <p className={`text-xs md:text-sm ${content.length > MAX ? "text-error" : "text-text-muted"}`}>
                 {MAX - content.length}
               </p>
+            </div>
+
+            {/* Media preview */}
+            {(previewUrl || mediaUrl) && (
+              <div className="relative bg-surface-dark rounded-lg overflow-hidden">
+                {previewUrl && selectedFile && (
+                  <div className="relative">
+                    {selectedFile.type.startsWith('image/') ? (
+                      <img src={previewUrl} alt="Preview" className="w-full h-auto max-h-96 object-cover" />
+                    ) : (
+                      <video src={previewUrl} controls className="w-full h-auto max-h-96" />
+                    )}
+                  </div>
+                )}
+                {mediaUrl && !previewUrl && (
+                  <div className="relative">
+                    {mediaUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+                      <img src={mediaUrl} alt="Uploaded" className="w-full h-auto max-h-96 object-cover" />
+                    ) : (
+                      <video src={mediaUrl} controls className="w-full h-auto max-h-96" />
+                    )}
+                  </div>
+                )}
+                <button
+                  type="button"
+                  onClick={handleRemoveMedia}
+                  className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-8 h-8 flex items-center justify-center"
+                >
+                  ✕
+                </button>
+              </div>
+            )}
+
+            {selectedFile && !mediaUrl && (
+              <p className="text-text-muted text-xs md:text-sm">
+                Fichier sélectionné: {selectedFile.name}
+              </p>
+            )}
+
+            <div className="flex items-center justify-between gap-2">
+              <div></div>
               {content.length > MAX && (
                 <p className="text-error text-xs md:text-sm">Limite dépassée de {content.length - MAX} caractères</p>
               )}

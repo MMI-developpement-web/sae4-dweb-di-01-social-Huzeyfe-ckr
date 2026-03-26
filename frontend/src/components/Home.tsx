@@ -179,11 +179,13 @@ export default function Home() {
                       avatar={avatar}
                       time={p.createdAt}
                       text={p.content}
+                      image={p.mediaUrl}
                       userId={p.user.id}
                       currentUserId={currentUser?.id}
                       likes={p.likes || 0}
                       liked={p.liked || false}
                       userBlocked={p.user.blocked || false}
+                      censored={p.censored || false}
                       onDelete={() => handlePostDeleted(p.id)}
                       onLikeChange={(liked, likeCount) => {
                         const updatedPosts = posts.map(post =>

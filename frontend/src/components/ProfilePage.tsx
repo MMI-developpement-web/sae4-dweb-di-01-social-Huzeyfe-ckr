@@ -4,7 +4,10 @@ import Header from "./ui/Header";
 import SideBar from "./ui/SideBar";
 import Footer from "./ui/Footer";
 import Avatar from "./ui/Avatar";
+import Button from "./ui/Button";
 import Post from "./ui/Post";
+import EditUserProfile from "./ui/EditUserProfile";
+import BlockedUsersList from "./ui/BlockedUsersList";
 import { getCurrentUser, getUser, getPosts, type Post as PostType } from "../lib/api";
 
 export default function ProfilePage() {
@@ -13,6 +16,8 @@ export default function ProfilePage() {
   const [userData, setUserData] = useState(currentUser);
   const [posts, setPosts] = useState<PostType[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isEditing, setIsEditing] = useState(false);
+  const [showBlockedUsers, setShowBlockedUsers] = useState(false);
 
   useEffect(() => {
     const loadProfileData = async () => {
@@ -91,6 +96,19 @@ export default function ProfilePage() {
     return <div className="text-center py-10">Chargement...</div>;
   }
 
+  if (isEditing) {
+    return (
+      <EditUserProfile
+        user={userData}
+        onCancel={() => setIsEditing(false)}
+        onSave={(updatedUser) => {
+          setUserData(updatedUser);
+          setIsEditing(false);
+        }}
+      />
+    );
+  }
+
   return (
     <div className="bg-bg-black min-h-screen text-text-white flex flex-col md:flex-row">
       {/* Desktop: Sidebar */}
@@ -104,15 +122,36 @@ export default function ProfilePage() {
         <div className="w-full max-w-2xl border-r border-border-dark md:border-l md:border-border-dark pb-24 md:pb-0">
           
           {/* Bannière */}
-          <div className="h-32 md:h-48 bg-linear-to-r from-tick to-text-muted"></div>
+          <div 
+            className="h-32 md:h-48 bg-linear-to-r from-tick to-text-muted bg-cover bg-center"
+            style={userData?.banner ? { backgroundImage: `url(${userData.banner})`, backgroundSize: 'cover' } : {}}
+          ></div>
 
           {/* Info utilisateur */}
           <div className="px-4 md:px-6 pb-4 md:pb-6">
             {/* Avatar et boutons */}
-            <div className="flex justify-between items-start -mt-16 md:-mt-20 mb-4">
-              <Avatar size="lg" src={getAvatarUrl()} alt={userData?.name || "User"}>
-                <div className="text-xl md:text-2xl font-bold">{userData?.name?.charAt(0) || "U"}</div>
-              </Avatar>
+            <div className="flex justify-between items-start gap-4 mb-4">
+              <div className="-mt-16 md:-mt-20">
+                <Avatar size="lg" src={getAvatarUrl()} alt={userData?.name || "User"}>
+                  <div className="text-xl md:text-2xl font-bold">{userData?.name?.charAt(0) || "U"}</div>
+                </Avatar>
+              </div>
+              <div className="flex gap-2 shrink-0 mt-2 flex-col">
+                <Button
+                  onClick={() => setIsEditing(true)}
+                  size="sm"
+                  className="bg-tick hover:bg-tick/90"
+                >
+                  Éditer le profil
+                </Button>
+                <Button
+                  onClick={() => setShowBlockedUsers(true)}
+                  size="sm"
+                  className="bg-gray-700 hover:bg-gray-600 text-sm"
+                >
+                  Utilisateurs bloqués
+                </Button>
+              </div>
             </div>
 
             {/* Informations du profil */}
@@ -123,7 +162,11 @@ export default function ProfilePage() {
 
             {/* Bio / Description */}
             <div className="text-sm md:text-base mb-4">
-              <p>Mon bio ici</p>
+              {userData?.bio ? (
+                <p className="text-text-white">{userData.bio}</p>
+              ) : (
+                <p className="text-text-muted italic">Aucune bio</p>
+              )}
             </div>
 
             {/* Stats */}
@@ -144,6 +187,20 @@ export default function ProfilePage() {
 
             {/* Texte informations */}
             <div className="text-xs md:text-sm text-text-muted space-y-2">
+              {userData?.location && <p>📍 {userData.location}</p>}
+              {userData?.website && (
+                <p>
+                  🔗{" "}
+                  <a
+                    href={userData.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-tick hover:underline"
+                  >
+                    {userData.website}
+                  </a>
+                </p>
+              )}
               <p>📧 {userData?.email}</p>
               <p>Inscrit depuis le {userData?.createdAt ? new Date(userData.createdAt).toLocaleDateString("fr-FR") : "N/A"}</p>
             </div>
@@ -175,11 +232,13 @@ export default function ProfilePage() {
                       avatar={avatar}
                       time={post.createdAt}
                       text={post.content}
+                      image={post.mediaUrl}
                       userId={post.user.id}
                       currentUserId={currentUser?.id}
                       likes={post.likes || 0}
                       liked={post.liked || false}
                       userBlocked={post.user.blocked || false}
+                      censored={post.censored || false}
                       onDelete={() => handlePostDeleted(post.id)}
                       onLikeChange={(liked, likeCount) => {
                         const updatedPosts = posts.map(p =>
@@ -198,6 +257,14 @@ export default function ProfilePage() {
 
       {/* Footer Mobile */}
       <Footer className="md:hidden" />
+
+      {/* Blocked Users Modal */}
+      {showBlockedUsers && (
+        <BlockedUsersList
+          userId={currentUser?.id || 0}
+          onClose={() => setShowBlockedUsers(false)}
+        />
+      )}
     </div>
   );
 }
