@@ -225,6 +225,10 @@ export default function Post({ id, name, handle, avatar, time, text, image, user
         // Close modals
         setShowEditModal(false);
         setShowMenu(false);
+        // Refresh page to show updated content
+        setTimeout(() => {
+          window.location.reload();
+        }, 300);
       } else {
         setEditError("Erreur lors de la modification du tweet");
       }
