@@ -122,23 +122,29 @@ export default function UserProfile() {
           <div className="px-4 md:px-6 pb-4 md:pb-6">
             {/* Avatar */}
             <div className="-mt-16 md:-mt-20 mb-4">
-              <Avatar size="lg" src={getAvatarUrl()} alt={user?.name || "User"}>
-                <div className="text-xl md:text-2xl font-bold">{user?.name?.charAt(0) || "U"}</div>
-              </Avatar>
+              <div className={user?.blocked ? 'grayscale opacity-95' : ''}>
+                <Avatar size="lg" src={getAvatarUrl()} alt={user?.name || "User"}>
+                  <div className="text-xl md:text-2xl font-bold">{user?.name?.charAt(0) || "U"}</div>
+                </Avatar>
+              </div>
             </div>
 
             {/* Profil Header avec nom et bouton */}
             <div className="flex justify-between items-center gap-4 mb-4">
               <div className="flex-1 min-w-0">
-                <h1 className="text-xl md:text-2xl font-bold truncate">{user?.name}</h1>
-                <p className="text-text-muted text-xs md:text-sm">@{user?.user || user?.username}</p>
+                <h1 className="text-xl md:text-2xl font-bold truncate">
+                  {user?.blocked ? "Utilisateur banni" : user?.name}
+                </h1>
+                <p className="text-text-muted text-xs md:text-sm">
+                  {user?.blocked ? "" : `@${user?.user || user?.username}`}
+                </p>
               </div>
 
               {/* Follow/Unfollow Button */}
               {!isOwnProfile && (
                 <Button
                   onClick={handleFollowToggle}
-                  disabled={followLoading}
+                  disabled={followLoading || user?.blocked}
                   variant={isFollowing ? "dark" : "solid"}
                   size="sm"
                   className={isFollowing ? "" : "bg-tick hover:bg-tick/90 shrink-0"}
@@ -151,6 +157,18 @@ export default function UserProfile() {
                 </Button>
               )}
             </div>
+
+            {/* Bannissement Warning */}
+            {user?.blocked && (
+              <div className="bg-red-900/30  rounded-lg p-3 md:p-4 mb-4">
+                <p className="text-red-400 font-semibold text-sm md:text-base flex items-center gap-2">
+                  ⛔ Compte banni
+                </p>
+                <p className="text-red-300 text-xs md:text-sm mt-1">
+                  Cet utilisateur a été suspendu pour non respect des conditions d'utilisation.
+                </p>
+              </div>
+            )}
 
             {/* Stats */}
             <div className="flex gap-4 md:gap-6 border-t border-b border-border-dark py-3 mb-4">
@@ -205,6 +223,7 @@ export default function UserProfile() {
                       currentUserId={currentUser?.id}
                       likes={post.likes || 0}
                       liked={post.liked || false}
+                      userBlocked={post.user.blocked || false}
                       onDelete={handlePostDeleted}
                       onLikeChange={(liked, likeCount) => {
                         const updatedPosts = posts.map(p =>

@@ -183,7 +183,7 @@ export default function Home() {
                       currentUserId={currentUser?.id}
                       likes={p.likes || 0}
                       liked={p.liked || false}
-                      blocked={false}
+                      userBlocked={p.user.blocked || false}
                       onDelete={() => handlePostDeleted(p.id)}
                       onLikeChange={(liked, likeCount) => {
                         const updatedPosts = posts.map(post =>

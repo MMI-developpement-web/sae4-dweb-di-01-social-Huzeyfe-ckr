@@ -33,6 +33,7 @@ export interface Post {
     name: string;
     user: string;
     pp?: string;
+    blocked?: boolean;
   };
 }
 

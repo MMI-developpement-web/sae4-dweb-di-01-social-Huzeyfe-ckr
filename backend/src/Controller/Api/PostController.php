@@ -40,11 +40,6 @@ class PostController extends AbstractController
             });
         }
 
-        // Filtrer les posts des utilisateurs bloqués
-        $posts = array_filter($posts, function(Post $p) {
-            return !$p->getUser()->isBlocked();
-        });
-
         // Trier par date décroissante
         usort($posts, function(Post $a, Post $b) {
             return $b->getCreatedAt()->getTimestamp() - $a->getCreatedAt()->getTimestamp();
@@ -67,6 +62,7 @@ class PostController extends AbstractController
                     'name' => $p->getUser()->getName(),
                     'user' => $p->getUser()->getUser(),
                     'pp' => $p->getUser()->getPp(),
+                    'blocked' => $p->getUser()->isBlocked(),
                 ] : null,
                 'likes' => $likeCount,
                 'liked' => $userLiked,
@@ -83,14 +79,6 @@ class PostController extends AbstractController
     #[Route('/{id}', name: 'posts.get', methods: ['GET'])]
     public function get(Post $post, LikeRepository $likeRepository): JsonResponse
     {
-        // Si l'utilisateur du post est bloqué, retourner une erreur
-        if ($post->getUser()->isBlocked()) {
-            return $this->json(
-                ['error' => 'Ce compte a été bloqué pour non respect des conditions d\'utilisation'],
-                Response::HTTP_FORBIDDEN
-            );
-        }
-
         $currentUser = $this->getUser();
         $likeCount = $likeRepository->countByPostExcludingBlocked($post->getId());
         $userLiked = false;
@@ -108,6 +96,7 @@ class PostController extends AbstractController
                 'name' => $post->getUser()->getName(),
                 'user' => $post->getUser()->getUser(),
                 'pp' => $post->getUser()->getPp(),
+                'blocked' => $post->getUser()->isBlocked(),
             ] : null,
             'likes' => $likeCount,
             'liked' => $userLiked,

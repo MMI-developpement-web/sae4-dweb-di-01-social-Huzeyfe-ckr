@@ -179,6 +179,7 @@ export default function ProfilePage() {
                       currentUserId={currentUser?.id}
                       likes={post.likes || 0}
                       liked={post.liked || false}
+                      userBlocked={post.user.blocked || false}
                       onDelete={() => handlePostDeleted(post.id)}
                       onLikeChange={(liked, likeCount) => {
                         const updatedPosts = posts.map(p =>

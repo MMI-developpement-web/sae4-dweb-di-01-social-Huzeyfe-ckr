@@ -34,12 +34,12 @@ export interface PostProps {
   currentUserId?: number;
   likes?: number;
   liked?: boolean;
-  blocked?: boolean;
+  userBlocked?: boolean;
   onDelete?: () => void;
   onLikeChange?: (liked: boolean, likeCount: number) => void;
 }
 
-export default function Post({ id, name, handle, avatar, time, text, userId, currentUserId, likes: initialLikes = 0, liked: initialLiked = false, blocked = false, onDelete, onLikeChange }: PostProps) {
+export default function Post({ id, name, handle, avatar, time, text, userId, currentUserId, likes: initialLikes = 0, liked: initialLiked = false, userBlocked = false, onDelete, onLikeChange }: PostProps) {
   const navigate = useNavigate();
   const displayTime = formatRelativeTime(time);
   const handleStr = typeof handle === 'string' ? handle : String(handle);
@@ -109,17 +109,23 @@ export default function Post({ id, name, handle, avatar, time, text, userId, cur
           className="hover:opacity-80 transition shrink-0"
           aria-label={`View ${name}'s profile`}
         >
-          <Avatar size="md" src={avatar} alt={`${name} avatar`}>
-            <div className="flex items-center justify-center w-full h-full text-xs md:text-sm font-bold text-text-white">{initials}</div>
-          </Avatar>
+          <div className={userBlocked ? "grayscale opacity-75" : ""}>
+            <Avatar size="md" src={avatar} alt={`${name} avatar`}>
+              <div className="flex items-center justify-center w-full h-full text-xs md:text-sm font-bold text-text-white">{initials}</div>
+            </Avatar>
+          </div>
         </button>
 
         <div className="flex-1 min-w-0">
           <div className="flex items-start justify-between gap-2">
             <div className="flex flex-col gap-1 min-w-0">
               <div className="flex items-center gap-1 flex-wrap">
-                <span className="font-bold text-text-white text-sm md:text-base truncate">{name}</span>
-                <span className="text-text-muted text-xs md:text-sm shrink-0">{handleStr}</span>
+                <span className="font-bold text-text-white text-sm md:text-base truncate">
+                  {userBlocked ? "Utilisateur banni" : name}
+                </span>
+                <span className="text-text-muted text-xs md:text-sm shrink-0">
+                  {userBlocked ? "" : handleStr}
+                </span>
               </div>
               <span className="text-text-muted text-xs md:text-sm">{displayTime}</span>
             </div>
@@ -181,8 +187,11 @@ export default function Post({ id, name, handle, avatar, time, text, userId, cur
             </div>
           </div>
 
-          {blocked ? (
-            <p className="mt-2 text-xs md:text-sm leading-6 text-text-muted italic">Ce compte a été bloqué pour non respect des conditions d'utilisation</p>
+          {userBlocked ? (
+            <div className="mt-3 bg-red-100 border border-red-400 rounded-lg p-3 md:p-4">
+              <p className="text-red-800 font-semibold text-sm md:text-base">⛔ Cet utilisateur a été banni</p>
+              <p className="text-red-700 text-xs md:text-sm italic mt-1">son compte a été suspendu pour non respect des conditions d'utilisation</p>
+            </div>
           ) : text && (
             <p className="mt-2 text-sm md:text-base leading-6 text-text-white whitespace-pre-wrap">{text}</p>
           )}
