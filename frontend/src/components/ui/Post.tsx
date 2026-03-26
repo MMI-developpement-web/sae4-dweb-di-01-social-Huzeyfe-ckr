@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Avatar from "./Avatar";
-import { deletePost, likePost, unlikePost, getReplies, type Reply as ReplyType } from "../../lib/api";
+import { deletePost, likePost, unlikePost, getReplies, updatePost, type Reply as ReplyType } from "../../lib/api";
 import { Reply } from "./Reply";
 import { ReplyForm } from "./ReplyForm";
 
@@ -42,9 +42,10 @@ export interface PostProps {
   onDelete?: () => void;
   onCensored?: (censored: boolean) => void;
   onLikeChange?: (liked: boolean, likeCount: number) => void;
+  onEdit?: (newContent: string) => void;
 }
 
-export default function Post({ id, name, handle, avatar, time, text, image, userId, currentUserId, likes: initialLikes = 0, liked: initialLiked = false, userBlocked = false, censored = false, isAdmin = false, onDelete, onCensored, onLikeChange }: PostProps) {
+export default function Post({ id, name, handle, avatar, time, text, image, userId, currentUserId, likes: initialLikes = 0, liked: initialLiked = false, userBlocked = false, censored = false, isAdmin = false, onDelete, onCensored, onLikeChange, onEdit }: PostProps) {
   const navigate = useNavigate();
   const displayTime = formatRelativeTime(time);
   const handleStr = typeof handle === 'string' ? handle : String(handle);
@@ -65,6 +66,12 @@ export default function Post({ id, name, handle, avatar, time, text, image, user
   const [repliesCount, setRepliesCount] = useState(0);
   const [loadingReplies, setLoadingReplies] = useState(false);
   const [showReplyForm, setShowReplyForm] = useState(false);
+
+  // Edit modal states
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editedContent, setEditedContent] = useState(text || "");
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
 
   const isOwnPost = userId === currentUserId;
 
@@ -201,6 +208,34 @@ export default function Post({ id, name, handle, avatar, time, text, image, user
     }
   };
 
+  const handleEditSubmit = async () => {
+    if (!id || !editedContent.trim()) {
+      setEditError("Le contenu ne peut pas être vide");
+      return;
+    }
+
+    setEditLoading(true);
+    setEditError(null);
+    
+    try {
+      const success = await updatePost(Number(id), editedContent.trim());
+      if (success) {
+        // Notify parent component of the edit
+        onEdit?.(editedContent.trim());
+        // Close modals
+        setShowEditModal(false);
+        setShowMenu(false);
+      } else {
+        setEditError("Erreur lors de la modification du tweet");
+      }
+    } catch (error) {
+      console.error("Error editing post:", error);
+      setEditError("Une erreur est survenue lors de la modification");
+    } finally {
+      setEditLoading(false);
+    }
+  };
+
 
 
   return (
@@ -310,12 +345,24 @@ export default function Post({ id, name, handle, avatar, time, text, image, user
                         </button>
                       )}
                       {isOwnPost && (
-                        <button
-                          onClick={() => setConfirmDelete(true)}
-                          className="w-full text-left px-3 md:px-4 py-2 md:py-3 text-error text-xs md:text-sm hover:bg-surface-dark transition border rounded border-white"
-                        >
-                          Supprimer le tweet
-                        </button>
+                        <>
+                          <button
+                            onClick={() => {
+                              setShowEditModal(true);
+                              setEditedContent(text || "");
+                              setEditError(null);
+                            }}
+                            className="w-full text-left px-3 md:px-4 py-2 md:py-3 text-tick text-xs md:text-sm hover:bg-surface-dark transition border rounded border-white"
+                          >
+                            Modifier le tweet
+                          </button>
+                          <button
+                            onClick={() => setConfirmDelete(true)}
+                            className="w-full text-left px-3 md:px-4 py-2 md:py-3 text-error text-xs md:text-sm hover:bg-surface-dark transition border rounded border-white"
+                          >
+                            Supprimer le tweet
+                          </button>
+                        </>
                       )}
                     </div>
                   )}
@@ -398,6 +445,47 @@ export default function Post({ id, name, handle, avatar, time, text, image, user
           )}
         </div>
       </div>
+
+      {/* Edit Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center z-[9999] p-4">
+          <div className="bg-bg-dark border border-border-dark rounded-2xl max-w-md w-full p-4 md:p-6 shadow-xl">
+            <h2 className="text-xl md:text-2xl font-bold text-text-white mb-4">Modifier le tweet</h2>
+            
+            {editError && (
+              <div className="mb-4 bg-red-100 border border-red-400 rounded-lg p-3">
+                <p className="text-red-800 text-xs md:text-sm">{editError}</p>
+              </div>
+            )}
+
+            <textarea
+              value={editedContent}
+              onChange={(e) => setEditedContent(e.target.value)}
+              className="w-full px-4 py-3 bg-surface-dark border border-border-dark rounded-lg text-text-white placeholder-text-muted focus:outline-none focus:border-tick resize-none"
+              rows={5}
+              placeholder="Modifiez votre tweet..."
+              disabled={editLoading}
+            />
+
+            <div className="mt-4 flex gap-3 justify-end">
+              <button
+                onClick={() => setShowEditModal(false)}
+                disabled={editLoading}
+                className="px-4 py-2 rounded-full border border-border-dark text-text-white hover:bg-surface-dark transition disabled:opacity-50"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleEditSubmit}
+                disabled={editLoading || !editedContent.trim()}
+                className="px-6 py-2 rounded-full bg-tick text-text-white font-bold hover:bg-tick/90 transition disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {editLoading ? "Enregistrement..." : "Enregistrer"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete Confirmation Modal */}
       {confirmDelete && (

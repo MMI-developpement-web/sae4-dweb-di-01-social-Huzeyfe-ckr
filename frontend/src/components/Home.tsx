@@ -20,9 +20,6 @@ export default function Home() {
 
   // Check if user is authenticated - BOTH currentUser AND authToken must exist
   if (!currentUser || !authToken) {
-    console.warn('Missing authentication - No user or token found. Redirecting to login');
-    console.log('currentUser:', currentUser ? 'exists' : 'missing');
-    console.log('authToken:', authToken ? 'exists' : 'missing');
     navigate('/login');
     return (
       <div className="min-h-screen bg-bg-black flex items-center justify-center">

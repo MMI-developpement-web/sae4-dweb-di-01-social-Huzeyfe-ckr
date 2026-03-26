@@ -248,7 +248,7 @@ export async function updatePost(id: number, content: string): Promise<boolean> 
   try {
     const res = await fetch(`${API_BASE}/posts/${id}`, {
       method: 'PATCH',
-      headers: { 'Content-Type': 'application/json' },
+      headers: getAuthHeaders(),
       body: JSON.stringify({ content }),
     });
     return res.ok;

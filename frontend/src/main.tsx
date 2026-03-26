@@ -36,7 +36,6 @@ const router = createBrowserRouter(
     
   }
 );
-console.log("BASE_URL =", import.meta.env.BASE_URL);
 
 const rootElement = document.getElementById("root");
 

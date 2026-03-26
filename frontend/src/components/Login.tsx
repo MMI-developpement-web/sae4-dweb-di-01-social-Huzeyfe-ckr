@@ -24,23 +24,18 @@ export default function Login() {
     setLoading(true);
     setError("");
     
-    console.log('Starting login with user:', user);
     const response = await login(user, password);
     
     if (response.error) {
-      console.log('Login failed with error:', response.error);
       setError(response.error);
       setLoading(false);
       return;
     }
 
     if (response.user) {
-      console.log('Login successful, user ID=' + response.user.id);
-      console.log('Saving current user and redirecting to /home');
       saveCurrentUser(response.user);
       navigate('/home');
     } else {
-      console.log('Login failed - no user or error returned');
       setError("Une erreur s'est produite");
     }
     

@@ -1,10 +1,14 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { updateUser, type User } from "../../lib/api";
+import { updateUser, uploadMedia, type User } from "../../lib/api";
 import Header from "./Header";
 import SideBar from "./SideBar";
 import Footer from "./Footer";
 import Button from "./Button";
+
+// Get backend origin for proper image URLs
+const API_BASE = import.meta.env.VITE_API_URL;
+const BACKEND_ORIGIN = API_BASE.replace(/\/api$/, '');
 
 interface EditUserProfileProps {
   user: User | null;
@@ -18,6 +22,14 @@ export default function EditUserProfile({ user, onSave: _onSave, onCancel }: Edi
   const [saving, setSaving] = useState(false);
   const [successMessage, setSuccessMessage] = useState("");
   const [errorMessage, setErrorMessage] = useState("");
+
+  // File upload states
+  const [ppFile, setPpFile] = useState<File | null>(null);
+  const [ppPreview, setPpPreview] = useState<string | null>(null);
+  const [ppUploading, setPpUploading] = useState(false);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [bannerPreview, setBannerPreview] = useState<string | null>(null);
+  const [bannerUploading, setBannerUploading] = useState(false);
 
   const [formData, setFormData] = useState({
     name: user?.name || "",
@@ -35,6 +47,86 @@ export default function EditUserProfile({ user, onSave: _onSave, onCancel }: Edi
       ...prev,
       [name]: value,
     }));
+  };
+
+  // Handle avatar file selection
+  const handlePpFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setPpFile(file);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setPpPreview(event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Handle banner file selection
+  const handleBannerFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setBannerFile(file);
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setBannerPreview(event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Upload avatar
+  const handlePpUpload = async () => {
+    if (!ppFile) return;
+    setPpUploading(true);
+    try {
+      const result = await uploadMedia(ppFile);
+      if (result.mediaUrl) {
+        // Convert relative URL to absolute URL with backend origin
+        const fullUrl = result.mediaUrl.startsWith('http') 
+          ? result.mediaUrl 
+          : `${BACKEND_ORIGIN}${result.mediaUrl}`;
+        setFormData((prev) => ({
+          ...prev,
+          pp: fullUrl,
+        }));
+        setPpFile(null);
+        setPpPreview(null);
+      } else {
+        setErrorMessage(result.error || "Erreur lors du téléchargement de l'avatar");
+      }
+    } catch (error) {
+      setErrorMessage("Erreur lors du téléchargement de l'avatar");
+    } finally {
+      setPpUploading(false);
+    }
+  };
+
+  // Upload banner
+  const handleBannerUpload = async () => {
+    if (!bannerFile) return;
+    setBannerUploading(true);
+    try {
+      const result = await uploadMedia(bannerFile);
+      if (result.mediaUrl) {
+        // Convert relative URL to absolute URL with backend origin
+        const fullUrl = result.mediaUrl.startsWith('http') 
+          ? result.mediaUrl 
+          : `${BACKEND_ORIGIN}${result.mediaUrl}`;
+        setFormData((prev) => ({
+          ...prev,
+          banner: fullUrl,
+        }));
+        setBannerFile(null);
+        setBannerPreview(null);
+      } else {
+        setErrorMessage(result.error || "Erreur lors du téléchargement de la bannière");
+      }
+    } catch (error) {
+      setErrorMessage("Erreur lors du téléchargement de la bannière");
+    } finally {
+      setBannerUploading(false);
+    }
   };
 
   const handleSave = async (e: React.FormEvent) => {
@@ -194,44 +286,158 @@ export default function EditUserProfile({ user, onSave: _onSave, onCancel }: Edi
                 />
               </div>
 
-              {/* Photo de profil URL */}
+              {/* Photo de profil */}
               <div>
                 <label className="block text-sm font-semibold text-text-white mb-2">
-                  URL Photo de profil
+                  Photo de profil
                 </label>
-                <input
-                  type="url"
-                  name="pp"
-                  value={formData.pp}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 bg-surface-dark border border-border-dark rounded-lg text-text-white placeholder-text-muted focus:outline-none focus:border-tick"
-                  placeholder="https://exemple.com/photo.jpg"
-                  maxLength={1000}
-                />
-                {formData.pp && (
-                  <img
-                    src={formData.pp}
-                    alt="Preview"
-                    className="mt-3 w-20 h-20 rounded-full object-cover border border-border-dark"
-                    onError={() => {}}
-                  />
+                
+                {/* File input button - always visible if no file selected */}
+                {!ppFile && !ppPreview && (
+                  <label className="cursor-pointer block">
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/gif,image/webp"
+                      onChange={handlePpFileSelect}
+                      className="hidden"
+                    />
+                    <span className="block w-full px-4 py-3 bg-tick hover:bg-tick/90 text-text-white rounded-lg text-center font-semibold transition">
+                      📁 Choisir une photo
+                    </span>
+                  </label>
+                )}
+
+                {/* Preview and upload - shown when file selected */}
+                {ppPreview && (
+                  <div className="space-y-3">
+                    <img
+                      src={ppPreview}
+                      alt="Avatar preview"
+                      className="w-32 h-32 rounded-full object-cover border-2 border-tick mx-auto"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={handlePpUpload}
+                        disabled={ppUploading}
+                        className="flex-1 px-4 py-2 bg-tick hover:bg-tick/90 disabled:opacity-50 text-text-white rounded-lg font-semibold transition"
+                      >
+                        {ppUploading ? "Envoi..." : "Envoyer"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setPpFile(null);
+                          setPpPreview(null);
+                        }}
+                        className="px-4 py-2 bg-error hover:bg-error/90 text-text-white rounded-lg font-semibold transition"
+                      >
+                        ✕ Annuler
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Current avatar display */}
+                {formData.pp && !ppPreview && (
+                  <div className="space-y-2">
+                    <p className="text-text-muted text-xs">Avatar actuel:</p>
+                    <img
+                      src={formData.pp}
+                      alt="Current avatar"
+                      className="w-32 h-32 rounded-full object-cover border border-border-dark"
+                      onError={() => {}}
+                    />
+                    <label className="cursor-pointer block">
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/gif,image/webp"
+                        onChange={handlePpFileSelect}
+                        className="hidden"
+                      />
+                      <span className="block w-full px-4 py-2 bg-tick hover:bg-tick/90 text-text-white rounded-lg text-center font-semibold transition text-sm">
+                        📁 Changer
+                      </span>
+                    </label>
+                  </div>
                 )}
               </div>
 
-              {/* Banner URL */}
+              {/* Banner */}
               <div>
                 <label className="block text-sm font-semibold text-text-white mb-2">
-                  URL Bannière
+                  Bannière
                 </label>
-                <input
-                  type="url"
-                  name="banner"
-                  value={formData.banner}
-                  onChange={handleInputChange}
-                  className="w-full px-4 py-2 bg-surface-dark border border-border-dark rounded-lg text-text-white placeholder-text-muted focus:outline-none focus:border-tick"
-                  placeholder="https://exemple.com/banniere.jpg"
-                  maxLength={1000}
-                />
+                
+                {/* File input button - always visible if no file selected */}
+                {!bannerFile && !bannerPreview && (
+                  <label className="cursor-pointer block">
+                    <input
+                      type="file"
+                      accept="image/jpeg,image/png,image/gif,image/webp"
+                      onChange={handleBannerFileSelect}
+                      className="hidden"
+                    />
+                    <span className="block w-full px-4 py-3 bg-tick hover:bg-tick/90 text-text-white rounded-lg text-center font-semibold transition">
+                      📁 Choisir une bannière
+                    </span>
+                  </label>
+                )}
+
+                {/* Preview and upload - shown when file selected */}
+                {bannerPreview && (
+                  <div className="space-y-3">
+                    <img
+                      src={bannerPreview}
+                      alt="Banner preview"
+                      className="w-full h-40 rounded-lg object-cover border-2 border-tick"
+                    />
+                    <div className="flex gap-2">
+                      <button
+                        type="button"
+                        onClick={handleBannerUpload}
+                        disabled={bannerUploading}
+                        className="flex-1 px-4 py-2 bg-tick hover:bg-tick/90 disabled:opacity-50 text-text-white rounded-lg font-semibold transition"
+                      >
+                        {bannerUploading ? "Envoi..." : "Envoyer"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setBannerFile(null);
+                          setBannerPreview(null);
+                        }}
+                        className="px-4 py-2 bg-error hover:bg-error/90 text-text-white rounded-lg font-semibold transition"
+                      >
+                        ✕ Annuler
+                      </button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Current banner display */}
+                {formData.banner && !bannerPreview && (
+                  <div className="space-y-2">
+                    <p className="text-text-muted text-xs">Bannière actuelle:</p>
+                    <img
+                      src={formData.banner}
+                      alt="Current banner"
+                      className="w-full h-40 rounded-lg object-cover border border-border-dark"
+                      onError={() => {}}
+                    />
+                    <label className="cursor-pointer block">
+                      <input
+                        type="file"
+                        accept="image/jpeg,image/png,image/gif,image/webp"
+                        onChange={handleBannerFileSelect}
+                        className="hidden"
+                      />
+                      <span className="block w-full px-4 py-2 bg-tick hover:bg-tick/90 text-text-white rounded-lg text-center font-semibold transition text-sm">
+                        📁 Changer
+                      </span>
+                    </label>
+                  </div>
+                )}
               </div>
             </div>
 
