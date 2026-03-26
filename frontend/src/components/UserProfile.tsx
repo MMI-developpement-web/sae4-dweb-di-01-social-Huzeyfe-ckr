@@ -7,6 +7,7 @@ import Avatar from "./ui/Avatar";
 import Button from "./ui/Button";
 import Post from "./ui/Post";
 import Footer from "./ui/Footer";
+import EditUserProfile from "./ui/EditUserProfile";
 
 export default function UserProfile() {
   const { id } = useParams<{ id: string }>();
@@ -18,6 +19,7 @@ export default function UserProfile() {
   const [isFollowing, setIsFollowing] = useState(false);
   const [loading, setLoading] = useState(true);
   const [followLoading, setFollowLoading] = useState(false);
+  const [isEditing, setIsEditing] = useState(false);
 
   useEffect(() => {
     const loadUser = async () => {
@@ -107,6 +109,19 @@ export default function UserProfile() {
 
   const isOwnProfile = currentUser?.id === user.id;
 
+  if (isEditing) {
+    return (
+      <EditUserProfile
+        user={user}
+        onCancel={() => setIsEditing(false)}
+        onSave={(updatedUser) => {
+          setUser(updatedUser);
+          setIsEditing(false);
+        }}
+      />
+    );
+  }
+
   return (
     <div className="bg-bg-black min-h-screen text-text-white flex flex-col md:flex-row">
       <SideBar />
@@ -116,7 +131,10 @@ export default function UserProfile() {
         <div className="w-full max-w-2xl border-r border-border-dark md:border-l md:border-border-dark pb-24 md:pb-0">
           
           {/* Bannière */}
-          <div className="h-32 md:h-48 bg-linear-to-r from-tick to-text-muted"></div>
+          <div 
+            className="h-32 md:h-48 bg-linear-to-r from-tick to-text-muted bg-cover bg-center"
+            style={user?.banner ? { backgroundImage: `url(${user.banner})`, backgroundSize: 'cover' } : {}}
+          ></div>
 
           {/* Info utilisateur */}
           <div className="px-4 md:px-6 pb-4 md:pb-6">
@@ -140,8 +158,16 @@ export default function UserProfile() {
                 </p>
               </div>
 
-              {/* Follow/Unfollow Button */}
-              {!isOwnProfile && (
+              {/* Follow/Unfollow or Edit Button */}
+              {isOwnProfile ? (
+                <Button
+                  onClick={() => setIsEditing(true)}
+                  size="sm"
+                  className="bg-tick hover:bg-tick/90 shrink-0"
+                >
+                  Éditer le profil
+                </Button>
+              ) : (
                 <Button
                   onClick={handleFollowToggle}
                   disabled={followLoading || user?.blocked}
@@ -188,6 +214,23 @@ export default function UserProfile() {
 
             {/* Texte informations */}
             <div className="text-xs md:text-sm text-text-muted space-y-2">
+              {user?.bio && (
+                <p className="text-text-white text-sm md:text-base mb-3">{user.bio}</p>
+              )}
+              {user?.location && <p>📍 {user.location}</p>}
+              {user?.website && (
+                <p>
+                  🔗{" "}
+                  <a
+                    href={user.website}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-tick hover:underline"
+                  >
+                    {user.website}
+                  </a>
+                </p>
+              )}
               {user?.email && <p>📧 {user.email}</p>}
               {user?.createdAt && <p>Inscrit depuis le {new Date(user.createdAt).toLocaleDateString("fr-FR")}</p>}
             </div>

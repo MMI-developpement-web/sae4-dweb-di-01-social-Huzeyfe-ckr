@@ -13,6 +13,10 @@ export interface User {
   phone?: string;
   birthDate?: string;
   pp?: string;
+  banner?: string;
+  bio?: string;
+  website?: string;
+  location?: string;
   avatar?: string;
   createdAt?: string;
   postsCount?: number;

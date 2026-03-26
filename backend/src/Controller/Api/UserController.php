@@ -40,6 +40,11 @@ class UserController extends AbstractController
                 'blocked' => $u->isBlocked(),
                 'phone' => $u->getPhone(),
                 'birthDate' => $u->getBirthDate() ? $u->getBirthDate()->format('Y-m-d') : null,
+                'pp' => $u->getPp(),
+                'banner' => $u->getBanner(),
+                'bio' => $u->getBio(),
+                'website' => $u->getWebsite(),
+                'location' => $u->getLocation(),
                 'createdAt' => $u->getCreatedAt() ? $u->getCreatedAt()->format(DATE_ATOM) : null,
             ];
         }, $users);
@@ -64,6 +69,11 @@ class UserController extends AbstractController
             'blocked' => $user->isBlocked(),
             'phone' => $user->getPhone(),
             'birthDate' => $user->getBirthDate() ? $user->getBirthDate()->format('Y-m-d') : null,
+            'pp' => $user->getPp(),
+            'banner' => $user->getBanner(),
+            'bio' => $user->getBio(),
+            'website' => $user->getWebsite(),
+            'location' => $user->getLocation(),
             'createdAt' => $user->getCreatedAt() ? $user->getCreatedAt()->format(DATE_ATOM) : null,
             'followers' => $followRepository->countFollowers($user->getId()),
             'following' => $followRepository->countFollowing($user->getId()),
@@ -186,6 +196,21 @@ class UserController extends AbstractController
         if (isset($data['role'])) {
             $user->setRole($data['role']);
         }
+        if (isset($data['pp'])) {
+            $user->setPp($data['pp']);
+        }
+        if (isset($data['banner'])) {
+            $user->setBanner($data['banner']);
+        }
+        if (isset($data['bio'])) {
+            $user->setBio($data['bio']);
+        }
+        if (isset($data['website'])) {
+            $user->setWebsite($data['website']);
+        }
+        if (isset($data['location'])) {
+            $user->setLocation($data['location']);
+        }
 
         $em->flush();
 
@@ -198,6 +223,11 @@ class UserController extends AbstractController
             'blocked' => $user->isBlocked(),
             'phone' => $user->getPhone(),
             'birthDate' => $user->getBirthDate() ? $user->getBirthDate()->format('Y-m-d') : null,
+            'pp' => $user->getPp(),
+            'banner' => $user->getBanner(),
+            'bio' => $user->getBio(),
+            'website' => $user->getWebsite(),
+            'location' => $user->getLocation(),
             'createdAt' => $user->getCreatedAt() ? $user->getCreatedAt()->format(DATE_ATOM) : null,
         ]);
     }

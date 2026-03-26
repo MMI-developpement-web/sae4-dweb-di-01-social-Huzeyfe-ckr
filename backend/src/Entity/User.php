@@ -55,6 +55,22 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(['default', 'detail'])]
     private ?string $pp = null;
 
+    #[ORM\Column(length: 1000, nullable: true)]
+    #[Groups(['default', 'detail'])]
+    private ?string $banner = null;
+
+    #[ORM\Column(length: 500, nullable: true)]
+    #[Groups(['default', 'detail'])]
+    private ?string $bio = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['default', 'detail'])]
+    private ?string $website = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['default', 'detail'])]
+    private ?string $location = null;
+
     #[ORM\Column(type: 'datetime')]
     #[Groups(['default', 'detail'])]
     private \DateTimeInterface $createdAt;
@@ -180,6 +196,50 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setPp(?string $pp): static
     {
         $this->pp = $pp;
+        return $this;
+    }
+
+    public function getBanner(): ?string
+    {
+        return $this->banner;
+    }
+
+    public function setBanner(?string $banner): static
+    {
+        $this->banner = $banner;
+        return $this;
+    }
+
+    public function getBio(): ?string
+    {
+        return $this->bio;
+    }
+
+    public function setBio(?string $bio): static
+    {
+        $this->bio = $bio;
+        return $this;
+    }
+
+    public function getWebsite(): ?string
+    {
+        return $this->website;
+    }
+
+    public function setWebsite(?string $website): static
+    {
+        $this->website = $website;
+        return $this;
+    }
+
+    public function getLocation(): ?string
+    {
+        return $this->location;
+    }
+
+    public function setLocation(?string $location): static
+    {
+        $this->location = $location;
         return $this;
     }
 
