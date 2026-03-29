@@ -46,10 +46,15 @@ class Post
     #[ORM\OneToMany(targetEntity: Like::class, mappedBy: 'post', orphanRemoval: true)]
     private Collection $likes;
 
+    #[ORM\ManyToMany(targetEntity: Hashtag::class, mappedBy: 'posts')]
+    #[Groups(['default', 'detail'])]
+    private Collection $hashtags;
+
     public function __construct()
     {
         $this->createdAt = new \DateTime();
         $this->likes = new ArrayCollection();
+        $this->hashtags = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -147,6 +152,31 @@ class Post
     public function setMediaUrl(?string $mediaUrl): static
     {
         $this->mediaUrl = $mediaUrl;
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Hashtag>
+     */
+    public function getHashtags(): Collection
+    {
+        return $this->hashtags;
+    }
+
+    public function addHashtag(Hashtag $hashtag): static
+    {
+        if (!$this->hashtags->contains($hashtag)) {
+            $this->hashtags->add($hashtag);
+            $hashtag->addPost($this);
+        }
+        return $this;
+    }
+
+    public function removeHashtag(Hashtag $hashtag): static
+    {
+        if ($this->hashtags->removeElement($hashtag)) {
+            $hashtag->removePost($this);
+        }
         return $this;
     }
 }

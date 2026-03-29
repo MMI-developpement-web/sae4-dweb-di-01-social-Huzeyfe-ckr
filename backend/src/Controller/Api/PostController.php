@@ -10,6 +10,7 @@ use App\Repository\UserRepository;
 use App\Repository\LikeRepository;
 use App\Repository\FollowRepository;
 use App\Repository\BlockedUserRepository;
+use App\Service\HashtagService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -158,7 +159,7 @@ class PostController extends AbstractController
      * POST /api/posts
      */
     #[Route('', name: 'posts.create', methods: ['POST'])]
-    public function create(Request $request, UserRepository $userRepository, EntityManagerInterface $em): JsonResponse
+    public function create(Request $request, UserRepository $userRepository, EntityManagerInterface $em, HashtagService $hashtagService): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
 
@@ -193,6 +194,9 @@ class PostController extends AbstractController
         $em->persist($post);
         $em->flush();
 
+        // Extract and apply hashtags
+        $hashtagService->extractAndApplyHashtags($post);
+
         $response = [
             'id' => $post->getId(),
             'content' => $post->getContent(),
@@ -205,6 +209,7 @@ class PostController extends AbstractController
                 'user' => $post->getUser()->getUser(),
                 'pp' => $post->getUser()->getPp(),
             ] : null,
+            'hashtags' => $post->getHashtags()->map(fn($h) => ['id' => $h->getId(), 'name' => $h->getName()])->toArray(),
         ];
 
         return $this->json($response, Response::HTTP_CREATED);
@@ -215,7 +220,7 @@ class PostController extends AbstractController
      * PUT /api/posts/{id}
      */
     #[Route('/{id}', name: 'posts.update', methods: ['PUT'])]
-    public function update(Post $post, Request $request, EntityManagerInterface $em, SerializerInterface $serializer): JsonResponse
+    public function update(Post $post, Request $request, EntityManagerInterface $em, SerializerInterface $serializer, HashtagService $hashtagService): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
 
@@ -228,6 +233,11 @@ class PostController extends AbstractController
         }
 
         $em->flush();
+
+        // Extract and apply hashtags if content was updated
+        if (isset($data['content'])) {
+            $hashtagService->extractAndApplyHashtags($post);
+        }
 
         $json = $serializer->serialize($post, 'json', ['groups' => 'detail']);
         return new JsonResponse(json_decode($json, true));
@@ -238,7 +248,7 @@ class PostController extends AbstractController
      * PATCH /api/posts/{id}
      */
     #[Route('/{id}', name: 'posts.patch', methods: ['PATCH'])]
-    public function patch(Post $post, Request $request, EntityManagerInterface $em, SerializerInterface $serializer): JsonResponse
+    public function patch(Post $post, Request $request, EntityManagerInterface $em, SerializerInterface $serializer, HashtagService $hashtagService): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
 
@@ -251,6 +261,11 @@ class PostController extends AbstractController
         }
 
         $em->flush();
+
+        // Extract and apply hashtags if content was updated
+        if (isset($data['content'])) {
+            $hashtagService->extractAndApplyHashtags($post);
+        }
 
         $json = $serializer->serialize($post, 'json', ['groups' => 'detail']);
         return new JsonResponse(json_decode($json, true));

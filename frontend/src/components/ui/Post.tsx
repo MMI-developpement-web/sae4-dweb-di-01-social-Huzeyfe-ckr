@@ -3,6 +3,7 @@ import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Avatar from "./Avatar";
 import { deletePost, likePost, unlikePost, getReplies, updatePost, type Reply as ReplyType } from "../../lib/api";
+import { InteractiveText } from "../../lib/hashtagParser";
 import { Reply } from "./Reply";
 import { ReplyForm } from "./ReplyForm";
 
@@ -407,7 +408,13 @@ export default function Post({ id, name, handle, avatar, time, text, image, user
               <p className="text-red-700 text-xs md:text-sm italic mt-1">son compte a été suspendu pour non respect des conditions d'utilisation</p>
             </div>
           ) : text && (
-            <p className="mt-2 text-sm md:text-base leading-6 text-text-white whitespace-pre-wrap">{text}</p>
+            <p className="mt-2 text-sm md:text-base leading-6 text-text-white whitespace-pre-wrap">
+              <InteractiveText 
+                text={text} 
+                onHashtagClick={(tag) => navigate(`/search/hashtag/${tag}`)}
+                onMentionClick={(mention) => navigate(`/profile/${mention}`)}
+              />
+            </p>
           )}
 
           {/* Media Display */}

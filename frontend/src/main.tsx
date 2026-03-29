@@ -12,6 +12,7 @@ import Post from "./routes/post";
 import Profile from "./routes/profile";
 import UserProfile from "./components/UserProfile";
 import Settings from "./components/Settings";
+import HashtagSearch from "./components/HashtagSearch";
 
 import "./index.css";
 
@@ -28,6 +29,7 @@ const router = createBrowserRouter(
         { path: "profile/:id", element: <UserProfile /> },
         { path: "post", element: <Post /> },
         { path: "settings", element: <Settings /> },
+        { path: "search/hashtag/:hashtag", element: <HashtagSearch /> },
         { path: "login", element: <Login /> },
         { path: "signup", element: <Signup /> },
       ],
