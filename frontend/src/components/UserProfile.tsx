@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getUser, followUser, unfollowUser, getCurrentUser, getPosts, isUserBlocked, type User, type Post as PostType } from "../lib/api";
+import { getUser, followUser, unfollowUser, getCurrentUser, getPosts, isUserBlocked, pinPost, unpinPost, type User, type Post as PostType } from "../lib/api";
 import Header from "./ui/Header";
 import SideBar from "./ui/SideBar";
 import Avatar from "./ui/Avatar";
@@ -17,6 +17,7 @@ export default function UserProfile() {
 
   const [user, setUser] = useState<User | null>(null);
   const [posts, setPosts] = useState<PostType[]>([]);
+  const [pinnedPost, setPinnedPost] = useState<PostType | null>(null);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -40,7 +41,19 @@ export default function UserProfile() {
         const userPosts = allPosts
           .filter((post: PostType) => post.user.id === userData?.id)
           .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-        setPosts(userPosts);
+        
+        // Séparer le post épinglé des autres posts
+        if (userData?.pinnedPostId) {
+          const pinned = userPosts.find(p => p.id === userData.pinnedPostId);
+          if (pinned) {
+            setPinnedPost(pinned);
+            setPosts(userPosts.filter(p => p.id !== userData.pinnedPostId));
+          } else {
+            setPosts(userPosts);
+          }
+        } else {
+          setPosts(userPosts);
+        }
       } catch (error) {
         console.error("Error loading user:", error);
       } finally {
@@ -85,6 +98,37 @@ export default function UserProfile() {
       setPosts(userPosts);
     };
     loadUserPosts();
+  };
+
+  const handlePinPost = async (postId: number) => {
+    if (!currentUser || !user) return;
+
+    // Si le post est déjà épinglé, le désépingler
+    if (pinnedPost?.id === postId) {
+      const success = await unpinPost(currentUser.id);
+      if (success) {
+        // Re-ajouter le post à la liste
+        setPosts(prev => [...prev, pinnedPost].sort((a, b) => 
+          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        ));
+        setPinnedPost(null);
+      }
+    } else {
+      // Épingler le post
+      const success = await pinPost(currentUser.id, postId);
+      if (success) {
+        // Trouver le post à épingler et le mettre à part
+        const postToPin = posts.find(p => p.id === postId);
+        if (postToPin) {
+          // Désépingler ancien si existe
+          if (pinnedPost) {
+            setPosts(prev => [...prev, pinnedPost]);
+          }
+          setPinnedPost(postToPin);
+          setPosts(prev => prev.filter(p => p.id !== postId));
+        }
+      }
+    }
   };
 
   const getAvatarUrl = () => {
@@ -260,11 +304,50 @@ export default function UserProfile() {
           {/* Separator */}
           <div className="border-t border-border-dark"></div>
 
+          {/* Post épinglé */}
+          {pinnedPost && isOwnProfile && (
+            <div className="bg-surface-dark/50 border-b border-border-dark">
+              <div className="px-4 md:px-6 py-2 text-xs text-text-muted flex items-center gap-2">
+                <span>📌</span>
+                <span>Tweet épinglé</span>
+              </div>
+              <div className="px-4 md:px-6 py-4 hover:bg-surface-dark transition border-b border-border-dark">
+                <Post
+                  id={pinnedPost.id}
+                  name={pinnedPost.user.name}
+                  handle={`@${pinnedPost.user.user}`}
+                  avatar={pinnedPost.user.pp && pinnedPost.user.pp !== "null" 
+                    ? pinnedPost.user.pp 
+                    : `https://picsum.photos/seed/${encodeURIComponent(pinnedPost.user.user)}/200`}
+                  time={pinnedPost.createdAt}
+                  text={pinnedPost.content}
+                  image={pinnedPost.mediaUrl}
+                  userId={pinnedPost.user.id}
+                  currentUserId={currentUser?.id}
+                  likes={pinnedPost.likes || 0}
+                  liked={pinnedPost.liked || false}
+                  userBlocked={pinnedPost.user.blocked || false}
+                  censored={pinnedPost.censored || false}
+                  onDelete={handlePostDeleted}
+                  onPin={handlePinPost}
+                  isPinned={true}
+                  onLikeChange={(liked, likeCount) => {
+                    setPinnedPost(prev => prev ? { ...prev, likes: likeCount, liked } : null);
+                  }}
+                />
+              </div>
+            </div>
+          )}
+
           {/* Posts de l'utilisateur */}
           <div className="divide-y divide-border-dark">
-            {posts.length === 0 ? (
+            {posts.length === 0 && !pinnedPost ? (
               <div className="px-4 md:px-6 py-10 text-center text-text-muted">
                 <p>Aucun tweet pour le moment</p>
+              </div>
+            ) : posts.length === 0 ? (
+              <div className="px-4 md:px-6 py-10 text-center text-text-muted">
+                <p>Aucun autre tweet</p>
               </div>
             ) : (
               posts.map((post) => {
@@ -291,6 +374,8 @@ export default function UserProfile() {
                       userBlocked={post.user.blocked || false}
                       censored={post.censored || false}
                       onDelete={handlePostDeleted}
+                      onPin={isOwnProfile ? handlePinPost : undefined}
+                      isPinned={false}
                       onLikeChange={(liked, likeCount) => {
                         const updatedPosts = posts.map(p =>
                           p.id === post.id ? { ...p, likes: likeCount, liked } : p

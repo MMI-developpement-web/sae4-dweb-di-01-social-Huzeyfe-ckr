@@ -41,13 +41,15 @@ export interface PostProps {
   userReadOnly?: boolean;
   censored?: boolean;
   isAdmin?: boolean;
+  isPinned?: boolean;
   onDelete?: () => void;
   onCensored?: (censored: boolean) => void;
   onLikeChange?: (liked: boolean, likeCount: number) => void;
   onEdit?: (newContent: string) => void;
+  onPin?: (postId: number) => void;
 }
 
-export default function Post({ id, name, handle, avatar, time, text, image, userId, currentUserId, likes: initialLikes = 0, liked: initialLiked = false, userBlocked = false, userReadOnly = false, censored = false, isAdmin = false, onDelete, onCensored, onLikeChange, onEdit }: PostProps) {
+export default function Post({ id, name, handle, avatar, time, text, image, userId, currentUserId, likes: initialLikes = 0, liked: initialLiked = false, userBlocked = false, userReadOnly = false, censored = false, isAdmin = false, isPinned = false, onDelete, onCensored, onLikeChange, onEdit, onPin }: PostProps) {
   const navigate = useNavigate();
   const displayTime = formatRelativeTime(time);
   const handleStr = typeof handle === 'string' ? handle : String(handle);
@@ -343,18 +345,35 @@ export default function Post({ id, name, handle, avatar, time, text, image, user
 
               {/* Menu Button - 3 dots en horizontales */}
               {isOwnPost && (
-                <div className="relative">
-                  <button
-                    onClick={() => setShowMenu(!showMenu)}
-                    className="text-text-muted hover:text-tick transition p-1.5 md:p-2 rounded-full hover:bg-tick/10"
-                    aria-label="Options du tweet"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="md:w-4 md:h-4">
-                      <circle cx="5" cy="12" r="2" />
-                      <circle cx="12" cy="12" r="2" />
-                      <circle cx="19" cy="12" r="2" />
-                    </svg>
-                  </button>
+                <>
+                  {/* Pin Button */}
+                  {onPin && (
+                    <button
+                      onClick={() => onPin(Number(id))}
+                      className={`transition p-1.5 md:p-2 rounded-full ${
+                        isPinned 
+                          ? 'text-tick hover:bg-tick/10' 
+                          : 'text-text-muted hover:text-tick hover:bg-tick/10'
+                      }`}
+                      aria-label={isPinned ? "Désépingler" : "Épingler"}
+                      title={isPinned ? "Désépingler ce tweet" : "Épingler ce tweet"}
+                    >
+                      <span className="text-lg">📌</span>
+                    </button>
+                  )}
+                  
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowMenu(!showMenu)}
+                      className="text-text-muted hover:text-tick transition p-1.5 md:p-2 rounded-full hover:bg-tick/10"
+                      aria-label="Options du tweet"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" className="md:w-4 md:h-4">
+                        <circle cx="5" cy="12" r="2" />
+                        <circle cx="12" cy="12" r="2" />
+                        <circle cx="19" cy="12" r="2" />
+                      </svg>
+                    </button>
 
                   {/* Dropdown Menu */}
                   {showMenu && (
@@ -393,6 +412,7 @@ export default function Post({ id, name, handle, avatar, time, text, image, user
                     </div>
                   )}
                 </div>
+                </>
               )}
             </div>
           </div>

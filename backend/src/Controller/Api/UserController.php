@@ -4,9 +4,11 @@ namespace App\Controller\Api;
 
 use App\Entity\User;
 use App\Entity\Follow;
+use App\Entity\Post;
 use App\Repository\UserRepository;
 use App\Repository\FollowRepository;
 use App\Repository\BlockedUserRepository;
+use App\Repository\PostRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -326,5 +328,77 @@ class UserController extends AbstractController
             'followers' => $followRepository->countFollowers($userToUnfollow->getId()),
             'following' => $followRepository->countFollowing($userToUnfollow->getId()),
         ]);
+    }
+
+    /**
+     * Épingler un post sur le profil utilisateur
+     * POST /api/users/{id}/pin-post/{postId}
+     */
+    #[Route('/{id}/pin-post/{postId}', name: 'users.pin_post', methods: ['POST'])]
+    public function pinPost(
+        int $id,
+        int $postId,
+        UserRepository $userRepository,
+        PostRepository $postRepository,
+        EntityManagerInterface $em
+    ): JsonResponse {
+        $currentUser = $this->getUser();
+
+        if (!$currentUser instanceof User) {
+            return $this->json(['error' => 'Non authentifié'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        // Vérifier que l'utilisateur épingle son propre post
+        if ($currentUser->getId() !== $id) {
+            return $this->json(['error' => 'Vous ne pouvez épingler que vos propres posts'], Response::HTTP_FORBIDDEN);
+        }
+
+        $post = $postRepository->find($postId);
+        if (!$post) {
+            return $this->json(['error' => 'Post non trouvé'], Response::HTTP_NOT_FOUND);
+        }
+
+        if ($post->getUser()->getId() !== $currentUser->getId()) {
+            return $this->json(['error' => 'Vous ne pouvez épingler que vos propres posts'], Response::HTTP_FORBIDDEN);
+        }
+
+        $currentUser->setPinnedPost($post);
+        $em->flush();
+
+        return $this->json([
+            'message' => 'Post épinglé avec succès',
+            'pinnedPostId' => $post->getId(),
+            'pinnedPostContent' => $post->getContent(),
+        ]);
+    }
+
+    /**
+     * Désépingler le post actuellement épinglé
+     * DELETE /api/users/{id}/pin-post
+     */
+    #[Route('/{id}/pin-post', name: 'users.unpin_post', methods: ['DELETE'])]
+    public function unpinPost(
+        int $id,
+        EntityManagerInterface $em
+    ): JsonResponse {
+        $currentUser = $this->getUser();
+
+        if (!$currentUser instanceof User) {
+            return $this->json(['error' => 'Non authentifié'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        // Vérifier que l'utilisateur désépingle son propre post
+        if ($currentUser->getId() !== $id) {
+            return $this->json(['error' => 'Vous ne pouvez désépingler que votre propre post'], Response::HTTP_FORBIDDEN);
+        }
+
+        if (!$currentUser->getPinnedPost()) {
+            return $this->json(['error' => 'Aucun post épinglé'], Response::HTTP_NOT_FOUND);
+        }
+
+        $currentUser->setPinnedPost(null);
+        $em->flush();
+
+        return $this->json(['message' => 'Post désépinglé avec succès']);
     }
 }

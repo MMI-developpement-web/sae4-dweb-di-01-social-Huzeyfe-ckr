@@ -14,6 +14,7 @@ export interface User {
   active: boolean;
   blocked?: boolean;
   readOnly?: boolean;  // Read-only mode
+  pinnedPostId?: number;  // ID of pinned post
   phone?: string;
   birthDate?: string;
   pp?: string;
@@ -532,6 +533,32 @@ export function getAuthHeaders(): HeadersInit {
     (headers as Record<string, string>)['Authorization'] = `Bearer ${token}`;
   }
   return headers;
+}
+
+export async function pinPost(userId: number, postId: number): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/users/${userId}/pin-post/${postId}`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+    });
+    return res.ok;
+  } catch (err) {
+    console.error('Pin post error:', err);
+    return false;
+  }
+}
+
+export async function unpinPost(userId: number): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE}/users/${userId}/pin-post`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+    return res.ok;
+  } catch (err) {
+    console.error('Unpin post error:', err);
+    return false;
+  }
 }
 
 export function logout(): void {

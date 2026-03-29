@@ -82,6 +82,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Post::class, mappedBy: 'user', orphanRemoval: true)]
     private Collection $posts;
 
+    #[ORM\ManyToOne(targetEntity: Post::class)]
+    #[ORM\JoinColumn(name: 'pinned_post_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
+    #[Groups(['default', 'detail'])]
+    private ?Post $pinnedPost = null;
+
     #[ORM\OneToOne(targetEntity: AccessToken::class, mappedBy: 'user', orphanRemoval: true)]
     private ?AccessToken $accessToken = null;
 
@@ -435,6 +440,21 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
                 $follow->setFollowing(null);
             }
         }
+        return $this;
+    }
+
+    public function getPinnedPost(): ?Post
+    {
+        return $this->pinnedPost;
+    }
+
+    public function setPinnedPost(?Post $pinnedPost): self
+    {
+        // Validate that the pinned post belongs to this user
+        if ($pinnedPost && $pinnedPost->getUser() !== $this) {
+            throw new \InvalidArgumentException('Cannot pin a post that does not belong to you');
+        }
+        $this->pinnedPost = $pinnedPost;
         return $this;
     }
 }
