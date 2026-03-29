@@ -77,6 +77,16 @@ export default function SideBar({ className = "" }: SideBarDataProps & SideBarVi
         Publier
       </Button>
 
+      {/* Settings Button */}
+      <Button 
+        variant="dark" 
+        size="lg" 
+        className="w-full border border-border-dark text-text-white hover:bg-surface-dark font-bold mb-6"
+        onClick={() => navigate('/settings')}
+      >
+        ⚙️ Paramètres
+      </Button>
+
     {/* log Out Button */}
       <Button 
         variant="solid" 

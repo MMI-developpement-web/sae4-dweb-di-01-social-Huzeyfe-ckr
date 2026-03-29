@@ -37,6 +37,7 @@ export interface PostProps {
   likes?: number;
   liked?: boolean;
   userBlocked?: boolean;
+  userReadOnly?: boolean;
   censored?: boolean;
   isAdmin?: boolean;
   onDelete?: () => void;
@@ -45,7 +46,7 @@ export interface PostProps {
   onEdit?: (newContent: string) => void;
 }
 
-export default function Post({ id, name, handle, avatar, time, text, image, userId, currentUserId, likes: initialLikes = 0, liked: initialLiked = false, userBlocked = false, censored = false, isAdmin = false, onDelete, onCensored, onLikeChange, onEdit }: PostProps) {
+export default function Post({ id, name, handle, avatar, time, text, image, userId, currentUserId, likes: initialLikes = 0, liked: initialLiked = false, userBlocked = false, userReadOnly = false, censored = false, isAdmin = false, onDelete, onCensored, onLikeChange, onEdit }: PostProps) {
   const navigate = useNavigate();
   const displayTime = formatRelativeTime(time);
   const handleStr = typeof handle === 'string' ? handle : String(handle);
@@ -272,27 +273,47 @@ export default function Post({ id, name, handle, avatar, time, text, image, user
             </div>
 
             <div className="flex items-center gap-1 md:gap-3 shrink-0">
-              {/* Bouton Réponse */}
-              <button
-                onClick={() => setShowReplyForm(!showReplyForm)}
-                className="flex items-center gap-1 transition text-text-muted hover:text-primary text-xs md:text-sm"
-                aria-label="Répondre"
-              >
-                <svg 
-                  width="16" 
-                  height="16" 
-                  viewBox="0 0 24 24" 
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  className="md:w-4 md:h-4"
+              {/* Bouton Réponse - Masqué si user readOnly */}
+              {!userReadOnly && (
+                <button
+                  onClick={() => setShowReplyForm(!showReplyForm)}
+                  className="flex items-center gap-1 transition text-text-muted hover:text-primary text-xs md:text-sm"
+                  aria-label="Répondre"
                 >
-                  <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                </svg>
-                <span className="text-xs md:text-sm">{repliesCount}</span>
-              </button>
+                  <svg 
+                    width="16" 
+                    height="16" 
+                    viewBox="0 0 24 24" 
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="md:w-4 md:h-4"
+                  >
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                  </svg>
+                  <span className="text-xs md:text-sm">{repliesCount}</span>
+                </button>
+              )}
+              {userReadOnly && (
+                <span className="flex items-center gap-1 text-text-muted text-xs md:text-sm">
+                  <svg 
+                    width="16" 
+                    height="16" 
+                    viewBox="0 0 24 24" 
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    className="md:w-4 md:h-4 opacity-50"
+                  >
+                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
+                  </svg>
+                  <span className="text-xs md:text-sm opacity-50">{repliesCount}</span>
+                </span>
+              )}
 
               {/* Like Button - Cœur à droite */}
               <button

@@ -97,6 +97,11 @@ class ReplyController extends AbstractController
             return $this->json(['error' => 'Impossible de répondre à un utilisateur banni'], Response::HTTP_FORBIDDEN);
         }
 
+        // Check if post author has read-only mode enabled
+        if ($post->getUser()->isReadOnly()) {
+            return $this->json(['error' => 'Cet utilisateur a activé le mode lecture seule. Les réponses ne sont pas autorisées'], Response::HTTP_FORBIDDEN);
+        }
+
         // Check if user is blocked by post author or blocks post author
         if ($this->blockedUserRepository->isUserBlocked($post->getUser()->getId(), $user->getId())) {
             return $this->json(['error' => 'Vous êtes bloqué par l\'auteur de ce tweet'], Response::HTTP_FORBIDDEN);

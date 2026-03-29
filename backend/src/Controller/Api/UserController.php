@@ -39,6 +39,7 @@ class UserController extends AbstractController
                 'name' => $u->getName(),
                 'role' => $u->getRole(),
                 'blocked' => $u->isBlocked(),
+                'readOnly' => $u->isReadOnly(),
                 'phone' => $u->getPhone(),
                 'birthDate' => $u->getBirthDate() ? $u->getBirthDate()->format('Y-m-d') : null,
                 'pp' => $u->getPp(),
@@ -68,6 +69,7 @@ class UserController extends AbstractController
             'name' => $user->getName(),
             'role' => $user->getRole(),
             'blocked' => $user->isBlocked(),
+            'readOnly' => $user->isReadOnly(),
             'phone' => $user->getPhone(),
             'birthDate' => $user->getBirthDate() ? $user->getBirthDate()->format('Y-m-d') : null,
             'pp' => $user->getPp(),
@@ -194,6 +196,9 @@ class UserController extends AbstractController
         if (isset($data['blocked'])) {
             $user->setBlocked($data['blocked']);
         }
+        if (isset($data['readOnly'])) {
+            $user->setReadOnly($data['readOnly']);
+        }
         if (isset($data['role'])) {
             $user->setRole($data['role']);
         }
@@ -222,6 +227,7 @@ class UserController extends AbstractController
             'name' => $user->getName(),
             'role' => $user->getRole(),
             'blocked' => $user->isBlocked(),
+            'readOnly' => $user->isReadOnly(),
             'phone' => $user->getPhone(),
             'birthDate' => $user->getBirthDate() ? $user->getBirthDate()->format('Y-m-d') : null,
             'pp' => $user->getPp(),

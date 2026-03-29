@@ -156,12 +156,20 @@ export default function UserProfile() {
             {/* Profil Header avec nom et bouton */}
             <div className="flex justify-between items-center gap-4 mb-4">
               <div className="flex-1 min-w-0">
-                <h1 className="text-xl md:text-2xl font-bold truncate">
-                  {user?.blocked ? "Utilisateur banni" : user?.name}
-                </h1>
+                <div className="flex items-center gap-2">
+                  <h1 className="text-xl md:text-2xl font-bold truncate">
+                    {user?.blocked ? "Utilisateur banni" : user?.name}
+                  </h1>
+                  {user?.readOnly && (
+                    <span className="text-lg">🔒</span>
+                  )}
+                </div>
                 <p className="text-text-muted text-xs md:text-sm">
                   {user?.blocked ? "" : `@${user?.user || user?.username}`}
                 </p>
+                {user?.readOnly && (
+                  <p className="text-text-muted text-xs mt-1">Mode lecture seule</p>
+                )}
               </div>
 
               {/* Follow/Unfollow or Edit Button */}

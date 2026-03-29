@@ -43,6 +43,10 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(['default', 'detail'])]
     private bool $blocked = false;
 
+    #[ORM\Column(type: 'boolean')]
+    #[Groups(['default', 'detail'])]
+    private bool $readOnly = false;
+
     #[ORM\Column(length: 20, nullable: true)]
     #[Groups(['default', 'detail'])]
     private ?string $phone = null;
@@ -166,6 +170,17 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function setBlocked(bool $blocked): static
     {
         $this->blocked = $blocked;
+        return $this;
+    }
+
+    public function isReadOnly(): bool
+    {
+        return $this->readOnly;
+    }
+
+    public function setReadOnly(bool $readOnly): static
+    {
+        $this->readOnly = $readOnly;
         return $this;
     }
 

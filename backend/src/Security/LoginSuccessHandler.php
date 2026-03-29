@@ -32,6 +32,7 @@ class LoginSuccessHandler implements AuthenticationSuccessHandlerInterface
                 'name' => $user->getName(),
                 'role' => $user->getRole(),
                 'blocked' => $user->isBlocked(),
+                'readOnly' => $user->isReadOnly(),
             ],
         ]);
     }

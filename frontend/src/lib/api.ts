@@ -13,6 +13,7 @@ export interface User {
   role: 'user' | 'admin';
   active: boolean;
   blocked?: boolean;
+  readOnly?: boolean;  // Read-only mode
   phone?: string;
   birthDate?: string;
   pp?: string;
@@ -168,6 +169,21 @@ export async function updateUser(id: number, data: Partial<User>): Promise<boole
   } catch (err) {
     console.error('Update user error:', err);
     return false;
+  }
+}
+
+export async function toggleUserReadOnly(id: number, readOnly: boolean): Promise<User | null> {
+  try {
+    const res = await fetch(`${API_BASE}/users/${id}`, {
+      method: 'PATCH',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ readOnly }),
+    });
+    if (!res.ok) throw new Error('Toggle readOnly failed');
+    return res.json();
+  } catch (err) {
+    console.error('Toggle readOnly error:', err);
+    return null;
   }
 }
 
