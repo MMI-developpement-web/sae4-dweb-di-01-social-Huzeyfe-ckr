@@ -3,6 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { logout } from "../../lib/api";
 import Button from "./Button";
 
+
+// Composant de header réutilisable avec logo centré et bouton de déconnexion optionnel, adapté pour les vues mobiles, utilisant class-variance-authority pour la gestion des classes CSS conditionnelles
+
 interface HeaderDataProps {
   logoSrc?: string;
   showLogout?: boolean;

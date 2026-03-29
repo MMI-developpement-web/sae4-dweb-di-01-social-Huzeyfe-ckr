@@ -67,6 +67,16 @@ export default function SideBar({ className = "" }: SideBarDataProps & SideBarVi
      
       <Footer vertical={true} />
 
+      {/* Search Button */}
+      <Button 
+        variant="dark" 
+        size="lg" 
+        className="w-full border border-border-dark text-text-white hover:bg-surface-dark font-bold mb-6"
+        onClick={() => navigate('/search')}
+      >
+        🔍 Rechercher
+      </Button>
+
       {/* Publish Button */}
       <Button 
         variant="solid" 

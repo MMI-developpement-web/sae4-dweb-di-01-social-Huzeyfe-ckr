@@ -1,6 +1,9 @@
 import { useState, useEffect } from "react";
 import { getBlockedUsers, unblockUser, type User } from "../../lib/api";
 
+
+// Composant pour afficher la liste des utilisateurs bloqués, avec possibilité de débloquer et gestion des états de chargement et d'erreur
+
 interface BlockedUsersListProps {
   userId: number;
   onClose: () => void;

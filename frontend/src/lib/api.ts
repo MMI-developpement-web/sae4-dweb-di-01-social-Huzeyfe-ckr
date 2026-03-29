@@ -561,6 +561,65 @@ export async function unpinPost(userId: number): Promise<boolean> {
   }
 }
 
+// Search
+export interface SearchOptions {
+  q: string;
+  type?: 'all' | 'posts' | 'users';
+  sort?: 'date' | 'relevance';
+  startDate?: string;
+  endDate?: string;
+}
+
+export interface SearchResult {
+  posts: Post[];
+  users: User[];
+  query: string;
+  postCount: number;
+  userCount: number;
+}
+
+export async function searchContent(options: SearchOptions): Promise<SearchResult> {
+  try {
+    const params = new URLSearchParams();
+    params.set('q', options.q);
+    if (options.type) params.set('type', options.type);
+    if (options.sort) params.set('sort', options.sort);
+    if (options.startDate) params.set('startDate', options.startDate);
+    if (options.endDate) params.set('endDate', options.endDate);
+
+    const res = await fetch(`${API_BASE}/search?${params.toString()}`, {
+      headers: getAuthHeaders(),
+    });
+
+    if (!res.ok) {
+      throw new Error('Search failed');
+    }
+
+    const data = await res.json();
+    
+    // Normaliser les URLs des médias
+    if (data.posts && Array.isArray(data.posts)) {
+      data.posts = data.posts.map((post: Post) => ({
+        ...post,
+        mediaUrl: post.mediaUrl && !post.mediaUrl.startsWith('http')
+          ? `${BACKEND_ORIGIN}${post.mediaUrl}`
+          : post.mediaUrl,
+      }));
+    }
+
+    return data as SearchResult;
+  } catch (err) {
+    console.error('Search error:', err);
+    return {
+      posts: [],
+      users: [],
+      query: options.q,
+      postCount: 0,
+      userCount: 0,
+    };
+  }
+}
+
 export function logout(): void {
   clearCurrentUser();
   clearAuthToken();

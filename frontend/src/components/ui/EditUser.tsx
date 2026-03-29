@@ -3,6 +3,9 @@ import Input from "./Input";
 import Button from "./Button";
 import type { User } from "../../lib/api";
 
+// Composant de formulaire pour éditer les informations d'un utilisateur, avec gestion des champs de saisie et de l'état local
+
+
 interface EditUserProps {
   user: User | null;
   isOpen: boolean;

@@ -2,6 +2,9 @@ import React, { useState } from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../../lib/utils.ts";
 
+// Composant d'input réutilisable avec variantes de style et de taille, gestion des types d'input (text, password, email) et possibilité d'afficher ou masquer le mot de passe
+
+
 export const inputVariants = cva(
   "w-full rounded border bg-transparent text-text-white placeholder-text-muted focus:outline-none focus:ring-2",
   {

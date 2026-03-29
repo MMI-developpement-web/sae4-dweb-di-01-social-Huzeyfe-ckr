@@ -7,6 +7,10 @@ import { InteractiveText } from "../../lib/hashtagParser";
 import { Reply } from "./Reply";
 import { ReplyForm } from "./ReplyForm";
 
+
+// Composant de post individuel, affichant les informations de l'utilisateur, le contenu du post, les interactions (like, reply) 
+// et un menu d'options pour les actions sur le post (modifier, supprimer, censurer), avec gestion des états locaux pour les interactions et les modals
+
 function formatRelativeTime(dateString?: string) {
   if (!dateString) return "";
   const d = new Date(dateString.replace(' ', 'T'));

@@ -6,6 +6,11 @@ import SideBar from "./SideBar";
 import Footer from "./Footer";
 import Button from "./Button";
 
+
+// Composant de formulaire pour éditer les informations du profil utilisateur, y compris le téléchargement d'avatar et de bannière, avec gestion des états de chargement et des messages de succès/erreur
+
+
+
 // Get backend origin for proper image URLs
 const API_BASE = import.meta.env.VITE_API_URL;
 const BACKEND_ORIGIN = API_BASE.replace(/\/api$/, '');

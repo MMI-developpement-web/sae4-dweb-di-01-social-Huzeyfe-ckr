@@ -3,6 +3,9 @@
 import { useNavigate } from "react-router-dom";
 import { cn } from "../../lib/utils.ts";
 
+// Composant de pied de page réutilisable, avec deux variantes : une version verticale pour le sidebar desktop et une version horizontale pour le mobile, utilisant class-variance-authority pour la gestion des classes CSS conditionnelles
+
+
 interface FooterProps {
   className?: string;
   vertical?: boolean;
