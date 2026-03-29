@@ -50,6 +50,15 @@ class Post
     #[Groups(['default', 'detail'])]
     private Collection $hashtags;
 
+    #[ORM\ManyToOne(targetEntity: self::class)]
+    #[ORM\JoinColumn(nullable: true, onDelete: 'SET NULL')]
+    #[Groups(['default', 'detail'])]
+    private ?Post $retweetedFrom = null;
+
+    #[ORM\Column(type: Types::TEXT, nullable: true)]
+    #[Groups(['default', 'detail'])]
+    private ?string $retweetComment = null;
+
     public function __construct()
     {
         $this->createdAt = new \DateTime();
@@ -177,6 +186,28 @@ class Post
         if ($this->hashtags->removeElement($hashtag)) {
             $hashtag->removePost($this);
         }
+        return $this;
+    }
+
+    public function getRetweetedFrom(): ?Post
+    {
+        return $this->retweetedFrom;
+    }
+
+    public function setRetweetedFrom(?Post $retweetedFrom): static
+    {
+        $this->retweetedFrom = $retweetedFrom;
+        return $this;
+    }
+
+    public function getRetweetComment(): ?string
+    {
+        return $this->retweetComment;
+    }
+
+    public function setRetweetComment(?string $retweetComment): static
+    {
+        $this->retweetComment = $retweetComment;
         return $this;
     }
 }

@@ -40,4 +40,44 @@ class PostRepository extends ServiceEntityRepository
     //            ->getOneOrNullResult()
     //        ;
     //    }
+
+    /**
+     * Find retweet by user for a given post
+     */
+    public function findRetweetByUser(int $postId, int $userId): ?Post
+    {
+        return $this->createQueryBuilder('p')
+            ->andWhere('p.retweetedFrom = :postId')
+            ->andWhere('p.user = :userId')
+            ->setParameter('postId', $postId)
+            ->setParameter('userId', $userId)
+            ->getQuery()
+            ->getOneOrNullResult();
+    }
+
+    /**
+     * Count retweets for a post
+     */
+    public function countRetweets(int $postId): int
+    {
+        return (int) $this->createQueryBuilder('p')
+            ->select('COUNT(p.id)')
+            ->andWhere('p.retweetedFrom = :postId')
+            ->setParameter('postId', $postId)
+            ->getQuery()
+            ->getSingleScalarResult();
+    }
+
+    /**
+     * Find all retweets of a post
+     */
+    public function findRetweetsOf(int $postId): array
+    {
+        return $this->createQueryBuilder('p')
+            ->andWhere('p.retweetedFrom = :postId')
+            ->setParameter('postId', $postId)
+            ->orderBy('p.createdAt', 'DESC')
+            ->getQuery()
+            ->getResult();
+    }
 }

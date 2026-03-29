@@ -2,6 +2,9 @@ import React, { useState } from 'react';
 import { type Reply as ReplyType } from '../../lib/api';
 import { deleteReply } from '../../lib/api';
 
+// Composants pour afficher une réponse individuelle (Reply)
+
+
 interface ReplyProps {
   reply: ReplyType;
   onDelete?: (replyId: number) => void;

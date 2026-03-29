@@ -20,6 +20,8 @@ interface PostData {
   };
   likes: number;
   liked: boolean;
+  retweets: number;
+  retweeted: boolean;
   censored: boolean;
 }
 
@@ -130,6 +132,8 @@ export default function HashtagSearch() {
                     currentUserId={parseInt(localStorage.getItem('userId') || '0')}
                     likes={post.likes}
                     liked={post.liked}
+                    retweets={post.retweets || 0}
+                    retweeted={post.retweeted || false}
                     userBlocked={post.user?.blocked || false}
                     userReadOnly={post.user?.readOnly || false}
                     censored={post.censored}

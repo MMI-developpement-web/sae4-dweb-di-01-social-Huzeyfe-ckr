@@ -237,12 +237,20 @@ export default function ProfilePage() {
                       currentUserId={currentUser?.id}
                       likes={post.likes || 0}
                       liked={post.liked || false}
+                      retweets={post.retweets || 0}
+                      retweeted={post.retweeted || false}
                       userBlocked={post.user.blocked || false}
                       censored={post.censored || false}
                       onDelete={() => handlePostDeleted(post.id)}
                       onLikeChange={(liked, likeCount) => {
                         const updatedPosts = posts.map(p =>
                           p.id === post.id ? { ...p, likes: likeCount, liked } : p
+                        );
+                        setPosts(updatedPosts);
+                      }}
+                      onRetweetChange={(retweeted, retweetCount) => {
+                        const updatedPosts = posts.map(p =>
+                          p.id === post.id ? { ...p, retweets: retweetCount, retweeted } : p
                         );
                         setPosts(updatedPosts);
                       }}

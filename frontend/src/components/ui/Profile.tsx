@@ -4,6 +4,9 @@ import { getCurrentUser } from "../../lib/api";
 import type { User } from "../../lib/api";
 import { useNavigate } from "react-router-dom";
 
+// Composant de profil utilisateur affichant l'avatar, le nom et le handle, avec redirection vers la page de profil au clic, et gestion des valeurs par défaut pour les utilisateurs non connect
+
+
 export interface ProfileProps {
   // optional override props in case caller wants to force values
   name?: string;

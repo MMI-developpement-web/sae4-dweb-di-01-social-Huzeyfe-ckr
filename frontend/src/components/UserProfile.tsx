@@ -326,6 +326,8 @@ export default function UserProfile() {
                   currentUserId={currentUser?.id}
                   likes={pinnedPost.likes || 0}
                   liked={pinnedPost.liked || false}
+                  retweets={pinnedPost.retweets || 0}
+                  retweeted={pinnedPost.retweeted || false}
                   userBlocked={pinnedPost.user.blocked || false}
                   censored={pinnedPost.censored || false}
                   onDelete={handlePostDeleted}
@@ -333,6 +335,9 @@ export default function UserProfile() {
                   isPinned={true}
                   onLikeChange={(liked, likeCount) => {
                     setPinnedPost(prev => prev ? { ...prev, likes: likeCount, liked } : null);
+                  }}
+                  onRetweetChange={(retweeted, retweetCount) => {
+                    setPinnedPost(prev => prev ? { ...prev, retweets: retweetCount, retweeted } : null);
                   }}
                 />
               </div>

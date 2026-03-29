@@ -1,6 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { type Reply, createReply, getCurrentUser } from '../../lib/api';
 
+// Composants pour afficher une réponse individuelle (Reply),
+
+
 interface ReplyFormProps {
   postId: number;
   onReplyCreated?: (reply: Reply) => void;

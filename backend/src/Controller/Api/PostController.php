@@ -47,7 +47,7 @@ class PostController extends AbstractController
             return $b->getCreatedAt()->getTimestamp() - $a->getCreatedAt()->getTimestamp();
         });
 
-        $result = array_map(function(Post $p) use ($likeRepository, $currentUser) {
+        $result = array_map(function(Post $p) use ($likeRepository, $postRepository, $currentUser) {
             // Si le post est censuré, retourner une structure minimale
             if ($p->isCensored()) {
                 return [
@@ -65,14 +65,20 @@ class PostController extends AbstractController
                     ] : null,
                     'likes' => 0,
                     'liked' => false,
+                    'retweets' => 0,
+                    'retweeted' => false,
                     'censored' => true,
                 ];
             }
 
             $likeCount = $likeRepository->countByPostExcludingBlocked($p->getId());
             $userLiked = false;
+            $retweetCount = $postRepository->countRetweets($p->getId());
+            $userRetweeted = false;
+            
             if ($currentUser) {
                 $userLiked = (bool) $likeRepository->findByUserAndPost($currentUser->getId(), $p->getId());
+                $userRetweeted = (bool) $postRepository->findRetweetByUser($p->getId(), $currentUser->getId());
             }
 
             return [
@@ -90,6 +96,8 @@ class PostController extends AbstractController
                 ] : null,
                 'likes' => $likeCount,
                 'liked' => $userLiked,
+                'retweets' => $retweetCount,
+                'retweeted' => $userRetweeted,
                 'censored' => false,
             ];
         }, $posts);
@@ -102,7 +110,7 @@ class PostController extends AbstractController
      * GET /api/posts/{id}
      */
     #[Route('/{id}', name: 'posts.get', methods: ['GET'])]
-    public function get(Post $post, LikeRepository $likeRepository): JsonResponse
+    public function get(Post $post, LikeRepository $likeRepository, PostRepository $postRepository): JsonResponse
     {
         $currentUser = $this->getUser();
 
@@ -123,14 +131,20 @@ class PostController extends AbstractController
                 ] : null,
                 'likes' => 0,
                 'liked' => false,
+                'retweets' => 0,
+                'retweeted' => false,
                 'censored' => true,
             ]);
         }
 
         $likeCount = $likeRepository->countByPostExcludingBlocked($post->getId());
         $userLiked = false;
+        $retweetCount = $postRepository->countRetweets($post->getId());
+        $userRetweeted = false;
+        
         if ($currentUser) {
             $userLiked = (bool) $likeRepository->findByUserAndPost($currentUser->getId(), $post->getId());
+            $userRetweeted = (bool) $postRepository->findRetweetByUser($post->getId(), $currentUser->getId());
         }
 
         $data = [
@@ -148,6 +162,8 @@ class PostController extends AbstractController
             ] : null,
             'likes' => $likeCount,
             'liked' => $userLiked,
+            'retweets' => $retweetCount,
+            'retweeted' => $userRetweeted,
             'censored' => false,
         ];
 
@@ -361,5 +377,94 @@ class PostController extends AbstractController
         $likeCount = $likeRepository->countByPostExcludingBlocked($post->getId());
 
         return $this->json(['message' => 'Like supprimé', 'likes' => $likeCount], Response::HTTP_OK);
+    }
+
+    /**
+     * Retweet a post
+     * POST /api/posts/{id}/retweet
+     * Body: { "comment": "optional comment" }
+     */
+    #[Route('/{id}/retweet', name: 'posts.retweet', methods: ['POST'])]
+    public function retweet(Post $post, Request $request, PostRepository $postRepository, EntityManagerInterface $em, BlockedUserRepository $blockedUserRepository): JsonResponse
+    {
+        $user = $this->getUser();
+        if (!$user) {
+            return $this->json(['error' => 'Utilisateur non authentifié'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        // Vérifier si l'utilisateur actuel est bloqué par l'auteur du post
+        if ($blockedUserRepository->isUserBlocked($post->getUser()->getId(), $user->getId())) {
+            return $this->json(['error' => 'Vous êtes bloqué par l\'auteur de ce post'], Response::HTTP_FORBIDDEN);
+        }
+
+        // Vérifier si l'utilisateur actuel bloque l'auteur du post
+        if ($blockedUserRepository->isUserBlocked($user->getId(), $post->getUser()->getId())) {
+            return $this->json(['error' => 'Vous avez bloqué l\'auteur de ce post'], Response::HTTP_FORBIDDEN);
+        }
+
+        // Vérifier si l'utilisateur a déjà retweeté ce post
+        $existingRetweet = $postRepository->findRetweetByUser($post->getId(), $user->getId());
+        if ($existingRetweet) {
+            return $this->json(['error' => 'Vous avez déjà retweeté ce post'], Response::HTTP_CONFLICT);
+        }
+
+        // Créer une copie du post (retweet)
+        $retweet = new Post();
+        $retweet->setUser($user);
+        $retweet->setContent($post->getContent());
+        $retweet->setTime($post->getTime());
+        $retweet->setMediaUrl($post->getMediaUrl());
+        $retweet->setRetweetedFrom($post); // Référence l'original
+        $retweet->setCreatedAt(new \DateTime());
+
+        // Ajouter le commentaire optionnel
+        $data = json_decode($request->getContent(), true);
+        if ($data && isset($data['comment']) && !empty($data['comment'])) {
+            $retweet->setRetweetComment($data['comment']);
+        }
+
+        $em->persist($retweet);
+        $em->flush();
+
+        return $this->json([
+            'message' => 'Post retweeté',
+            'retweet' => [
+                'id' => $retweet->getId(),
+                'content' => $retweet->getContent(),
+                'retweetedFrom' => [
+                    'id' => $post->getId(),
+                    'user' => [
+                        'id' => $post->getUser()->getId(),
+                        'name' => $post->getUser()->getName(),
+                        'user' => $post->getUser()->getUser(),
+                    ]
+                ]
+            ]
+        ], Response::HTTP_CREATED);
+    }
+
+    /**
+     * Remove a retweet
+     * DELETE /api/posts/{id}/retweet
+     */
+    #[Route('/{id}/retweet', name: 'posts.unRetweet', methods: ['DELETE'])]
+    public function unRetweet(Post $post, PostRepository $postRepository, EntityManagerInterface $em): JsonResponse
+    {
+        $user = $this->getUser();
+        if (!$user) {
+            return $this->json(['error' => 'Utilisateur non authentifié'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        // Trouver le retweet de cet utilisateur pour ce post
+        $retweet = $postRepository->findRetweetByUser($post->getId(), $user->getId());
+        if (!$retweet) {
+            return $this->json(['error' => 'Vous n\'avez pas retweeté ce post'], Response::HTTP_NOT_FOUND);
+        }
+
+        // Supprimer le retweet
+        $em->remove($retweet);
+        $em->flush();
+
+        return $this->json(['message' => 'Retweet supprimé'], Response::HTTP_OK);
     }
 }

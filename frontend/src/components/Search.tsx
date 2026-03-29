@@ -249,6 +249,8 @@ export default function Search() {
                   currentUserId={currentUser?.id}
                   likes={post.likes || 0}
                   liked={post.liked || false}
+                  retweets={post.retweets || 0}
+                  retweeted={post.retweeted || false}
                   userBlocked={post.user.blocked || false}
                   userReadOnly={post.user.readOnly || false}
                   censored={post.censored || false}

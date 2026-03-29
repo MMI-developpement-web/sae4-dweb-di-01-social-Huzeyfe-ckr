@@ -38,6 +38,8 @@ export interface Post {
   mediaUrl?: string;
   likes?: number;
   liked?: boolean;
+  retweets?: number;
+  retweeted?: boolean;
   repliesCount?: number;
   censored?: boolean;
   user: {
@@ -330,6 +332,59 @@ export async function unlikePost(postId: number): Promise<{success: boolean, err
   } catch (err) {
     console.error('Unlike post error:', err);
     return { success: false, error: 'Erreur lors du retrait du like. Veuillez réessayer.' };
+  }
+}
+
+// Retweet
+export async function retweetPost(postId: number, comment?: string): Promise<{success: boolean, error?: string}> {
+  try {
+    const body: any = {};
+    if (comment) {
+      body.comment = comment;
+    }
+
+    const res = await fetch(`${API_BASE}/posts/${postId}/retweet`, {
+      method: 'POST',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(body),
+    });
+
+    if (res.ok) {
+      return { success: true };
+    } else {
+      try {
+        const data = await res.json();
+        return { success: false, error: data.error || 'Erreur lors du retweet. Veuillez réessayer.' };
+      } catch {
+        return { success: false, error: 'Erreur lors du retweet. Veuillez réessayer.' };
+      }
+    }
+  } catch (err) {
+    console.error('Retweet error:', err);
+    return { success: false, error: 'Erreur lors du retweet. Veuillez réessayer.' };
+  }
+}
+
+export async function unretweetPost(postId: number): Promise<{success: boolean, error?: string}> {
+  try {
+    const res = await fetch(`${API_BASE}/posts/${postId}/retweet`, {
+      method: 'DELETE',
+      headers: getAuthHeaders(),
+    });
+
+    if (res.ok) {
+      return { success: true };
+    } else {
+      try {
+        const data = await res.json();
+        return { success: false, error: data.error || 'Erreur lors du retrait du retweet. Veuillez réessayer.' };
+      } catch {
+        return { success: false, error: 'Erreur lors du retrait du retweet. Veuillez réessayer.' };
+      }
+    }
+  } catch (err) {
+    console.error('Unretweet error:', err);
+    return { success: false, error: 'Erreur lors du retrait du retweet. Veuillez réessayer.' };
   }
 }
 

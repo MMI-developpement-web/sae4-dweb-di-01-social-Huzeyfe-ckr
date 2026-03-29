@@ -181,12 +181,21 @@ export default function Home() {
                       currentUserId={currentUser?.id}
                       likes={p.likes || 0}
                       liked={p.liked || false}
+                      retweets={p.retweets || 0}
+                      retweeted={p.retweeted || false}
                       userBlocked={p.user.blocked || false}
                       censored={p.censored || false}
                       onDelete={() => handlePostDeleted(p.id)}
                       onLikeChange={(liked, likeCount) => {
                         const updatedPosts = posts.map(post =>
                           post.id === p.id ? { ...post, likes: likeCount, liked } : post
+                        );
+                        setPosts(updatedPosts);
+                        postsRef.current = updatedPosts;
+                      }}
+                      onRetweetChange={(retweeted, retweetCount) => {
+                        const updatedPosts = posts.map(post =>
+                          post.id === p.id ? { ...post, retweets: retweetCount, retweeted } : post
                         );
                         setPosts(updatedPosts);
                         postsRef.current = updatedPosts;

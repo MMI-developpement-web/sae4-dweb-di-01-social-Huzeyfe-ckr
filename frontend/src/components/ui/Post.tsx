@@ -2,10 +2,11 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Avatar from "./Avatar";
-import { deletePost, likePost, unlikePost, getReplies, updatePost, type Reply as ReplyType } from "../../lib/api";
+import { deletePost, likePost, unlikePost, getReplies, updatePost, retweetPost, unretweetPost, type Reply as ReplyType } from "../../lib/api";
 import { InteractiveText } from "../../lib/hashtagParser";
 import { Reply } from "./Reply";
 import { ReplyForm } from "./ReplyForm";
+import RetweetModal from "./RetweetModal";
 
 
 // Composant de post individuel, affichant les informations de l'utilisateur, le contenu du post, les interactions (like, reply) 
@@ -41,6 +42,8 @@ export interface PostProps {
   currentUserId?: number;
   likes?: number;
   liked?: boolean;
+  retweets?: number;
+  retweeted?: boolean;
   userBlocked?: boolean;
   userReadOnly?: boolean;
   censored?: boolean;
@@ -49,11 +52,12 @@ export interface PostProps {
   onDelete?: () => void;
   onCensored?: (censored: boolean) => void;
   onLikeChange?: (liked: boolean, likeCount: number) => void;
+  onRetweetChange?: (retweeted: boolean, retweetCount: number) => void;
   onEdit?: (newContent: string) => void;
   onPin?: (postId: number) => void;
 }
 
-export default function Post({ id, name, handle, avatar, time, text, image, userId, currentUserId, likes: initialLikes = 0, liked: initialLiked = false, userBlocked = false, userReadOnly = false, censored = false, isAdmin = false, isPinned = false, onDelete, onCensored, onLikeChange, onEdit, onPin }: PostProps) {
+export default function Post({ id, name, handle, avatar, time, text, image, userId, currentUserId, likes: initialLikes = 0, liked: initialLiked = false, retweets: initialRetweets = 0, retweeted: initialRetweeted = false, userBlocked = false, userReadOnly = false, censored = false, isAdmin = false, isPinned = false, onDelete, onCensored, onLikeChange, onRetweetChange, onEdit, onPin }: PostProps) {
   const navigate = useNavigate();
   const displayTime = formatRelativeTime(time);
   const handleStr = typeof handle === 'string' ? handle : String(handle);
@@ -68,6 +72,11 @@ export default function Post({ id, name, handle, avatar, time, text, image, user
   const [likeCount, setLikeCount] = useState(initialLikes);
   const [likingLoading, setLikingLoading] = useState(false);
   const [likeError, setLikeError] = useState<string | null>(null);
+  
+  const [retweeted, setRetweeted] = useState(initialRetweeted);
+  const [retweetCount, setRetweetCount] = useState(initialRetweets);
+  const [retweetingLoading, setRetweetingLoading] = useState(false);
+  const [showRetweetModal, setShowRetweetModal] = useState(false);
   
   const [showReplies, setShowReplies] = useState(false);
   const [replies, setReplies] = useState<ReplyType[]>([]);
@@ -191,6 +200,35 @@ export default function Post({ id, name, handle, avatar, time, text, image, user
       setLikeError('Erreur lors du like. Veuillez réessayer.');
     } finally {
       setLikingLoading(false);
+    }
+  };
+
+  const handleRetweetClick = async (comment?: string) => {
+    if (!id) return;
+    setRetweetingLoading(true);
+    setShowRetweetModal(false);
+    try {
+      if (retweeted) {
+        const result = await unretweetPost(Number(id));
+        if (result.success) {
+          setRetweeted(false);
+          const newCount = Math.max(0, retweetCount - 1);
+          setRetweetCount(newCount);
+          onRetweetChange?.(false, newCount);
+        }
+      } else {
+        const result = await retweetPost(Number(id), comment);
+        if (result.success) {
+          setRetweeted(true);
+          const newCount = retweetCount + 1;
+          setRetweetCount(newCount);
+          onRetweetChange?.(true, newCount);
+        }
+      }
+    } catch (error) {
+      console.error("Error toggling retweet:", error);
+    } finally {
+      setRetweetingLoading(false);
     }
   };
 
@@ -345,6 +383,43 @@ export default function Post({ id, name, handle, avatar, time, text, image, user
                   <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
                 </svg>
                 <span className="text-xs md:text-sm">{likeCount}</span>
+              </button>
+
+              {/* Retweet Button - Flèches circulaires */}
+              <button
+                onClick={() => {
+                  if (retweeted) {
+                    handleRetweetClick();
+                  } else {
+                    setShowRetweetModal(true);
+                  }
+                }}
+                disabled={retweetingLoading}
+                className={`flex items-center gap-1 transition disabled:opacity-50 text-xs md:text-sm ${
+                  retweeted 
+                    ? 'text-tick hover:text-tick/90' 
+                    : 'text-text-muted hover:text-tick'
+                }`}
+                aria-label={retweeted ? "Undo Retweet" : "Retweet"}
+                title={retweeted ? "Supprimer le retweet" : "Retweet avec commentaire optional"}
+              >
+                <svg 
+                  width="16" 
+                  height="16" 
+                  viewBox="0 0 24 24" 
+                  fill={retweeted ? "currentColor" : "none"}
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className="md:w-4 md:h-4"
+                >
+                  <polyline points="17 2 19 4 17 6"></polyline>
+                  <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+                  <polyline points="7 22 5 20 7 18"></polyline>
+                  <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+                </svg>
+                <span className="text-xs md:text-sm">{retweetCount}</span>
               </button>
 
               {/* Menu Button - 3 dots en horizontales */}
@@ -570,6 +645,16 @@ export default function Post({ id, name, handle, avatar, time, text, image, user
           </div>
         </div>
       )}
+
+      {/* Retweet Modal */}
+      <RetweetModal
+        isOpen={showRetweetModal}
+        onClose={() => setShowRetweetModal(false)}
+        onRetweet={handleRetweetClick}
+        isLoading={retweetingLoading}
+        authorName={name}
+        originalContent={text || ''}
+      />
     </article>
   );
 }
