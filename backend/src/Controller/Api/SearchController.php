@@ -131,6 +131,7 @@ class SearchController extends AbstractController
                         'user' => $post->getUser()->getUser(),
                         'pp' => $post->getUser()->getPp(),
                         'blocked' => $post->getUser()->isBlocked(),
+                        'readOnly' => $post->getUser()->isReadOnly(),
                     ] : null,
                     'likes' => 0,
                     'liked' => false,

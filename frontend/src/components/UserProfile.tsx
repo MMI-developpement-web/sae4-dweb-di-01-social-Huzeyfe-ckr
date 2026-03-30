@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getUser, followUser, unfollowUser, getCurrentUser, getPosts, isUserBlocked, pinPost, unpinPost, type User, type Post as PostType } from "../lib/api";
+import { getUser, followUser, unfollowUser, getCurrentUser, getPosts, isUserBlocked, type User, type Post as PostType } from "../lib/api";
 import Header from "./ui/Header";
 import SideBar from "./ui/SideBar";
 import Avatar from "./ui/Avatar";
@@ -102,37 +102,6 @@ export default function UserProfile() {
       setPosts(userPosts);
     };
     loadUserPosts();
-  };
-
-  const handlePinPost = async (postId: number) => {
-    if (!currentUser || !user) return;
-
-    // Si le post est déjà épinglé, le désépingler
-    if (pinnedPost?.id === postId) {
-      const success = await unpinPost(currentUser.id);
-      if (success) {
-        // Re-ajouter le post à la liste
-        setPosts(prev => [...prev, pinnedPost].sort((a, b) => 
-          new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-        ));
-        setPinnedPost(null);
-      }
-    } else {
-      // Épingler le post
-      const success = await pinPost(currentUser.id, postId);
-      if (success) {
-        // Trouver le post à épingler et le mettre à part
-        const postToPin = posts.find(p => p.id === postId);
-        if (postToPin) {
-          // Désépingler ancien si existe
-          if (pinnedPost) {
-            setPosts(prev => [...prev, pinnedPost]);
-          }
-          setPinnedPost(postToPin);
-          setPosts(prev => prev.filter(p => p.id !== postId));
-        }
-      }
-    }
   };
 
   const getAvatarUrl = () => {
@@ -335,7 +304,6 @@ export default function UserProfile() {
                   userBlocked={pinnedPost.user.blocked || false}
                   censored={pinnedPost.censored || false}
                   onDelete={handlePostDeleted}
-                  onPin={handlePinPost}
                   isPinned={true}
                   onLikeChange={(liked, likeCount) => {
                     setPinnedPost(prev => prev ? { ...prev, likes: likeCount, liked } : null);
@@ -383,7 +351,6 @@ export default function UserProfile() {
                       userBlocked={post.user.blocked || false}
                       censored={post.censored || false}
                       onDelete={handlePostDeleted}
-                      onPin={isOwnProfile ? handlePinPost : undefined}
                       isPinned={false}
                       onLikeChange={(liked, likeCount) => {
                         const updatedPosts = posts.map(p =>

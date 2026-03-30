@@ -67,6 +67,8 @@ class AuthController extends AbstractController
                 'name' => $user->getName(),
                 'role' => $user->getRole(),
                 'blocked' => $user->isBlocked(),
+                'readOnly' => $user->isReadOnly(),
+                'pinnedPostId' => $user->getPinnedPost()?->getId(),
             ],
         ]);
     }
@@ -137,6 +139,8 @@ class AuthController extends AbstractController
                 'name' => $user->getName(),
                 'role' => $user->getRole(),
                 'blocked' => $user->isBlocked(),
+                'readOnly' => $user->isReadOnly(),
+                'pinnedPostId' => $user->getPinnedPost()?->getId(),
             ],
         ], Response::HTTP_CREATED);
     }

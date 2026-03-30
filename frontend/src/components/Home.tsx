@@ -117,7 +117,7 @@ export default function Home() {
 
           {/* Filter and Refresh Section - Hidden when searching */}
           {!searchQuery && (
-          <div className="sticky top-[60px] z-10 bg-bg-black border-b border-border-dark">
+          <div className=" top-[60px] z-10 bg-bg-black border-b border-border-dark">
             {/* Tabs */}
             <div className="flex">
               <button

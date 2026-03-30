@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Avatar from "./Avatar";
-import { deletePost, likePost, unlikePost, getReplies, updatePost, retweetPost, unretweetPost, getUserByUsername, type Reply as ReplyType } from "../../lib/api";
+import { deletePost, likePost, unlikePost, getReplies, updatePost, retweetPost, unretweetPost, getUserByUsername, pinPost, unpinPost, getCurrentUser, type Reply as ReplyType } from "../../lib/api";
 import { InteractiveText } from "../../lib/hashtagParser";
 import { Reply } from "./Reply";
 import { ReplyForm } from "./ReplyForm";
@@ -54,10 +54,9 @@ export interface PostProps {
   onLikeChange?: (liked: boolean, likeCount: number) => void;
   onRetweetChange?: (retweeted: boolean, retweetCount: number) => void;
   onEdit?: (newContent: string) => void;
-  onPin?: (postId: number) => void;
 }
 
-export default function Post({ id, name, handle, avatar, time, text, image, userId, currentUserId, likes: initialLikes = 0, liked: initialLiked = false, retweets: initialRetweets = 0, retweeted: initialRetweeted = false, userBlocked = false, userReadOnly = false, censored = false, isAdmin = false, isPinned = false, onDelete, onCensored, onLikeChange, onRetweetChange, onEdit, onPin }: PostProps) {
+export default function Post({ id, name, handle, avatar, time, text, image, userId, currentUserId, likes: initialLikes = 0, liked: initialLiked = false, retweets: initialRetweets = 0, retweeted: initialRetweeted = false, userBlocked = false, userReadOnly = false, censored = false, isAdmin = false, isPinned = false, onDelete, onCensored, onLikeChange, onRetweetChange, onEdit }: PostProps) {
   const navigate = useNavigate();
   const displayTime = formatRelativeTime(time);
   const handleStr = typeof handle === 'string' ? handle : String(handle);
@@ -166,6 +165,35 @@ export default function Post({ id, name, handle, avatar, time, text, image, user
       alert("Erreur lors de la suppression du tweet");
     } finally {
       setDeleting(false);
+    }
+  };
+
+  const handlePinClick = async () => {
+    if (!id) return;
+    const currentUser = getCurrentUser();
+    if (!currentUser) return;
+
+    try {
+      let success = false;
+      if (isPinned) {
+        // Unpin
+        success = await unpinPost(currentUser.id);
+      } else {
+        // Pin
+        success = await pinPost(currentUser.id, Number(id));
+      }
+
+      if (success) {
+        // Reload the page to refresh pinned status
+        setTimeout(() => {
+          window.location.reload();
+        }, 300);
+      } else {
+        alert(isPinned ? "Erreur lors du désépinglage" : "Erreur lors de l'épinglage");
+      }
+    } catch (error) {
+      console.error("Error toggling pin:", error);
+      alert("Erreur lors du changement d'épinglage");
     }
   };
 
@@ -411,22 +439,6 @@ export default function Post({ id, name, handle, avatar, time, text, image, user
               {/* Menu Button - 3 dots en horizontales */}
               {isOwnPost && (
                 <>
-                  {/* Pin Button */}
-                  {onPin && (
-                    <button
-                      onClick={() => onPin(Number(id))}
-                      className={`transition p-1.5 md:p-2 rounded-full ${
-                        isPinned 
-                          ? 'text-tick hover:bg-tick/10' 
-                          : 'text-text-muted hover:text-tick hover:bg-tick/10'
-                      }`}
-                      aria-label={isPinned ? "Désépingler" : "Épingler"}
-                      title={isPinned ? "Désépingler ce tweet" : "Épingler ce tweet"}
-                    >
-                      <span className="text-lg">📌</span>
-                    </button>
-                  )}
-                  
                   <div className="relative">
                     <button
                       onClick={() => setShowMenu(!showMenu)}
@@ -471,6 +483,17 @@ export default function Post({ id, name, handle, avatar, time, text, image, user
                             className="w-full text-left px-3 md:px-4 py-2 md:py-3 text-error text-xs md:text-sm hover:bg-surface-dark transition border rounded border-white"
                           >
                             Supprimer le tweet
+                          </button>
+                          <button
+                            onClick={() => {
+                              handlePinClick();
+                              setShowMenu(false);
+                            }}
+                            className={`w-full text-left px-3 md:px-4 py-2 md:py-3 text-xs md:text-sm hover:bg-surface-dark transition border rounded border-white ${
+                              isPinned ? 'text-yellow-500' : 'text-text-muted'
+                            }`}
+                          >
+                            {isPinned ? '📌 Désépingler' : '📌 Épingler le tweet'}
                           </button>
                         </>
                       )}
