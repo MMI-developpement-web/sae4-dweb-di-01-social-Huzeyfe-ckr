@@ -1,26 +1,23 @@
 import { useNavigate } from "react-router-dom";
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef } from "react";
 import Post from './ui/Post'
 import Footer from './ui/Footer'
 import SideBar from './ui/SideBar'
-import { getPosts, getCurrentUser, getAuthToken, searchContent, type Post as PostType } from "../lib/api";
+import { getPosts, getCurrentUser, getAuthToken, type Post as PostType } from "../lib/api";
 import Header from "./ui/Header";
 import Profile from "./ui/Profile";
-import { debounce } from "../lib/utils";
-import Avatar from "./ui/Avatar";
+import SearchBar from "./ui/SearchBar";
 
 export default function Home() {
   const navigate = useNavigate();
   const currentUser = getCurrentUser();
   const authToken = getAuthToken();
   const [posts, setPosts] = useState<PostType[]>([]);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [searchResults, setSearchResults] = useState<{ posts: PostType[]; users: any[] }>({ posts: [], users: [] });
-  const [searchLoading, setSearchLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [newPostsCount, setNewPostsCount] = useState(0);
   const [filter, setFilter] = useState<'all' | 'following'>('all');
+  const [searchQuery, setSearchQuery] = useState("");
   const postsRef = useRef<PostType[]>([]);
 
   // Check if user is authenticated - BOTH currentUser AND authToken must exist
@@ -32,38 +29,6 @@ export default function Home() {
       </div>
     );
   }
-
-  // Fonction de recherche débounced
-  const performSearch = useCallback(
-    debounce(async (q: string) => {
-      if (!q.trim()) {
-        setSearchResults({ posts: [], users: [] });
-        setSearchLoading(false);
-        return;
-      }
-
-      try {
-        setSearchLoading(true);
-        const results = await searchContent({
-          q,
-          type: 'all',
-          sort: 'date',
-        });
-        setSearchResults(results);
-      } catch (error) {
-        console.error('Search error:', error);
-        setSearchResults({ posts: [], users: [] });
-      } finally {
-        setSearchLoading(false);
-      }
-    }, 500),
-    []
-  );
-
-  // Mettre à jour la recherche quand la query change
-  useEffect(() => {
-    performSearch(searchQuery);
-  }, [searchQuery, performSearch]);
 
   // Charger les posts au démarrage
   useEffect(() => {
@@ -147,118 +112,8 @@ export default function Home() {
             <Profile />
           </div>
 
-          {/* Search Bar */}
-          <div className="sticky top-0 z-20 bg-bg-black/95 backdrop-blur-sm border-b border-border-dark px-4 md:px-6 py-3">
-            <div className="flex gap-2 items-center">
-              <div className="flex-1 relative">
-                <input
-                  type="text"
-                  placeholder="🔍 Chercher des posts ou des utilisateurs..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full bg-neutral-900 text-text-white placeholder-text-muted rounded-full py-2 px-4 border border-border-dark focus:border-tick focus:outline-none transition"
-                />
-              </div>
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery("")}
-                  className="px-4 py-2 bg-neutral-700 hover:bg-neutral-600 text-white rounded-full font-semibold text-sm whitespace-nowrap transition"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* Search Results Section */}
-          {searchQuery && (
-            <div className="border-b border-border-dark">
-              {searchLoading && (
-                <div className="p-4 text-center text-text-muted">
-                  <div className="inline-block animate-spin">
-                    <div className="w-4 h-4 border-2 border-text-muted border-t-tick rounded-full"></div>
-                  </div>
-                  <p className="mt-2 text-sm">Recherche en cours...</p>
-                </div>
-              )}
-
-              {!searchLoading && searchResults.users.length === 0 && searchResults.posts.length === 0 && (
-                <div className="p-4 text-center text-text-muted">
-                  <p className="text-sm">Aucun résultat trouvé pour "{searchQuery}"</p>
-                </div>
-              )}
-
-              {/* Users Results */}
-              {searchResults.users.length > 0 && (
-                <div className="border-b border-border-dark">
-                  <div className="px-4 md:px-6 py-3 border-b border-border-dark">
-                    <p className="text-sm font-bold text-text-muted">Utilisateurs ({searchResults.users.length})</p>
-                  </div>
-                  <div className="divide-y divide-border-dark">
-                    {searchResults.users.map((user: any) => (
-                      <div
-                        key={user.id}
-                        onClick={() => navigate(`/profile/${user.id}`)}
-                        className="p-4 md:px-6 hover:bg-surface-dark/20 cursor-pointer transition flex items-center gap-3"
-                      >
-                        <Avatar 
-                          src={user.pp && user.pp !== "null" && user.pp !== "" ? user.pp : `https://picsum.photos/seed/${encodeURIComponent(user.user || "default")}/200`}
-                          alt={user.name}
-                          size="md"
-                        />
-                        <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2">
-                            <p className="font-bold text-white truncate">{user.name}</p>
-                            {user.readOnly && (
-                              <span className="text-xs bg-neutral-700 text-neutral-200 px-2 py-1 rounded">
-                                🔒 Lecture
-                              </span>
-                            )}
-                          </div>
-                          <p className="text-text-muted text-sm">@{user.user}</p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Posts Results */}
-              {searchResults.posts.length > 0 && (
-                <div>
-                  <div className="px-4 md:px-6 py-3">
-                    <p className="text-sm font-bold text-text-muted">Posts ({searchResults.posts.length})</p>
-                  </div>
-                  <div className="space-y-1">
-                    {searchResults.posts.map((post: PostType) => (
-                      <Post
-                        key={post.id}
-                        id={post.id}
-                        name={post.user.name}
-                        handle={`@${post.user.user}`}
-                        avatar={post.user.pp && post.user.pp !== "null" && post.user.pp !== "" ? post.user.pp : `https://picsum.photos/seed/${encodeURIComponent(post.user.user || "default")}/200`}
-                        time={post.createdAt}
-                        text={post.content}
-                        image={post.mediaUrl}
-                        userId={post.user.id}
-                        currentUserId={currentUser?.id}
-                        likes={post.likes || 0}
-                        liked={post.liked || false}
-                        retweets={post.retweets || 0}
-                        retweeted={post.retweeted || false}
-                        userBlocked={post.user.blocked || false}
-                        userReadOnly={post.user.readOnly || false}
-                        censored={post.censored || false}
-                        onDelete={() => {
-                          performSearch(searchQuery);
-                        }}
-                      />
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
+          {/* Search Bar - with results inline */}
+          <SearchBar compact={true} onSearchChange={setSearchQuery} />
 
           {/* Filter and Refresh Section - Hidden when searching */}
           {!searchQuery && (

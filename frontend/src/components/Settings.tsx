@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { toggleUserReadOnly, getCurrentUser, saveCurrentUser, type User } from '../lib/api';
 import Header from './ui/Header';
 import SideBar from './ui/SideBar';
+import Footer from './ui/Footer';
 
 interface SettingsProps {
   user?: User | null;
@@ -57,9 +58,13 @@ export default function Settings({ onUserUpdate }: SettingsProps) {
 
   return (
     <div className="bg-bg-black min-h-screen text-text-white flex flex-col md:flex-row">
+      {/* Desktop Sidebar */}
       <SideBar />
+
+      {/* Header Mobile */}
       <Header showLogout={true} />
 
+      {/* Main Content */}
       <main className="flex-1 md:ml-72 flex flex-col items-center w-full">
         <div className="w-full max-w-2xl border-r border-border-dark md:border-l md:border-border-dark pb-24 md:pb-0 px-4 md:px-6 py-6">
           <h2 className="text-2xl font-bold mb-6 text-text-white">⚙️ Paramètres</h2>
@@ -110,6 +115,9 @@ export default function Settings({ onUserUpdate }: SettingsProps) {
       </p>
         </div>
       </main>
+
+      {/* Footer Mobile */}
+      <Footer className="md:hidden z-50" />
     </div>
   );
 }
