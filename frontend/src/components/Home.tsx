@@ -192,6 +192,7 @@ export default function Home() {
                       retweets={p.retweets || 0}
                       retweeted={p.retweeted || false}
                       userBlocked={p.user.blocked || false}
+                      userReadOnly={p.user.readOnly || false}
                       censored={p.censored || false}
                       onDelete={() => handlePostDeleted(p.id)}
                       onLikeChange={(liked, likeCount) => {
