@@ -99,7 +99,8 @@ export default function Search() {
   };
 
   return (
-    <div className="w-full max-w-2xl mx-auto p-4">
+    <div className="w-full min-h-screen bg-bg-black">
+      <div className="w-full max-w-2xl mx-auto p-4">
       {/* Search Header */}
       <div className="space-y-4 mb-6">
         <h1 className="text-2xl font-bold text-white">Rechercher</h1>
@@ -263,6 +264,7 @@ export default function Search() {
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   );

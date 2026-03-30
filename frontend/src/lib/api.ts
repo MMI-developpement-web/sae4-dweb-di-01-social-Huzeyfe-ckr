@@ -48,6 +48,7 @@ export interface Post {
     user: string;
     pp?: string;
     blocked?: boolean;
+    readOnly?: boolean;
   };
 }
 
