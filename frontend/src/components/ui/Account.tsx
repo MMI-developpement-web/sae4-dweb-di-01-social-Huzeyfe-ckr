@@ -2,6 +2,9 @@ import Avatar from "./Avatar";
 import Button from "./Button";
 import editIcon from "../../assets/edit.svg";
 import type { User } from "../../lib/api";
+import { getMediaUrl } from "../../lib/api";
+
+// Composant de compte utilisateur affichant les informations de base et un bouton pour modifier le profil
 
 interface AccountProps {
   user: User;
@@ -11,7 +14,7 @@ interface AccountProps {
 export default function Account({ user, onModify }: AccountProps) {
   const rawPp = user.pp;
   const username = user.username ?? user.user ?? "guest";
-  const avatarSrc = rawPp && rawPp !== "null" ? rawPp : `https://picsum.photos/seed/${encodeURIComponent(username)}/200`;
+  const avatarSrc = rawPp && rawPp !== "null" ? getMediaUrl(rawPp) : `https://picsum.photos/seed/${encodeURIComponent(username)}/200`;
   const initials = user.name?.charAt(0)?.toUpperCase() ?? "U";
 
   return (

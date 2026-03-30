@@ -4,7 +4,7 @@ import Avatar from './ui/Avatar';
 import Post from './ui/Post';
 import { useNavigate } from 'react-router-dom';
 import { debounce } from '../lib/utils';
-import { searchContent, getCurrentUser } from '../lib/api';
+import { searchContent, getCurrentUser, getMediaUrl } from '../lib/api';
 import Header from './ui/Header';
 import SideBar from './ui/SideBar';
 import Footer from './ui/Footer';
@@ -95,7 +95,7 @@ export default function Search() {
 
   const getAvatarUrl = (user: any) => {
     if (user.pp && user.pp !== "null" && user.pp !== "" && user.pp !== null) {
-      return user.pp;
+      return getMediaUrl(user.pp);
     }
     return `https://picsum.photos/seed/${encodeURIComponent(user.user || "default")}/200`;
   };
@@ -258,6 +258,8 @@ export default function Search() {
                         userBlocked={post.user.blocked || false}
                         userReadOnly={post.user.readOnly || false}
                         censored={post.censored || false}
+                      isPinned={currentUser?.pinnedPostIds?.includes(post.id) || false}
+                        retweetedFromPost={post.retweetedFrom}
                         onDelete={() => {
                           // Refresh search results
                           performSearch(query, searchType, sortBy, startDate, endDate);

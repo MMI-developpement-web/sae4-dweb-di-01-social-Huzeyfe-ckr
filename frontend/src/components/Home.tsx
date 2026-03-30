@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import Post from './ui/Post'
 import Footer from './ui/Footer'
 import SideBar from './ui/SideBar'
-import { getPosts, getCurrentUser, getAuthToken, type Post as PostType } from "../lib/api";
+import { getPosts, getCurrentUser, getAuthToken, getMediaUrl, type Post as PostType } from "../lib/api";
 import Header from "./ui/Header";
 import Profile from "./ui/Profile";
 import SearchBar from "./ui/SearchBar";
@@ -171,7 +171,7 @@ export default function Home() {
             ) : (
               posts.map((p) => {
                 const rawPp = p.user.pp;
-                const avatar = rawPp && rawPp !== "null" ? rawPp : `https://picsum.photos/seed/${encodeURIComponent(p.user.user)}/200`;
+                const avatar = rawPp && rawPp !== "null" ? getMediaUrl(rawPp) : `https://picsum.photos/seed/${encodeURIComponent(p.user.user)}/200`;
                 return (
                   <div 
                     key={p.id} 
@@ -194,6 +194,8 @@ export default function Home() {
                       userBlocked={p.user.blocked || false}
                       userReadOnly={p.user.readOnly || false}
                       censored={p.censored || false}
+                      isPinned={currentUser?.pinnedPostIds?.includes(p.id) || false}
+                      retweetedFromPost={p.retweetedFrom}
                       onDelete={() => handlePostDeleted(p.id)}
                       onLikeChange={(liked, likeCount) => {
                         const updatedPosts = posts.map(post =>

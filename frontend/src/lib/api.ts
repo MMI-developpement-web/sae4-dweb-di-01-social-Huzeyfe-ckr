@@ -2,7 +2,14 @@
 const API_BASE = import.meta.env.VITE_API_URL;
 
 // Extract backend origin from API_BASE (e.g., "http://localhost:8080/api" -> "http://localhost:8080")
-const BACKEND_ORIGIN = API_BASE.replace(/\/api$/, '');
+export const BACKEND_ORIGIN = API_BASE.replace(/\/api$/, '');
+
+// Get full media URL (converts relative paths to absolute URLs)
+export function getMediaUrl(mediaPath?: string | null): string | undefined {
+  if (!mediaPath) return undefined;
+  if (mediaPath.startsWith('http')) return mediaPath;
+  return `${BACKEND_ORIGIN}${mediaPath}`;
+}
 
 export interface User {
   id: number;
@@ -14,7 +21,7 @@ export interface User {
   active: boolean;
   blocked?: boolean;
   readOnly?: boolean;  // Read-only mode
-  pinnedPostId?: number;  // ID of pinned post
+  pinnedPostIds?: number[];  // Array of pinned post IDs
   phone?: string;
   birthDate?: string;
   pp?: string;
@@ -42,6 +49,7 @@ export interface Post {
   retweeted?: boolean;
   repliesCount?: number;
   censored?: boolean;
+  retweetedFrom?: Post;
   user: {
     id: number;
     name: string;
@@ -603,29 +611,37 @@ export function getAuthHeaders(): HeadersInit {
   return headers;
 }
 
-export async function pinPost(userId: number, postId: number): Promise<boolean> {
+export async function pinPost(userId: number, postId: number): Promise<{ success: boolean; pinnedPostIds?: number[] }> {
   try {
     const res = await fetch(`${API_BASE}/users/${userId}/pin-post/${postId}`, {
       method: 'POST',
       headers: getAuthHeaders(),
     });
-    return res.ok;
+    if (res.ok) {
+      const data = await res.json();
+      return { success: true, pinnedPostIds: data.pinnedPostIds || [] };
+    }
+    return { success: false };
   } catch (err) {
     console.error('Pin post error:', err);
-    return false;
+    return { success: false };
   }
 }
 
-export async function unpinPost(userId: number): Promise<boolean> {
+export async function unpinPost(userId: number, postId: number): Promise<{ success: boolean; pinnedPostIds?: number[] }> {
   try {
-    const res = await fetch(`${API_BASE}/users/${userId}/pin-post`, {
+    const res = await fetch(`${API_BASE}/users/${userId}/pin-post/${postId}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
     });
-    return res.ok;
+    if (res.ok) {
+      const data = await res.json();
+      return { success: true, pinnedPostIds: data.pinnedPostIds || [] };
+    }
+    return { success: false };
   } catch (err) {
     console.error('Unpin post error:', err);
-    return false;
+    return { success: false };
   }
 }
 

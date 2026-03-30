@@ -1,6 +1,6 @@
 
 import Avatar from "./Avatar";
-import { getCurrentUser } from "../../lib/api";
+import { getCurrentUser, getMediaUrl } from "../../lib/api";
 import type { User } from "../../lib/api";
 import { useNavigate } from "react-router-dom";
 
@@ -23,7 +23,7 @@ export default function Profile({ name: propName, handle: propHandle, image: pro
   const handle = propHandle ?? current?.username ?? current?.user ?? "guest";
 
   const rawPp = current?.pp || undefined;
-  const avatarSrc = propImage ?? (rawPp && rawPp !== "null" ? rawPp : `https://picsum.photos/seed/${encodeURIComponent(String(handle))}/200`);
+  const avatarSrc = propImage ?? (rawPp && rawPp !== "null" ? getMediaUrl(rawPp) : `https://picsum.photos/seed/${encodeURIComponent(String(handle))}/200`);
 
   // Ensure handle is a string and get first character
   const handleStr = typeof handle === 'string' ? handle : String(handle);

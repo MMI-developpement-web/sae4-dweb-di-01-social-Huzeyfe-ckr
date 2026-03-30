@@ -82,10 +82,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[ORM\OneToMany(targetEntity: Post::class, mappedBy: 'user', orphanRemoval: true)]
     private Collection $posts;
 
-    #[ORM\ManyToOne(targetEntity: Post::class)]
-    #[ORM\JoinColumn(name: 'pinned_post_id', referencedColumnName: 'id', nullable: true, onDelete: 'SET NULL')]
+    #[ORM\ManyToMany(targetEntity: Post::class)]
+    #[ORM\JoinTable(name: 'user_pinned_posts')]
+    #[ORM\OrderBy(['id' => 'DESC'])]
     #[Groups(['default', 'detail'])]
-    private ?Post $pinnedPost = null;
+    private Collection $pinnedPosts;
 
     #[ORM\OneToOne(targetEntity: AccessToken::class, mappedBy: 'user', orphanRemoval: true)]
     private ?AccessToken $accessToken = null;
@@ -105,6 +106,7 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function __construct()
     {
         $this->posts = new ArrayCollection();
+        $this->pinnedPosts = new ArrayCollection();
         $this->likes = new ArrayCollection();
         $this->following = new ArrayCollection();
         $this->followers = new ArrayCollection();
@@ -443,18 +445,35 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function getPinnedPost(): ?Post
+    /**
+     * @return Collection<int, Post>
+     */
+    public function getPinnedPosts(): Collection
     {
-        return $this->pinnedPost;
+        return $this->pinnedPosts;
     }
 
-    public function setPinnedPost(?Post $pinnedPost): self
+    public function addPinnedPost(Post $pinnedPost): static
     {
         // Validate that the pinned post belongs to this user
-        if ($pinnedPost && $pinnedPost->getUser() !== $this) {
+        if ($pinnedPost->getUser() !== $this) {
             throw new \InvalidArgumentException('Cannot pin a post that does not belong to you');
         }
-        $this->pinnedPost = $pinnedPost;
+        if (!$this->pinnedPosts->contains($pinnedPost)) {
+            $this->pinnedPosts->add($pinnedPost);
+        }
         return $this;
+    }
+
+    public function removePinnedPost(Post $pinnedPost): static
+    {
+        $this->pinnedPosts->removeElement($pinnedPost);
+        return $this;
+    }
+
+    // Legacy getter for backward compatibility
+    public function getPinnedPost(): ?Post
+    {
+        return $this->pinnedPosts->first() ?: null;
     }
 }

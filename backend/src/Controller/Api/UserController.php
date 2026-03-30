@@ -50,6 +50,7 @@ class UserController extends AbstractController
                 'website' => $u->getWebsite(),
                 'location' => $u->getLocation(),
                 'createdAt' => $u->getCreatedAt() ? $u->getCreatedAt()->format(DATE_ATOM) : null,
+                'pinnedPostIds' => $u->getPinnedPosts()->map(fn(Post $p) => $p->getId())->toArray(),
             ];
         }, $users);
 
@@ -80,6 +81,7 @@ class UserController extends AbstractController
             'website' => $user->getWebsite(),
             'location' => $user->getLocation(),
             'createdAt' => $user->getCreatedAt() ? $user->getCreatedAt()->format(DATE_ATOM) : null,
+            'pinnedPostIds' => $user->getPinnedPosts()->map(fn(Post $p) => $p->getId())->toArray(),
             'followers' => $followRepository->countFollowers($user->getId()),
             'following' => $followRepository->countFollowing($user->getId()),
             'isFollowing' => false,
@@ -362,23 +364,28 @@ class UserController extends AbstractController
             return $this->json(['error' => 'Vous ne pouvez épingler que vos propres posts'], Response::HTTP_FORBIDDEN);
         }
 
-        $currentUser->setPinnedPost($post);
+        // Ajouter le post à la collection des posts épingles
+        $currentUser->addPinnedPost($post);
         $em->flush();
+
+        // Retourner la liste des IDs des posts épingles (pour front-end)
+        $pinnedPostIds = $currentUser->getPinnedPosts()->map(fn(Post $p) => $p->getId())->toArray();
 
         return $this->json([
             'message' => 'Post épinglé avec succès',
-            'pinnedPostId' => $post->getId(),
-            'pinnedPostContent' => $post->getContent(),
+            'pinnedPostIds' => $pinnedPostIds,
         ]);
     }
 
     /**
-     * Désépingler le post actuellement épinglé
-     * DELETE /api/users/{id}/pin-post
+     * Désépingler un post spécifique
+     * DELETE /api/users/{id}/pin-post/{postId}
      */
-    #[Route('/{id}/pin-post', name: 'users.unpin_post', methods: ['DELETE'])]
+    #[Route('/{id}/pin-post/{postId}', name: 'users.unpin_post', methods: ['DELETE'])]
     public function unpinPost(
         int $id,
+        int $postId,
+        PostRepository $postRepository,
         EntityManagerInterface $em
     ): JsonResponse {
         $currentUser = $this->getUser();
@@ -392,13 +399,21 @@ class UserController extends AbstractController
             return $this->json(['error' => 'Vous ne pouvez désépingler que votre propre post'], Response::HTTP_FORBIDDEN);
         }
 
-        if (!$currentUser->getPinnedPost()) {
-            return $this->json(['error' => 'Aucun post épinglé'], Response::HTTP_NOT_FOUND);
+        $post = $postRepository->find($postId);
+        if (!$post) {
+            return $this->json(['error' => 'Post non trouvé'], Response::HTTP_NOT_FOUND);
         }
 
-        $currentUser->setPinnedPost(null);
+        // Retirer le post de la collection des posts épingles
+        $currentUser->removePinnedPost($post);
         $em->flush();
 
-        return $this->json(['message' => 'Post désépinglé avec succès']);
+        // Retourner la liste des IDs restants des posts épingles
+        $pinnedPostIds = $currentUser->getPinnedPosts()->map(fn(Post $p) => $p->getId())->toArray();
+
+        return $this->json([
+            'message' => 'Post désépinglé avec succès',
+            'pinnedPostIds' => $pinnedPostIds,
+        ]);
     }
 }

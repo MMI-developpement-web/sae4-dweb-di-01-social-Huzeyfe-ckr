@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { type Reply, createReply, getCurrentUser } from '../../lib/api';
+import { type Reply, createReply, getCurrentUser, getMediaUrl } from '../../lib/api';
 
 // Composants pour afficher une réponse individuelle (Reply),
 
@@ -31,7 +31,7 @@ export const ReplyForm: React.FC<ReplyFormProps> = ({ postId, onReplyCreated, on
   // Generate avatar URL with fallback to picsum.photos
   const getAvatarUrl = () => {
     if (currentUser?.pp && currentUser.pp.trim()) {
-      return currentUser.pp;
+      return getMediaUrl(currentUser.pp);
     }
     return `https://picsum.photos/seed/${encodeURIComponent(currentUser?.user || currentUser?.username || 'user')}/200`;
   };

@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { searchContent } from "../../lib/api";
+import { searchContent, getMediaUrl } from "../../lib/api";
 import { debounce } from "../../lib/utils";
 import Avatar from "./Avatar";
 import Post from "./Post";
@@ -58,7 +58,7 @@ export default function SearchBar({
 
   const getAvatarUrl = (user: any) => {
     if (user.pp && user.pp !== "null" && user.pp !== "") {
-      return user.pp;
+      return getMediaUrl(user.pp);
     }
     return `https://picsum.photos/seed/${encodeURIComponent(user.user || "default")}/200`;
   };
@@ -164,7 +164,7 @@ export default function SearchBar({
                     handle={`@${post.user.user}`}
                     avatar={
                       post.user.pp && post.user.pp !== "null"
-                        ? post.user.pp
+                        ? getMediaUrl(post.user.pp)
                         : `https://picsum.photos/seed/${encodeURIComponent(post.user.user || "default")}/200`
                     }
                     time={post.createdAt}

@@ -68,7 +68,7 @@ class AuthController extends AbstractController
                 'role' => $user->getRole(),
                 'blocked' => $user->isBlocked(),
                 'readOnly' => $user->isReadOnly(),
-                'pinnedPostId' => $user->getPinnedPost()?->getId(),
+                'pinnedPostIds' => $user->getPinnedPosts()->map(fn(Post $p) => $p->getId())->toArray(),
             ],
         ]);
     }
@@ -140,7 +140,7 @@ class AuthController extends AbstractController
                 'role' => $user->getRole(),
                 'blocked' => $user->isBlocked(),
                 'readOnly' => $user->isReadOnly(),
-                'pinnedPostId' => $user->getPinnedPost()?->getId(),
+                'pinnedPostIds' => $user->getPinnedPosts()->map(fn(Post $p) => $p->getId())->toArray(),
             ],
         ], Response::HTTP_CREATED);
     }

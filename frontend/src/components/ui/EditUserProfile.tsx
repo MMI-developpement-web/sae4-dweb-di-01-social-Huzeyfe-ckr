@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { updateUser, uploadMedia, type User } from "../../lib/api";
+import { updateUser, uploadMedia, getMediaUrl, BACKEND_ORIGIN, type User } from "../../lib/api";
 import Header from "./Header";
 import SideBar from "./SideBar";
 import Footer from "./Footer";
@@ -8,12 +8,6 @@ import Button from "./Button";
 
 
 // Composant de formulaire pour éditer les informations du profil utilisateur, y compris le téléchargement d'avatar et de bannière, avec gestion des états de chargement et des messages de succès/erreur
-
-
-
-// Get backend origin for proper image URLs
-const API_BASE = import.meta.env.VITE_API_URL;
-const BACKEND_ORIGIN = API_BASE.replace(/\/api$/, '');
 
 interface EditUserProfileProps {
   user: User | null;
@@ -348,7 +342,7 @@ export default function EditUserProfile({ user, onSave: _onSave, onCancel }: Edi
                   <div className="space-y-2">
                     <p className="text-text-muted text-xs">Avatar actuel:</p>
                     <img
-                      src={formData.pp}
+                      src={getMediaUrl(formData.pp)}
                       alt="Current avatar"
                       className="w-32 h-32 rounded-full object-cover border border-border-dark"
                       onError={() => {}}
@@ -425,7 +419,7 @@ export default function EditUserProfile({ user, onSave: _onSave, onCancel }: Edi
                   <div className="space-y-2">
                     <p className="text-text-muted text-xs">Bannière actuelle:</p>
                     <img
-                      src={formData.banner}
+                      src={getMediaUrl(formData.banner)}
                       alt="Current banner"
                       className="w-full h-40 rounded-lg object-cover border border-border-dark"
                       onError={() => {}}

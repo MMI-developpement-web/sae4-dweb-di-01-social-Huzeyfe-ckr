@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { getBlockedUsers, unblockUser, type User } from "../../lib/api";
+import { getBlockedUsers, unblockUser, getMediaUrl, type User } from "../../lib/api";
 
 
 // Composant pour afficher la liste des utilisateurs bloqués, avec possibilité de débloquer et gestion des états de chargement et d'erreur
@@ -52,7 +52,7 @@ export default function BlockedUsersList({ userId, onClose }: BlockedUsersListPr
 
   const getAvatarUrl = (user: User) => {
     if (user.pp && user.pp !== "null" && user.pp !== "" && user.pp !== null) {
-      return user.pp;
+      return getMediaUrl(user.pp);
     }
     return `https://picsum.photos/seed/${encodeURIComponent(user.user || user.username || "default")}/200`;
   };

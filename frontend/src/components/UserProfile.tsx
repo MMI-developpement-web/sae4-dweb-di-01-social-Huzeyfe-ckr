@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getUser, followUser, unfollowUser, getCurrentUser, getPosts, isUserBlocked, type User, type Post as PostType } from "../lib/api";
+import { getUser, followUser, unfollowUser, getCurrentUser, getPosts, isUserBlocked, getMediaUrl, type User, type Post as PostType } from "../lib/api";
 import Header from "./ui/Header";
 import SideBar from "./ui/SideBar";
 import Avatar from "./ui/Avatar";
@@ -17,7 +17,7 @@ export default function UserProfile() {
 
   const [user, setUser] = useState<User | null>(null);
   const [posts, setPosts] = useState<PostType[]>([]);
-  const [pinnedPost, setPinnedPost] = useState<PostType | null>(null);
+  const [pinnedPosts, setPinnedPosts] = useState<PostType[]>([]);
   const [isFollowing, setIsFollowing] = useState(false);
   const [isBlocked, setIsBlocked] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -46,16 +46,14 @@ export default function UserProfile() {
           .filter((post: PostType) => post.user.id === userData?.id)
           .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
         
-        // Séparer le post épinglé des autres posts
-        if (userData?.pinnedPostId) {
-          const pinned = userPosts.find(p => p.id === userData.pinnedPostId);
-          if (pinned) {
-            setPinnedPost(pinned);
-            setPosts(userPosts.filter(p => p.id !== userData.pinnedPostId));
-          } else {
-            setPosts(userPosts);
-          }
+        // Séparer les posts épingles des autres posts
+        if (userData?.pinnedPostIds && userData.pinnedPostIds.length > 0) {
+          const pinned = userPosts.filter(p => userData.pinnedPostIds?.includes(p.id));
+          const unpinned = userPosts.filter(p => !userData.pinnedPostIds?.includes(p.id));
+          setPinnedPosts(pinned);
+          setPosts(unpinned);
         } else {
+          setPinnedPosts([]);
           setPosts(userPosts);
         }
       } catch (error) {
@@ -106,7 +104,7 @@ export default function UserProfile() {
 
   const getAvatarUrl = () => {
     if (user?.pp && user.pp !== "null" && user.pp !== "" && user.pp !== null) {
-      return user.pp;
+      return getMediaUrl(user.pp);
     }
     return `https://picsum.photos/seed/${encodeURIComponent(user?.user || "default")}/200`;
   };
@@ -156,7 +154,7 @@ export default function UserProfile() {
           {/* Bannière */}
           <div 
             className="h-32 md:h-48 bg-linear-to-r from-tick to-text-muted bg-cover bg-center"
-            style={user?.banner ? { backgroundImage: `url(${user.banner})`, backgroundSize: 'cover' } : {}}
+            style={user?.banner ? { backgroundImage: `url(${getMediaUrl(user.banner)})`, backgroundSize: 'cover' } : {}}
           ></div>
 
           {/* Info utilisateur */}
@@ -277,91 +275,105 @@ export default function UserProfile() {
           {/* Separator */}
           <div className="border-t border-border-dark"></div>
 
-          {/* Post épinglé */}
-          {pinnedPost && isOwnProfile && (
-            <div className="bg-surface-dark/50 border-b border-border-dark">
-              <div className="px-4 md:px-6 py-2 text-xs text-text-muted flex items-center gap-2">
-                <span>📌</span>
-                <span>Tweet épinglé</span>
-              </div>
-              <div className="px-4 md:px-6 py-4 hover:bg-surface-dark transition border-b border-border-dark">
-                <Post
-                  id={pinnedPost.id}
-                  name={pinnedPost.user.name}
-                  handle={`@${pinnedPost.user.user}`}
-                  avatar={pinnedPost.user.pp && pinnedPost.user.pp !== "null" 
-                    ? pinnedPost.user.pp 
-                    : `https://picsum.photos/seed/${encodeURIComponent(pinnedPost.user.user)}/200`}
-                  time={pinnedPost.createdAt}
-                  text={pinnedPost.content}
-                  image={pinnedPost.mediaUrl}
-                  userId={pinnedPost.user.id}
-                  currentUserId={currentUser?.id}
-                  likes={pinnedPost.likes || 0}
-                  liked={pinnedPost.liked || false}
-                  retweets={pinnedPost.retweets || 0}
-                  retweeted={pinnedPost.retweeted || false}
-                  userBlocked={pinnedPost.user.blocked || false}
-                  censored={pinnedPost.censored || false}
-                  onDelete={handlePostDeleted}
-                  isPinned={true}
-                  onLikeChange={(liked, likeCount) => {
-                    setPinnedPost(prev => prev ? { ...prev, likes: likeCount, liked } : null);
-                  }}
-                  onRetweetChange={(retweeted, retweetCount) => {
-                    setPinnedPost(prev => prev ? { ...prev, retweets: retweetCount, retweeted } : null);
-                  }}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Posts de l'utilisateur */}
+        
+          {/* Posts de l'utilisateur (épingles en premier) */}
           <div className="divide-y divide-border-dark">
-            {posts.length === 0 && !pinnedPost ? (
+            {pinnedPosts.length === 0 && posts.length === 0 ? (
               <div className="px-4 md:px-6 py-10 text-center text-text-muted">
                 <p>Aucun tweet pour le moment</p>
               </div>
-            ) : posts.length === 0 ? (
-              <div className="px-4 md:px-6 py-10 text-center text-text-muted">
-                <p>Aucun autre tweet</p>
-              </div>
             ) : (
-              posts.map((post) => {
-                const avatar = post.user.pp && post.user.pp !== "null" 
-                  ? post.user.pp 
-                  : `https://picsum.photos/seed/${encodeURIComponent(post.user.user)}/200`;
-                return (
-                  <div
-                    key={post.id}
-                    className="px-4 md:px-6 py-4 hover:bg-surface-dark transition"
-                  >
-                    <Post
-                      id={post.id}
-                      name={post.user.name}
-                      handle={`@${post.user.user}`}
-                      avatar={avatar}
-                      time={post.createdAt}
-                      text={post.content}
-                      image={post.mediaUrl}
-                      userId={post.user.id}
-                      currentUserId={currentUser?.id}
-                      likes={post.likes || 0}
-                      liked={post.liked || false}
-                      userBlocked={post.user.blocked || false}
-                      censored={post.censored || false}
-                      onDelete={handlePostDeleted}
-                      isPinned={false}
-                      onLikeChange={(liked, likeCount) => {
-                        const updatedPosts = posts.map(p =>
-                          p.id === post.id ? { ...p, likes: likeCount, liked } : p
-                        );
-                        setPosts(updatedPosts);
-                      }}
-                    />
-                  </div>
-                );
-              })
+              <>
+                {/* Afficher d'abord les posts épingles */}
+                {pinnedPosts.map((post) => {
+                  const avatar = post.user.pp && post.user.pp !== "null" 
+                    ? getMediaUrl(post.user.pp)
+                    : `https://picsum.photos/seed/${encodeURIComponent(post.user.user)}/200`;
+                  return (
+                    <div
+                      key={post.id}
+                      className="px-4 md:px-6 py-4 hover:bg-surface-dark transition"
+                    >
+                      <Post
+                        id={post.id}
+                        name={post.user.name}
+                        handle={`@${post.user.user}`}
+                        avatar={avatar}
+                        time={post.createdAt}
+                        text={post.content}
+                        image={post.mediaUrl}
+                        userId={post.user.id}
+                        currentUserId={currentUser?.id}
+                        likes={post.likes || 0}
+                        liked={post.liked || false}
+                        retweets={post.retweets || 0}
+                        retweeted={post.retweeted || false}
+                        userBlocked={post.user.blocked || false}
+                        userReadOnly={post.user.readOnly || false}
+                        censored={post.censored || false}
+                        isPinned={user?.pinnedPostIds?.includes(post.id) || false}                      retweetedFromPost={post.retweetedFrom}                        onDelete={handlePostDeleted}
+                        onLikeChange={(liked, likeCount) => {
+                          const updatedPosts = pinnedPosts.map(p =>
+                            p.id === post.id ? { ...p, likes: likeCount, liked } : p
+                          );
+                          setPinnedPosts(updatedPosts);
+                        }}
+                        onRetweetChange={(retweeted, retweetCount) => {
+                          const updatedPosts = pinnedPosts.map(p =>
+                            p.id === post.id ? { ...p, retweets: retweetCount, retweeted } : p
+                          );
+                          setPinnedPosts(updatedPosts);
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+                {/* Puis afficher les posts normaux */}
+                {posts.map((post) => {
+                  const avatar = post.user.pp && post.user.pp !== "null" 
+                    ? getMediaUrl(post.user.pp)
+                    : `https://picsum.photos/seed/${encodeURIComponent(post.user.user)}/200`;
+                  return (
+                    <div
+                      key={post.id}
+                      className="px-4 md:px-6 py-4 hover:bg-surface-dark transition"
+                    >
+                      <Post
+                        id={post.id}
+                        name={post.user.name}
+                        handle={`@${post.user.user}`}
+                        avatar={avatar}
+                        time={post.createdAt}
+                        text={post.content}
+                        image={post.mediaUrl}
+                        userId={post.user.id}
+                        currentUserId={currentUser?.id}
+                        likes={post.likes || 0}
+                        liked={post.liked || false}
+                        retweets={post.retweets || 0}
+                        retweeted={post.retweeted || false}
+                        userBlocked={post.user.blocked || false}
+                        userReadOnly={post.user.readOnly || false}
+                        censored={post.censored || false}
+                        isPinned={user?.pinnedPostIds?.includes(post.id) || false}
+                        onDelete={handlePostDeleted}
+                        onLikeChange={(liked, likeCount) => {
+                          const updatedPosts = posts.map(p =>
+                            p.id === post.id ? { ...p, likes: likeCount, liked } : p
+                          );
+                          setPosts(updatedPosts);
+                        }}
+                        onRetweetChange={(retweeted, retweetCount) => {
+                          const updatedPosts = posts.map(p =>
+                            p.id === post.id ? { ...p, retweets: retweetCount, retweeted } : p
+                          );
+                          setPosts(updatedPosts);
+                        }}
+                      />
+                    </div>
+                  );
+                })}
+              </>
             )}
           </div>
         </div>

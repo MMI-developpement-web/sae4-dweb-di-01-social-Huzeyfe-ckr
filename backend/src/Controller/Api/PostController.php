@@ -23,6 +23,103 @@ use Doctrine\ORM\EntityManagerInterface;
 class PostController extends AbstractController
 {
     /**
+     * Formate un post pour la réponse JSON, incluant les infos du retweet original si applicable
+     */
+    private function formatPost(Post $p, LikeRepository $likeRepository, PostRepository $postRepository, ?User $currentUser = null): array
+    {
+        if ($p->isCensored()) {
+            return [
+                'id' => $p->getId(),
+                'content' => 'Ce message enfreint les conditions d\'utilisation de la plateforme',
+                'time' => $p->getTime()?->format('Y-m-d'),
+                'createdAt' => $p->getCreatedAt()->format(\DateTime::ATOM),
+                'mediaUrl' => $p->getMediaUrl(),
+                'user' => $p->getUser() ? [
+                    'id' => $p->getUser()->getId(),
+                    'name' => $p->getUser()->getName(),
+                    'user' => $p->getUser()->getUser(),
+                    'pp' => $p->getUser()->getPp(),
+                    'blocked' => $p->getUser()->isBlocked(),
+                    'readOnly' => false,
+                ] : null,
+                'likes' => 0,
+                'liked' => false,
+                'retweets' => 0,
+                'retweeted' => false,
+                'censored' => true,
+                'retweetedFrom' => null,
+            ];
+        }
+
+        $likeCount = $likeRepository->countByPostExcludingBlocked($p->getId());
+        $userLiked = false;
+        $retweetCount = $postRepository->countRetweets($p->getId());
+        $userRetweeted = false;
+        
+        if ($currentUser) {
+            $userLiked = (bool) $likeRepository->findByUserAndPost($currentUser->getId(), $p->getId());
+            $userRetweeted = (bool) $postRepository->findRetweetByUser($p->getId(), $currentUser->getId());
+        }
+
+        // Formater le post original si c'est un retweet
+        $retweetedFrom = null;
+        if ($p->getRetweetedFrom()) {
+            $originalPost = $p->getRetweetedFrom();
+            $originalLikeCount = $likeRepository->countByPostExcludingBlocked($originalPost->getId());
+            $originalRetweetCount = $postRepository->countRetweets($originalPost->getId());
+            $originalUserLiked = false;
+            $originalUserRetweeted = false;
+            
+            if ($currentUser) {
+                $originalUserLiked = (bool) $likeRepository->findByUserAndPost($currentUser->getId(), $originalPost->getId());
+                $originalUserRetweeted = (bool) $postRepository->findRetweetByUser($originalPost->getId(), $currentUser->getId());
+            }
+
+            $retweetedFrom = [
+                'id' => $originalPost->getId(),
+                'content' => $originalPost->getContent(),
+                'time' => $originalPost->getTime()?->format('Y-m-d'),
+                'createdAt' => $originalPost->getCreatedAt()->format(\DateTime::ATOM),
+                'mediaUrl' => $originalPost->getMediaUrl(),
+                'user' => $originalPost->getUser() ? [
+                    'id' => $originalPost->getUser()->getId(),
+                    'name' => $originalPost->getUser()->getName(),
+                    'user' => $originalPost->getUser()->getUser(),
+                    'pp' => $originalPost->getUser()->getPp(),
+                    'blocked' => $originalPost->getUser()->isBlocked(),
+                    'readOnly' => $originalPost->getUser()->isReadOnly(),
+                ] : null,
+                'likes' => $originalLikeCount,
+                'liked' => $originalUserLiked,
+                'retweets' => $originalRetweetCount,
+                'retweeted' => $originalUserRetweeted,
+            ];
+        }
+
+        return [
+            'id' => $p->getId(),
+            'content' => $p->getContent(),
+            'time' => $p->getTime()?->format('Y-m-d'),
+            'createdAt' => $p->getCreatedAt()->format(\DateTime::ATOM),
+            'mediaUrl' => $p->getMediaUrl(),
+            'user' => $p->getUser() ? [
+                'id' => $p->getUser()->getId(),
+                'name' => $p->getUser()->getName(),
+                'user' => $p->getUser()->getUser(),
+                'pp' => $p->getUser()->getPp(),
+                'blocked' => $p->getUser()->isBlocked(),
+                'readOnly' => $p->getUser()->isReadOnly(),
+            ] : null,
+            'likes' => $likeCount,
+            'liked' => $userLiked,
+            'retweets' => $retweetCount,
+            'retweeted' => $userRetweeted,
+            'censored' => false,
+            'retweetedFrom' => $retweetedFrom,
+        ];
+    }
+
+    /**
      * Récupère tous les posts avec les infos utilisateur
      * GET /api/posts?filter=following (optionnel: retourne seulement les posts des utilisateurs suivis)
      */
@@ -47,62 +144,8 @@ class PostController extends AbstractController
             return $b->getCreatedAt()->getTimestamp() - $a->getCreatedAt()->getTimestamp();
         });
 
-        $result = array_map(function(Post $p) use ($likeRepository, $postRepository, $currentUser) {
-            // Si le post est censuré, retourner une structure minimale
-            if ($p->isCensored()) {
-                return [
-                    'id' => $p->getId(),
-                    'content' => 'Ce message enfreint les conditions d\'utilisation de la plateforme',
-                    'time' => $p->getTime()?->format('Y-m-d'),
-                    'createdAt' => $p->getCreatedAt()->format(\DateTime::ATOM),
-                    'mediaUrl' => $p->getMediaUrl(),
-                    'user' => $p->getUser() ? [
-                        'id' => $p->getUser()->getId(),
-                        'name' => $p->getUser()->getName(),
-                        'user' => $p->getUser()->getUser(),
-                        'pp' => $p->getUser()->getPp(),
-                        'blocked' => $p->getUser()->isBlocked(),
-                        'readOnly' => $p->getUser()->isReadOnly(),
-                    ] : null,
-                    'likes' => 0,
-                    'liked' => false,
-                    'retweets' => 0,
-                    'retweeted' => false,
-                    'censored' => true,
-                ];
-            }
-
-            $likeCount = $likeRepository->countByPostExcludingBlocked($p->getId());
-            $userLiked = false;
-            $retweetCount = $postRepository->countRetweets($p->getId());
-            $userRetweeted = false;
-            
-            if ($currentUser) {
-                $userLiked = (bool) $likeRepository->findByUserAndPost($currentUser->getId(), $p->getId());
-                $userRetweeted = (bool) $postRepository->findRetweetByUser($p->getId(), $currentUser->getId());
-            }
-
-            return [
-                'id' => $p->getId(),
-                'content' => $p->getContent(),
-                'time' => $p->getTime()?->format('Y-m-d'),
-                'createdAt' => $p->getCreatedAt()->format(\DateTime::ATOM),
-                'mediaUrl' => $p->getMediaUrl(),
-                'user' => $p->getUser() ? [
-                    'id' => $p->getUser()->getId(),
-                    'name' => $p->getUser()->getName(),
-                    'user' => $p->getUser()->getUser(),
-                    'pp' => $p->getUser()->getPp(),
-                    'blocked' => $p->getUser()->isBlocked(),
-                    'readOnly' => $p->getUser()->isReadOnly(),
-                ] : null,
-                'likes' => $likeCount,
-                'liked' => $userLiked,
-                'retweets' => $retweetCount,
-                'retweeted' => $userRetweeted,
-                'censored' => false,
-            ];
-        }, $posts);
+        $currentUser = $this->getUser();
+        $result = array_map(fn(Post $p) => $this->formatPost($p, $likeRepository, $postRepository, $currentUser), $posts);
 
         return $this->json(['posts' => $result]);
     }
@@ -114,64 +157,7 @@ class PostController extends AbstractController
     #[Route('/{id}', name: 'posts.get', methods: ['GET'])]
     public function get(Post $post, LikeRepository $likeRepository, PostRepository $postRepository): JsonResponse
     {
-        $currentUser = $this->getUser();
-
-        // Si le post est censuré, retourner une structure minimale
-        if ($post->isCensored()) {
-            return $this->json([
-                'id' => $post->getId(),
-                'content' => 'Ce message enfreint les conditions d\'utilisation de la plateforme',
-                'time' => $post->getTime()?->format('Y-m-d'),
-                'createdAt' => $post->getCreatedAt()->format(\DateTime::ATOM),
-                'mediaUrl' => $post->getMediaUrl(),
-                'user' => $post->getUser() ? [
-                    'id' => $post->getUser()->getId(),
-                    'name' => $post->getUser()->getName(),
-                    'user' => $post->getUser()->getUser(),
-                    'pp' => $post->getUser()->getPp(),
-                    'blocked' => $post->getUser()->isBlocked(),
-                    'readOnly' => $post->getUser()->isReadOnly(),
-                ] : null,
-                'likes' => 0,
-                'liked' => false,
-                'retweets' => 0,
-                'retweeted' => false,
-                'censored' => true,
-            ]);
-        }
-
-        $likeCount = $likeRepository->countByPostExcludingBlocked($post->getId());
-        $userLiked = false;
-        $retweetCount = $postRepository->countRetweets($post->getId());
-        $userRetweeted = false;
-        
-        if ($currentUser) {
-            $userLiked = (bool) $likeRepository->findByUserAndPost($currentUser->getId(), $post->getId());
-            $userRetweeted = (bool) $postRepository->findRetweetByUser($post->getId(), $currentUser->getId());
-        }
-
-        $data = [
-            'id' => $post->getId(),
-            'content' => $post->getContent(),
-            'time' => $post->getTime()?->format('Y-m-d'),
-            'createdAt' => $post->getCreatedAt()->format(\DateTime::ATOM),
-            'mediaUrl' => $post->getMediaUrl(),
-            'user' => $post->getUser() ? [
-                'id' => $post->getUser()->getId(),
-                'name' => $post->getUser()->getName(),
-                'user' => $post->getUser()->getUser(),
-                'pp' => $post->getUser()->getPp(),
-                'blocked' => $post->getUser()->isBlocked(),
-                'readOnly' => $post->getUser()->isReadOnly(),
-            ] : null,
-            'likes' => $likeCount,
-            'liked' => $userLiked,
-            'retweets' => $retweetCount,
-            'retweeted' => $userRetweeted,
-            'censored' => false,
-        ];
-
-        return $this->json($data);
+        return $this->json($this->formatPost($post, $likeRepository, $postRepository, $this->getUser()));
     }
 
     /**

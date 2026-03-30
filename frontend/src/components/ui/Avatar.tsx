@@ -1,7 +1,11 @@
 import { useState, useEffect } from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../../lib/utils";
+import { getMediaUrl } from "../../lib/api";
 import type { ReactNode } from "react";
+
+
+// Composant Avatar réutilisable avec gestion des erreurs de chargement d'image et variantes de taille
 
 export const AvatarVariants = cva(
   "inline-block overflow-hidden rounded-full bg-text-muted",
@@ -33,19 +37,18 @@ export interface AvatarProps extends VariantProps<typeof AvatarVariants> {
 
 export default function Avatar({ children, size, className, src, alt }: AvatarProps) {
   const [imageError, setImageError] = useState(false);
-
-  // Reset error state when src changes
+  const fullSrc = getMediaUrl(src);
   useEffect(() => {
     setImageError(false);
-  }, [src]);
+  }, [fullSrc]);
 
   const container = cn(AvatarVariants({ size }), className);
 
   return (
     <div className={container}>
-      {src && !imageError ? (
+      {fullSrc && !imageError ? (
         <img
-          src={src}
+          src={fullSrc}
           alt={alt || "avatar"}
           className="w-full h-full object-cover"
           onError={() => setImageError(true)}

@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Avatar from "./Avatar";
-import { deletePost, likePost, unlikePost, getReplies, updatePost, retweetPost, unretweetPost, getUserByUsername, pinPost, unpinPost, getCurrentUser, type Reply as ReplyType } from "../../lib/api";
+import { deletePost, likePost, unlikePost, getReplies, updatePost, retweetPost, unretweetPost, getUserByUsername, pinPost, unpinPost, getCurrentUser, getMediaUrl, type Reply as ReplyType } from "../../lib/api";
 import { InteractiveText } from "../../lib/hashtagParser";
 import { Reply } from "./Reply";
 import { ReplyForm } from "./ReplyForm";
@@ -49,6 +49,7 @@ export interface PostProps {
   censored?: boolean;
   isAdmin?: boolean;
   isPinned?: boolean;
+  retweetedFromPost?: any;  // Post original for retweets
   onDelete?: () => void;
   onCensored?: (censored: boolean) => void;
   onLikeChange?: (liked: boolean, likeCount: number) => void;
@@ -56,7 +57,7 @@ export interface PostProps {
   onEdit?: (newContent: string) => void;
 }
 
-export default function Post({ id, name, handle, avatar, time, text, image, userId, currentUserId, likes: initialLikes = 0, liked: initialLiked = false, retweets: initialRetweets = 0, retweeted: initialRetweeted = false, userBlocked = false, userReadOnly = false, censored = false, isAdmin = false, isPinned = false, onDelete, onCensored, onLikeChange, onRetweetChange, onEdit }: PostProps) {
+export default function Post({ id, name, handle, avatar, time, text, image, userId, currentUserId, likes: initialLikes = 0, liked: initialLiked = false, retweets: initialRetweets = 0, retweeted: initialRetweeted = false, userBlocked = false, userReadOnly = false, censored = false, isAdmin = false, isPinned = false, retweetedFromPost, onDelete, onCensored, onLikeChange, onRetweetChange, onEdit }: PostProps) {
   const navigate = useNavigate();
   const displayTime = formatRelativeTime(time);
   const handleStr = typeof handle === 'string' ? handle : String(handle);
@@ -177,13 +178,24 @@ export default function Post({ id, name, handle, avatar, time, text, image, user
       let success = false;
       if (isPinned) {
         // Unpin
-        success = await unpinPost(currentUser.id);
+        const result = await unpinPost(currentUser.id, Number(id));
+        success = result.success;
+        if (success && result.pinnedPostIds) {
+          currentUser.pinnedPostIds = result.pinnedPostIds;
+        }
       } else {
         // Pin
-        success = await pinPost(currentUser.id, Number(id));
+        const result = await pinPost(currentUser.id, Number(id));
+        success = result.success;
+        if (success && result.pinnedPostIds) {
+          currentUser.pinnedPostIds = result.pinnedPostIds;
+        }
       }
 
       if (success) {
+        // Update currentUser in localStorage before reload
+        localStorage.setItem('currentUser', JSON.stringify(currentUser));
+        
         // Reload the page to refresh pinned status
         setTimeout(() => {
           window.location.reload();
@@ -341,6 +353,11 @@ export default function Post({ id, name, handle, avatar, time, text, image, user
                 <span className="text-text-muted text-xs md:text-sm shrink-0">
                   {userBlocked ? "" : handleStr}
                 </span>
+                {isPinned && (
+                  <span className="text-yellow-500 text-sm md:text-base" title="Tweet épinglé">
+                    📌
+                  </span>
+                )}
               </div>
               <span className="text-text-muted text-xs md:text-sm">{displayTime}</span>
             </div>
@@ -530,13 +547,109 @@ export default function Post({ id, name, handle, avatar, time, text, image, user
             </p>
           )}
 
-          {/* Media Display */}
-          {!isCensored && image && (
+          {/* Retweet Original Post Display */}
+          {!isCensored && retweetedFromPost && (
+            <div className="mt-3 border border-border-dark rounded-lg p-3 bg-surface-dark/50 hover:bg-surface-dark transition cursor-pointer"
+              onClick={() => {
+                if (retweetedFromPost.user?.id) {
+                  navigate(`/profile/${retweetedFromPost.user.id}`);
+                }
+              }}>
+              {/* Original post header */}
+              <div className="flex items-start gap-2 mb-2">
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    retweetedFromPost.user?.id && navigate(`/profile/${retweetedFromPost.user.id}`);
+                  }}
+                  className="hover:opacity-80 transition shrink-0"
+                >
+                  {retweetedFromPost.user?.pp && retweetedFromPost.user.pp !== "null" ? (
+                    <img 
+                      src={getMediaUrl(retweetedFromPost.user.pp)}
+                      alt={`${retweetedFromPost.user?.name} avatar`}
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
+                  ) : (
+                    <img 
+                      src={`https://picsum.photos/seed/${encodeURIComponent(retweetedFromPost.user?.user || "unknown")}/200`}
+                      alt={`${retweetedFromPost.user?.name} avatar`}
+                      className="w-8 h-8 rounded-full object-cover"
+                    />
+                  )}
+                </button>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center justify-between gap-2">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-text-white text-xs md:text-sm truncate">
+                        {retweetedFromPost.user?.name}
+                      </span>
+                      <span className="text-text-muted text-xs">
+                        {retweetedFromPost.user?.user}
+                      </span>
+                    </div>
+                    <span className="text-text-muted text-xs">
+                      {retweetedFromPost.time || formatRelativeTime(retweetedFromPost.createdAt)}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Original post content */}
+              {retweetedFromPost.content && (
+                <p className="text-xs md:text-sm leading-5 text-text-white mb-2">
+                  <InteractiveText 
+                    text={retweetedFromPost.content} 
+                    onHashtagClick={(tag) => navigate(`/search/hashtag/${tag}`)}
+                    onMentionClick={async (mention) => {
+                      const user = await getUserByUsername(mention);
+                      if (user) {
+                        navigate(`/profile/${user.id}`);
+                      }
+                    }}
+                  />
+                </p>
+              )}
+
+              {/* Original post media - Only display if different from main image or if retweetedFromPost has media but main post doesn't */}
+              {retweetedFromPost.mediaUrl && retweetedFromPost.mediaUrl !== image && (
+                <div className="mt-2 rounded-lg overflow-hidden bg-surface-dark max-h-48">
+                  {getMediaUrl(retweetedFromPost.mediaUrl)?.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+                    <img src={getMediaUrl(retweetedFromPost.mediaUrl)} alt="Original post media" className="w-full h-auto object-cover" />
+                  ) : (
+                    <video src={getMediaUrl(retweetedFromPost.mediaUrl)} controls className="w-full h-auto max-h-48" />
+                  )}
+                </div>
+              )}
+
+              {/* Original post stats */}
+              <div className="flex items-center gap-2 md:gap-3 mt-2 text-text-muted text-xs pt-2 border-t border-border-dark">
+                <span className="flex items-center gap-1">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
+                  </svg>
+                  {retweetedFromPost.likes || 0}
+                </span>
+                <span className="flex items-center gap-1">
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor">
+                    <polyline points="17 2 19 4 17 6"></polyline>
+                    <path d="M3 11V9a4 4 0 0 1 4-4h14"></path>
+                    <polyline points="7 22 5 20 7 18"></polyline>
+                    <path d="M21 13v2a4 4 0 0 1-4 4H3"></path>
+                  </svg>
+                  {retweetedFromPost.retweets || 0}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Media Display - Do not display if this is a  retweet (media is shown in the quoted post) */}
+          {!isCensored && image && !retweetedFromPost && (
             <div className="mt-3 rounded-lg overflow-hidden bg-surface-dark max-h-96">
-              {image.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-                <img src={image} alt="Post" className="w-full h-auto object-cover" />
+              {getMediaUrl(image)?.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+                <img src={getMediaUrl(image)} alt="Post" className="w-full h-auto object-cover" />
               ) : (
-                <video src={image} controls className="w-full h-auto" />
+                <video src={getMediaUrl(image)} controls className="w-full h-auto" />
               )}
             </div>
           )}

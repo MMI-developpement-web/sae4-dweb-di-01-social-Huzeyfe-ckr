@@ -6,7 +6,7 @@ import Avatar from "./ui/Avatar";
 import Input from "./ui/Input";
 import Button from "./ui/Button";
 import Footer from "./ui/Footer";
-import { createPost, getCurrentUser, uploadMedia } from "../lib/api";
+import { createPost, getCurrentUser, uploadMedia, getMediaUrl } from "../lib/api";
 
 export default function PostPage() {
   const [content, setContent] = useState("");
@@ -136,7 +136,7 @@ export default function PostPage() {
                 const current = getCurrentUser();
                 const rawPp = current?.pp;
                 const username = current?.username ?? current?.user ?? "guest";
-                const avatarSrc = rawPp && rawPp !== "null" ? rawPp : current ? `https://picsum.photos/seed/${encodeURIComponent(username)}/200` : undefined;
+                const avatarSrc = rawPp && rawPp !== "null" ? getMediaUrl(rawPp) : current ? `https://picsum.photos/seed/${encodeURIComponent(username)}/200` : undefined;
                 const initials = current?.name?.charAt(0)?.toUpperCase() ?? "U";
                 return (
                   <Avatar size="md" src={avatarSrc} alt={`${current?.name ?? "Utilisateur"} avatar`}>
@@ -200,10 +200,10 @@ export default function PostPage() {
                 )}
                 {mediaUrl && !previewUrl && (
                   <div className="relative">
-                    {mediaUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-                      <img src={mediaUrl} alt="Uploaded" className="w-full h-auto max-h-96 object-cover" />
+                    {getMediaUrl(mediaUrl)?.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+                      <img src={getMediaUrl(mediaUrl)} alt="Uploaded" className="w-full h-auto max-h-96 object-cover" />
                     ) : (
-                      <video src={mediaUrl} controls className="w-full h-auto max-h-96" />
+                      <video src={getMediaUrl(mediaUrl)} controls className="w-full h-auto max-h-96" />
                     )}
                   </div>
                 )}

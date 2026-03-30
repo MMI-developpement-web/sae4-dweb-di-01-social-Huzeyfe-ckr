@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import Footer from './Footer'
-import { getUser, getCurrentUser, getAuthToken, saveCurrentUser, logout } from "../../lib/api";
+import { getUser, getCurrentUser, getAuthToken, saveCurrentUser, logout, getMediaUrl } from "../../lib/api";
 import Button from "./Button";
 import Avatar from "./Avatar";
 
@@ -50,7 +50,7 @@ export default function SideBar({ className = "" }: SideBarDataProps & SideBarVi
 
   const getAvatarUrl = () => {
     if (currentUser?.pp && currentUser.pp !== "null" && currentUser.pp !== "" && currentUser.pp !== null) {
-      return currentUser.pp;
+      return getMediaUrl(currentUser.pp);
     }
     return `https://picsum.photos/seed/${encodeURIComponent(currentUser?.user || "default")}/200`;
   };

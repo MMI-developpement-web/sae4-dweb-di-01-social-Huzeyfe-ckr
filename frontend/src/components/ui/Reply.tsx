@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
-import { type Reply as ReplyType } from '../../lib/api';
-import { deleteReply } from '../../lib/api';
+import { type Reply as ReplyType, deleteReply, getMediaUrl } from '../../lib/api';
 
 // Composants pour afficher une réponse individuelle (Reply)
 
@@ -47,7 +46,7 @@ export const Reply: React.FC<ReplyProps> = ({ reply, onDelete, isOwner, isAdmin 
   // Generate avatar URL with fallback to picsum.photos
   const getAvatarUrl = () => {
     if (reply.user?.pp && reply.user.pp.trim()) {
-      return reply.user.pp;
+      return getMediaUrl(reply.user.pp);
     }
     return `https://picsum.photos/seed/${encodeURIComponent(reply.user?.username || 'user')}/200`;
   };
