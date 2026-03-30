@@ -2,7 +2,7 @@
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import Avatar from "./Avatar";
-import { deletePost, likePost, unlikePost, getReplies, updatePost, retweetPost, unretweetPost, type Reply as ReplyType } from "../../lib/api";
+import { deletePost, likePost, unlikePost, getReplies, updatePost, retweetPost, unretweetPost, getUserByUsername, type Reply as ReplyType } from "../../lib/api";
 import { InteractiveText } from "../../lib/hashtagParser";
 import { Reply } from "./Reply";
 import { ReplyForm } from "./ReplyForm";
@@ -511,7 +511,12 @@ export default function Post({ id, name, handle, avatar, time, text, image, user
               <InteractiveText 
                 text={text} 
                 onHashtagClick={(tag) => navigate(`/search/hashtag/${tag}`)}
-                onMentionClick={(mention) => navigate(`/profile/${mention}`)}
+                onMentionClick={async (mention) => {
+                  const user = await getUserByUsername(mention);
+                  if (user) {
+                    navigate(`/profile/${user.id}`);
+                  }
+                }}
               />
             </p>
           )}

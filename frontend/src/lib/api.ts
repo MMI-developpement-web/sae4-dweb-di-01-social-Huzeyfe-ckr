@@ -161,6 +161,18 @@ export async function getUser(id: number): Promise<User | null> {
   }
 }
 
+export async function getUserByUsername(username: string): Promise<User | null> {
+  try {
+    const users = await getUsers();
+    // Find user by username (field 'user' or 'username')
+    const user = users.find(u => (u.user === username || u.username === username));
+    return user || null;
+  } catch (err) {
+    console.error('Get user by username error:', err);
+    return null;
+  }
+}
+
 export async function updateUser(id: number, data: Partial<User>): Promise<boolean> {
   try {
     const res = await fetch(`${API_BASE}/users/${id}`, {

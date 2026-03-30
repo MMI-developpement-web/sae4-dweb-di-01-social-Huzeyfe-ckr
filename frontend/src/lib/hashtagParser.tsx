@@ -2,7 +2,7 @@
  * Utility to parse and render hashtags and mentions in text
  */
 
-export function parseHashtagsAndMentions(text: string, onHashtagClick?: (tag: string) => void, onMentionClick?: (mention: string) => void) {
+export function parseHashtagsAndMentions(text: string, onHashtagClick?: (tag: string) => void, onMentionClick?: (mention: string) => void | Promise<void>) {
   // Pattern to match hashtags (#word) and mentions (@word)
   const pattern = /(#\w+|@\w+)/g;
   const parts = text.split(pattern);
@@ -33,10 +33,10 @@ export function parseHashtagsAndMentions(text: string, onHashtagClick?: (tag: st
       return (
         <a
           key={index}
-          href={`/search/mention/${mention}`}
-          onClick={(e) => {
+          href={`/profile/${mention}`}
+          onClick={async (e) => {
             e.preventDefault();
-            onMentionClick?.(mention);
+            await onMentionClick?.(mention);
           }}
           className="text-blue-400 hover:underline"
           title={`@${mention}`}
@@ -60,7 +60,7 @@ export function parseHashtagsAndMentions(text: string, onHashtagClick?: (tag: st
 export function InteractiveText({ text, onHashtagClick, onMentionClick }: {
   text: string;
   onHashtagClick?: (tag: string) => void;
-  onMentionClick?: (mention: string) => void;
+  onMentionClick?: (mention: string) => void | Promise<void>;
 }) {
   return (
     <>{parseHashtagsAndMentions(text, onHashtagClick, onMentionClick)}</>

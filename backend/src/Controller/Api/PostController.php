@@ -312,6 +312,11 @@ class PostController extends AbstractController
             return $this->json(['error' => 'Utilisateur non authentifié'], Response::HTTP_UNAUTHORIZED);
         }
 
+        // Vérifier si l'utilisateur est en mode lecture seule
+        if ($user->isReadOnly()) {
+            return $this->json(['error' => 'Vous êtes en mode lecture seule et ne pouvez pas liker'], Response::HTTP_FORBIDDEN);
+        }
+
         // Vérifier si l'utilisateur actuel est bloqué par l'auteur du post
         if ($blockedUserRepository->isUserBlocked($post->getUser()->getId(), $user->getId())) {
             return $this->json(['error' => 'Vous êtes bloqué par l\'auteur de ce post'], Response::HTTP_FORBIDDEN);
@@ -390,6 +395,11 @@ class PostController extends AbstractController
         $user = $this->getUser();
         if (!$user) {
             return $this->json(['error' => 'Utilisateur non authentifié'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        // Vérifier si l'utilisateur est en mode lecture seule
+        if ($user->isReadOnly()) {
+            return $this->json(['error' => 'Vous êtes en mode lecture seule et ne pouvez pas retweeter'], Response::HTTP_FORBIDDEN);
         }
 
         // Vérifier si l'utilisateur actuel est bloqué par l'auteur du post

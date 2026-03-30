@@ -30,7 +30,7 @@ export default function RetweetModal({
   }
 
   return (
-    <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 bg-black/80 z-50 flex items-center justify-center p-4">
       <div className="bg-dark border border-dark rounded-lg w-full max-w-md p-4 shadow-xl">
         {/* Header */}
         <div className="mb-4">

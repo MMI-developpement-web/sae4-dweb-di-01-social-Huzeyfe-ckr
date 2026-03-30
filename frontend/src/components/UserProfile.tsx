@@ -26,14 +26,18 @@ export default function UserProfile() {
 
   useEffect(() => {
     const loadUser = async () => {
-      if (!id) return;
+      const userId = id ? Number(id) : undefined;
+      if (!userId || isNaN(userId)) {
+        setLoading(false);
+        return;
+      }
       try {
-        const userData = await getUser(Number(id));
+        const userData = await getUser(userId);
         setUser(userData);
         setIsFollowing(userData?.isFollowing || false);
 
         // Charger l'état de blocage
-        const blocked = await isUserBlocked(Number(id));
+        const blocked = await isUserBlocked(userId);
         setIsBlocked(blocked);
 
         // Charger les posts de l'utilisateur

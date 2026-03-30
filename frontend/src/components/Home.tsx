@@ -12,6 +12,7 @@ export default function Home() {
   const currentUser = getCurrentUser();
   const authToken = getAuthToken();
   const [posts, setPosts] = useState<PostType[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [newPostsCount, setNewPostsCount] = useState(0);
@@ -110,8 +111,38 @@ export default function Home() {
             <Profile />
           </div>
 
+          {/* Search Bar */}
+          <div className="sticky top-0 z-20 bg-bg-black/95 backdrop-blur-sm border-b border-border-dark px-4 md:px-6 py-3">
+            <div className="flex gap-2 items-center">
+              <div className="flex-1 relative">
+                <input
+                  type="text"
+                  placeholder="🔍 Chercher des posts ou des utilisateurs..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyPress={(e) => {
+                    if (e.key === 'Enter' && searchQuery.trim()) {
+                      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+                    }
+                  }}
+                  className="w-full bg-neutral-900 text-text-white placeholder-text-muted rounded-full py-2 px-4 border border-border-dark focus:border-tick focus:outline-none transition"
+                />
+              </div>
+              {searchQuery && (
+                <button
+                  onClick={() => {
+                    navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+                  }}
+                  className="px-4 py-2 bg-tick hover:bg-tick/90 text-white rounded-full font-semibold text-sm whitespace-nowrap transition"
+                >
+                  Chercher
+                </button>
+              )}
+            </div>
+          </div>
+
           {/* Filter and Refresh Section */}
-          <div className="sticky top-0 z-10 bg-bg-black border-b border-border-dark">
+          <div className="sticky top-[60px] z-10 bg-bg-black border-b border-border-dark">
             {/* Tabs */}
             <div className="flex">
               <button
