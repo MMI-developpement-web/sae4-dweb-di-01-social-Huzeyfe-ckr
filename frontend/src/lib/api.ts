@@ -8,6 +8,10 @@ export const BACKEND_ORIGIN = API_BASE.replace(/\/api$/, '');
 export function getMediaUrl(mediaPath?: string | null): string | undefined {
   if (!mediaPath) return undefined;
   if (mediaPath.startsWith('http')) return mediaPath;
+  // If path starts with /~, it's already absolute from domain root (e.g., /~user/CycleD/...)
+  // Just use it directly - the browser will add https://mmi.unilim.fr
+  if (mediaPath.startsWith('/~')) return mediaPath;
+  // Otherwise (including /uploads/media/...), prepend backend origin
   return `${BACKEND_ORIGIN}${mediaPath}`;
 }
 
@@ -65,6 +69,7 @@ export interface Reply {
   postId: number;
   content: string;
   createdAt: string;
+  mediaUrl?: string;
   canDelete?: boolean;
   user: {
     id: number;

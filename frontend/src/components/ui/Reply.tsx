@@ -108,6 +108,22 @@ export const Reply: React.FC<ReplyProps> = ({ reply, onDelete, isOwner, isAdmin 
       <div className="text-textPrimary text-sm leading-relaxed">
         {reply.content}
       </div>
+
+      {/* Media display */}
+      {reply.mediaUrl && (() => {
+        const mediaUrl = getMediaUrl(reply.mediaUrl);
+        if (!mediaUrl) return null;
+        const isImage = mediaUrl.match(/\.(jpg|jpeg|png|gif|webp)$/i);
+        return (
+          <div className="mt-3 rounded-lg overflow-hidden bg-surface-dark max-h-48">
+            {isImage ? (
+              <img src={mediaUrl} alt="Reply media" className="w-full h-auto object-cover" />
+            ) : (
+              <video src={mediaUrl} controls className="w-full h-auto max-h-48" />
+            )}
+          </div>
+        );
+      })()}
     </div>
   );
 };
