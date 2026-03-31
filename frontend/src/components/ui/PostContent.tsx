@@ -27,6 +27,8 @@ interface PostContentDataProps {
   userBlocked: boolean;
   retweetedFromPost?: any;
   likeError?: string | null;
+  retweetError?: string | null;
+  replyError?: string | null;
 }
 
 interface PostContentViewProps {}
@@ -38,6 +40,8 @@ export function PostContent({
   userBlocked,
   retweetedFromPost,
   likeError,
+  retweetError,
+  replyError,
 }: PostContentDataProps & PostContentViewProps) {
   const navigate = useNavigate();
 
@@ -217,6 +221,20 @@ export function PostContent({
       {likeError && (
         <div className="mt-3 bg-red-100 border border-red-400 rounded-lg p-2 md:p-3">
           <p className="text-red-800 text-xs md:text-sm">{likeError}</p>
+        </div>
+      )}
+
+      {/* Retweet Error Message */}
+      {retweetError && (
+        <div className="mt-3 bg-red-100 border border-red-400 rounded-lg p-2 md:p-3">
+          <p className="text-red-800 text-xs md:text-sm">{retweetError}</p>
+        </div>
+      )}
+
+      {/* Reply Error Message */}
+      {replyError && (
+        <div className="mt-3 bg-red-100 border border-red-400 rounded-lg p-2 md:p-3">
+          <p className="text-red-800 text-xs md:text-sm">{replyError}</p>
         </div>
       )}
     </>

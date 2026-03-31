@@ -71,7 +71,7 @@ export default function SideBar({ className = "" }: SideBarDataProps & SideBarVi
       <Button 
         variant="dark" 
         size="lg" 
-        className="w-full border border-border-dark text-text-white hover:bg-surface-dark font-bold mb-6"
+        className="w-full border border-white text-text-white hover:bg-surface-dark font-bold mb-6"
         onClick={() => navigate('/search')}
       >
         🔍 Rechercher
@@ -80,7 +80,7 @@ export default function SideBar({ className = "" }: SideBarDataProps & SideBarVi
       {/* Publish Button */}
       <Button 
         variant="solid" 
-        size="gg" 
+        size="lg" 
         className="w-full bg-tick hover:bg-tick/90 text-white font-bold mb-6"
         onClick={() => navigate('/post')}
       >
@@ -91,10 +91,10 @@ export default function SideBar({ className = "" }: SideBarDataProps & SideBarVi
       <Button 
         variant="dark" 
         size="lg" 
-        className="w-full border border-border-dark text-text-white hover:bg-surface-dark font-bold mb-6"
+        className="w-full border border-white text-text-white hover:bg-surface-dark font-bold mb-6"
         onClick={() => navigate('/settings')}
       >
-        ⚙️ Paramètres
+         Paramètres
       </Button>
 
     {/* log Out Button */}
@@ -104,7 +104,8 @@ export default function SideBar({ className = "" }: SideBarDataProps & SideBarVi
         className="w-full bg-error hover:bg-red/90 text-white font-bold mb-6"
         onClick={handleLogout}
       >
-        Se déconnecter
+
+        Déconnection
       </Button>
 
     

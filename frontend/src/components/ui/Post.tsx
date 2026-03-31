@@ -10,6 +10,7 @@ import {
   unpinPost,
   getCurrentUser,
   getReplies,
+  uploadMedia,
 } from "../../lib/api";
 import RetweetModal from "./RetweetModal";
 import { PostHeader } from "./PostHeader";
@@ -114,9 +115,17 @@ export default function Post({
   const [retweeted, setRetweeted] = useState(initialRetweeted);
   const [retweetCount, setRetweetCount] = useState(initialRetweets);
   const [retweetingLoading, setRetweetingLoading] = useState(false);
+  const [retweetError, setRetweetError] = useState<string | null>(null);
+
+  // Reply State
+  const [replyError, setReplyError] = useState<string | null>(null);
 
   // Edit State
   const [editedContent, setEditedContent] = useState(text || "");
+  const [editedMediaUrl, setEditedMediaUrl] = useState(image || null);
+  const [editMediaPreview, setEditMediaPreview] = useState<string | null>(null);
+  const [editMediaFile, setEditMediaFile] = useState<File | null>(null);
+  const [editMediaUploading, setEditMediaUploading] = useState(false);
   const [editLoading, setEditLoading] = useState(false);
   const [editError, setEditError] = useState<string | null>(null);
 
@@ -146,6 +155,11 @@ export default function Post({
     loadRepliesCount();
   }, [id]);
 
+  // Sync censored state with prop
+  useEffect(() => {
+    setIsCensored(censored);
+  }, [censored]);
+
   // Auto-clear like error after 5 seconds
   useEffect(() => {
     if (likeError) {
@@ -156,8 +170,32 @@ export default function Post({
     }
   }, [likeError]);
 
+  // Auto-clear retweet error after 5 seconds
+  useEffect(() => {
+    if (retweetError) {
+      const timer = setTimeout(() => {
+        setRetweetError(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [retweetError]);
+
+  // Auto-clear reply error after 5 seconds
+  useEffect(() => {
+    if (replyError) {
+      const timer = setTimeout(() => {
+        setReplyError(null);
+      }, 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [replyError]);
+
   // Handlers
   const handleLikeClick = async () => {
+    if (isCensored) {
+      setLikeError("Ce post a été censuré le like est désactivé");
+      return;
+    }
     if (!id) return;
     setLikingLoading(true);
     setLikeError(null);
@@ -305,6 +343,47 @@ export default function Post({
     }
   };
 
+  const handleEditMediaSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setEditMediaFile(file);
+      setEditError("");
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setEditMediaPreview(event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleEditMediaUpload = async () => {
+    if (!editMediaFile) return;
+    
+    setEditMediaUploading(true);
+    setEditError("");
+    try {
+      const result = await uploadMedia(editMediaFile);
+      if (result.mediaUrl) {
+        setEditedMediaUrl(result.mediaUrl);
+        setEditMediaFile(null);
+        // Keep preview visible
+      } else {
+        setEditError(result.error || "Erreur lors du téléchargement");
+      }
+    } catch (err) {
+      setEditError("Erreur lors du téléchargement");
+    } finally {
+      setEditMediaUploading(false);
+    }
+  };
+
+  const handleRemoveEditMedia = () => {
+    setEditedMediaUrl(null);
+    setEditMediaFile(null);
+    setEditMediaPreview(null);
+  };
+
   const handleEditSubmit = async () => {
     if (!id || !editedContent.trim()) {
       setEditError("Le contenu ne peut pas être vide");
@@ -315,7 +394,7 @@ export default function Post({
     setEditError(null);
 
     try {
-      const success = await updatePost(Number(id), editedContent.trim());
+      const success = await updatePost(Number(id), editedContent.trim(), editedMediaUrl || undefined);
       if (success) {
         onEdit?.(editedContent.trim());
         setShowEditModal(false);
@@ -404,6 +483,8 @@ export default function Post({
           userBlocked={userBlocked}
           retweetedFromPost={retweetedFromPost}
           likeError={likeError}
+          retweetError={retweetError}
+          replyError={replyError}
         />
 
         {/* Actions */}
@@ -418,13 +499,23 @@ export default function Post({
           userReadOnly={userReadOnly}
           onLikeClick={handleLikeClick}
           onRetweetClick={() => {
+            if (isCensored) {
+              setRetweetError("Ce post a été censuré le retweet est désactivé");
+              return;
+            }
             if (retweeted) {
               handleRetweetClick();
             } else {
               setShowRetweetModal(true);
             }
           }}
-          onReplyFormToggle={() => setShowReplyForm(!showReplyForm)}
+          onReplyFormToggle={() => {
+            if (isCensored) {
+              setReplyError("Ce post a été censuré les réponses sont désactivées");
+              return;
+            }
+            setShowReplyForm(!showReplyForm);
+          }}
         />
 
         {/* Replies */}
@@ -445,12 +536,24 @@ export default function Post({
       <PostModals
         showEditModal={showEditModal}
         editedContent={editedContent}
+        editedMediaUrl={editedMediaUrl}
+        editMediaPreview={editMediaPreview}
+        editMediaUploading={editMediaUploading}
+        editMediaFile={editMediaFile}
         editError={editError}
         editLoading={editLoading}
         confirmDelete={confirmDelete}
         deleting={deleting}
-        onEditClose={() => setShowEditModal(false)}
+        onEditClose={() => {
+          setShowEditModal(false);
+          setEditMediaFile(null);
+          setEditMediaPreview(null);
+          setEditedMediaUrl(image || null);
+        }}
         onEditContentChange={setEditedContent}
+        onEditMediaSelect={handleEditMediaSelect}
+        onEditMediaUpload={handleEditMediaUpload}
+        onRemoveEditMedia={handleRemoveEditMedia}
         onEditSubmit={handleEditSubmit}
         onDeleteConfirmClose={() => setConfirmDelete(false)}
         onDeleteConfirm={handleDeleteClick}

@@ -289,12 +289,12 @@ export async function createPost(userId: number, content: string, time?: string,
   }
 }
 
-export async function updatePost(id: number, content: string): Promise<boolean> {
+export async function updatePost(id: number, content: string, mediaUrl?: string): Promise<boolean> {
   try {
     const res = await fetch(`${API_BASE}/posts/${id}`, {
-      method: 'PATCH',
+      method: 'PUT',
       headers: getAuthHeaders(),
-      body: JSON.stringify({ content }),
+      body: JSON.stringify({ content, ...(mediaUrl !== undefined && { mediaUrl }) }),
     });
     return res.ok;
   } catch (err) {
@@ -496,7 +496,29 @@ export async function deleteReply(replyId: number): Promise<boolean> {
     return false;
   }
 }
+export async function updateReply(replyId: number, content: string): Promise<{success: boolean, error?: string}> {
+  try {
+    const res = await fetch(`${API_BASE}/replies/${replyId}`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify({ content }),
+    });
 
+    if (res.ok) {
+      return { success: true };
+    } else {
+      try {
+        const data = await res.json();
+        return { success: false, error: data.error || 'Erreur lors de la modification de la réponse' };
+      } catch {
+        return { success: false, error: 'Erreur lors de la modification de la réponse' };
+      }
+    }
+  } catch (error) {
+    console.error('Update reply error:', error);
+    return { success: false, error: 'Erreur lors de la modification de la réponse' };
+  }
+}
 // Blocking functions
 export async function blockUser(userId: number): Promise<boolean> {
   try {

@@ -3,7 +3,7 @@ import { useState, useEffect, useRef } from "react";
 import Post from './ui/Post'
 import Footer from './ui/Footer'
 import SideBar from './ui/SideBar'
-import { getPosts, getCurrentUser, getAuthToken, getMediaUrl, type Post as PostType } from "../lib/api";
+import { getPosts, getPost, getCurrentUser, getAuthToken, getMediaUrl, type Post as PostType } from "../lib/api";
 import Header from "./ui/Header";
 import Profile from "./ui/Profile";
 import SearchBar from "./ui/SearchBar";
@@ -210,6 +210,26 @@ export default function Home() {
                         );
                         setPosts(updatedPosts);
                         postsRef.current = updatedPosts;
+                      }}
+                      onCensored={async (censored) => {
+                        // Reload the post to get updated content/image if uncensored
+                        if (!censored) {
+                          const updatedPost = await getPost(p.id);
+                          if (updatedPost) {
+                            const updatedPosts = posts.map(post =>
+                              post.id === p.id ? updatedPost : post
+                            );
+                            setPosts(updatedPosts);
+                            postsRef.current = updatedPosts;
+                          }
+                        } else {
+                          // Just update the censored flag
+                          const updatedPosts = posts.map(post =>
+                            post.id === p.id ? { ...post, censored } : post
+                          );
+                          setPosts(updatedPosts);
+                          postsRef.current = updatedPosts;
+                        }
                       }}
                     />
                   </div>

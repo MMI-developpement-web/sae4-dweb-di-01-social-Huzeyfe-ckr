@@ -1,6 +1,12 @@
+import { getMediaUrl } from "../../lib/api";
+
 interface PostModalsDataProps {
   showEditModal: boolean;
   editedContent: string;
+  editedMediaUrl: string | null;
+  editMediaPreview: string | null;
+  editMediaUploading: boolean;
+  editMediaFile: File | null;
   editError: string | null;
   editLoading: boolean;
   confirmDelete: boolean;
@@ -10,6 +16,9 @@ interface PostModalsDataProps {
 interface PostModalsViewProps {
   onEditClose: () => void;
   onEditContentChange: (content: string) => void;
+  onEditMediaSelect: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  onEditMediaUpload: () => void;
+  onRemoveEditMedia: () => void;
   onEditSubmit: () => void;
   onDeleteConfirmClose: () => void;
   onDeleteConfirm: () => void;
@@ -18,12 +27,19 @@ interface PostModalsViewProps {
 export function PostModals({
   showEditModal,
   editedContent,
+  editedMediaUrl,
+  editMediaPreview,
+  editMediaUploading,
+  editMediaFile,
   editError,
   editLoading,
   confirmDelete,
   deleting,
   onEditClose,
   onEditContentChange,
+  onEditMediaSelect,
+  onEditMediaUpload,
+  onRemoveEditMedia,
   onEditSubmit,
   onDeleteConfirmClose,
   onDeleteConfirm,
@@ -52,6 +68,65 @@ export function PostModals({
               placeholder="Modifiez votre tweet..."
               disabled={editLoading}
             />
+
+            {/* Media editing section */}
+            <div className="mt-4 space-y-3">
+              {/* Media upload button */}
+              {!editedMediaUrl && (
+                <div>
+                  <label className="cursor-pointer">
+                    <input
+                      type="file"
+                      accept="image/*,video/*"
+                      onChange={onEditMediaSelect}
+                      disabled={editMediaUploading || editLoading}
+                      className="hidden"
+                    />
+                    <span className={`text-tick hover:text-tick/80 text-sm cursor-pointer inline-block ${editMediaUploading || editLoading ? 'opacity-50 cursor-not-allowed' : ''}`}>
+                      📎 Ajouter/Changer média
+                    </span>
+                  </label>
+                </div>
+              )}
+
+              {/* Upload button for selected file */}
+              {editMediaFile && !editedMediaUrl && (
+                <button
+                  onClick={onEditMediaUpload}
+                  disabled={editMediaUploading || editLoading}
+                  className="text-sm bg-tick text-white px-3 py-1 rounded hover:bg-tick/90 disabled:opacity-50"
+                >
+                  {editMediaUploading ? "Upload..." : "Upload média"}
+                </button>
+              )}
+
+              {/* Media preview */}
+              {(editMediaPreview || editedMediaUrl) && (
+                <div className="relative bg-surface-dark rounded-lg overflow-hidden max-h-48">
+                  {editMediaPreview ? (
+                    editMediaFile?.type.startsWith('image/') ? (
+                      <img src={editMediaPreview} alt="Preview" className="w-full h-auto object-cover" />
+                    ) : (
+                      <video src={editMediaPreview} controls className="w-full h-auto" />
+                    )
+                  ) : editedMediaUrl ? (
+                    getMediaUrl(editedMediaUrl)?.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+                      <img src={getMediaUrl(editedMediaUrl)} alt="Media" className="w-full h-auto object-cover" />
+                    ) : (
+                      <video src={getMediaUrl(editedMediaUrl)} controls className="w-full h-auto" />
+                    )
+                  ) : null}
+                  <button
+                    type="button"
+                    onClick={onRemoveEditMedia}
+                    disabled={editLoading}
+                    className="absolute top-2 right-2 bg-red-500 hover:bg-red-600 text-white rounded-full w-7 h-7 flex items-center justify-center text-sm disabled:opacity-50"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
+            </div>
 
             <div className="mt-4 flex gap-3 justify-end">
               <button

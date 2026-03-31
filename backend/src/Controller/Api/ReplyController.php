@@ -174,6 +174,68 @@ class ReplyController extends AbstractController
     }
 
     /**
+     * PUT /api/replies/{id}
+     * Update a reply (only owner or admin can update)
+     */
+    #[Route('/replies/{id}', name: 'api_update_reply', methods: ['PUT'])]
+    public function updateReply(int $id, Request $request): JsonResponse
+    {
+        $user = $this->getUser();
+        if (!$user) {
+            return $this->json(['error' => 'Unauthorized'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        // Find reply
+        $reply = $this->replyRepository->find($id);
+        if (!$reply) {
+            return $this->json(['error' => 'Reply not found'], Response::HTTP_NOT_FOUND);
+        }
+
+        // Check permissions (only owner or admin can update)
+        if ($reply->getUser()->getId() !== $user->getId() && !$this->isGranted('ROLE_ADMIN')) {
+            return $this->json(['error' => 'Forbidden'], Response::HTTP_FORBIDDEN);
+        }
+
+        // Parse request
+        $data = json_decode($request->getContent(), true);
+
+        if (!isset($data['content']) || empty(trim($data['content']))) {
+            return $this->json(['error' => 'Content is required'], Response::HTTP_BAD_REQUEST);
+        }
+
+        $content = trim($data['content']);
+
+        // Validate content length
+        if (strlen($content) > 500) {
+            return $this->json(['error' => 'Reply must not exceed 500 characters'], Response::HTTP_BAD_REQUEST);
+        }
+
+        // Update reply
+        $reply->setContent($content);
+        $this->entityManager->flush();
+
+        // Return updated reply
+        $responseData = [
+            'id' => $reply->getId(),
+            'postId' => $reply->getPost()->getId(),
+            'user' => [
+                'id' => $reply->getUser()->getId(),
+                'username' => $reply->getUser()->getUser(),
+                'displayName' => $reply->getUser()->getName(),
+                'pp' => $reply->getUser()->getPp(),
+            ],
+            'content' => $reply->getContent(),
+            'createdAt' => $reply->getCreatedAt()->format('c'),
+        ];
+
+        if ($reply->getMediaUrl()) {
+            $responseData['mediaUrl'] = $reply->getMediaUrl();
+        }
+
+        return $this->json($responseData, Response::HTTP_OK);
+    }
+
+    /**
      * DELETE /api/replies/{id}
      * Delete a reply (only owner or admin can delete)
      */

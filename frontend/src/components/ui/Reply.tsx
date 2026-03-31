@@ -1,8 +1,5 @@
-import React, { useState } from 'react';
-import { type Reply as ReplyType, deleteReply, getMediaUrl } from '../../lib/api';
-
-// Composants pour afficher une réponse individuelle (Reply)
-
+import React, { useState, useRef, useEffect } from 'react';
+import { type Reply as ReplyType, deleteReply, updateReply, getMediaUrl } from '../../lib/api';
 
 // Reply Data Props - contient les données de la réponse
 interface ReplyDataProps {
@@ -14,10 +11,32 @@ interface ReplyDataProps {
 // Reply View Props - contient les callbacks
 interface ReplyViewProps {
   onDelete?: (replyId: number) => void;
+  onUpdate?: (replyId: number, newContent: string) => void;
 }
 
-export const Reply: React.FC<ReplyDataProps & ReplyViewProps> = ({ reply, onDelete, isOwner, isAdmin }) => {
+export const Reply: React.FC<ReplyDataProps & ReplyViewProps> = ({ reply, onDelete, onUpdate, isOwner, isAdmin }) => {
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showMenu, setShowMenu] = useState(false);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editedContent, setEditedContent] = useState(reply.content);
+  const [editLoading, setEditLoading] = useState(false);
+  const [editError, setEditError] = useState<string | null>(null);
+  const [deleteConfirm, setDeleteConfirm] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
+
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+        setShowMenu(false);
+      }
+    };
+
+    if (showMenu) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+  }, [showMenu]);
 
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
@@ -33,20 +52,46 @@ export const Reply: React.FC<ReplyDataProps & ReplyViewProps> = ({ reply, onDele
   };
 
   const handleDelete = async () => {
-    if (!window.confirm('Delete this reply?')) return;
-
     setIsDeleting(true);
     const success = await deleteReply(reply.id);
     setIsDeleting(false);
 
     if (success) {
+      setDeleteConfirm(false);
+      setShowMenu(false);
       onDelete?.(reply.id);
     } else {
-      alert('Failed to delete reply');
+      alert('Erreur lors de la suppression de la réponse');
     }
   };
 
-  const canDelete = isOwner || isAdmin;
+  const handleEditSubmit = async () => {
+    if (!editedContent.trim()) {
+      setEditError('La réponse ne peut pas être vide');
+      return;
+    }
+
+    if (editedContent.length > 500) {
+      setEditError('La réponse ne peut pas dépasser 500 caractères');
+      return;
+    }
+
+    setEditLoading(true);
+    setEditError(null);
+
+    const result = await updateReply(reply.id, editedContent.trim());
+
+    if (result.success) {
+      setEditedContent(editedContent.trim());
+      onUpdate?.(reply.id, editedContent.trim());
+      setShowEditModal(false);
+      setShowMenu(false);
+    } else {
+      setEditError(result.error || 'Erreur lors de la modification');
+    }
+
+    setEditLoading(false);
+  };
 
   // Generate avatar URL with fallback to picsum.photos
   const getAvatarUrl = () => {
@@ -83,21 +128,49 @@ export const Reply: React.FC<ReplyDataProps & ReplyViewProps> = ({ reply, onDele
           </div>
         </div>
 
-        {/* Timestamp and action buttons */}
+        {/* Timestamp and 3-dot menu */}
         <div className="flex items-center gap-2">
           <span className="text-textSecondary text-xs">
             {formatDate(reply.createdAt)}
           </span>
 
-          {canDelete && (
-            <button
-              onClick={handleDelete}
-              disabled={isDeleting}
-              className="ml-2 text-red-500 hover:text-red-600 disabled:opacity-50 text-xs font-medium"
-              title="Delete reply"
-            >
-              {isDeleting ? '...' : '✕'}
-            </button>
+          {(isOwner || isAdmin) && (
+            <div className="relative" ref={menuRef}>
+              <button
+                onClick={() => setShowMenu(!showMenu)}
+                className="text-text-muted hover:text-primary transition p-1 rounded hover:bg-primary/10"
+                title="Options"
+              >
+                ⋯
+              </button>
+
+              {showMenu && (
+                <div className="absolute right-0 top-6 bg-black border border-border-dark rounded-lg shadow-lg z-50">
+                  <button
+                    onClick={() => {
+                      setShowEditModal(true);
+                      setEditError(null);
+                    }}
+                    className="block w-full text-left px-4 py-2 text-sm text-text-white hover:bg-primary/20 transition first:rounded-t-lg"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="inline-block w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                    </svg>
+                    Modifier
+
+                  </button>
+                  <button
+                    onClick={() => setDeleteConfirm(true)}
+                    className="block w-full text-left px-4 py-2 text-sm text-red-400 hover:bg-red-500/20 transition last:rounded-b-lg"
+                  >
+                    <svg xmlns="http://www.w3.org/2000/svg" className="inline-block w-4 h-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                    </svg>
+                    Supprimer
+                  </button>
+                </div>
+              )}
+            </div>
           )}
         </div>
       </div>
@@ -129,6 +202,87 @@ export const Reply: React.FC<ReplyDataProps & ReplyViewProps> = ({ reply, onDele
           </div>
         );
       })()}
+
+      {/* Edit Modal */}
+      {showEditModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-surface-dark border border-border-dark rounded-lg p-6 max-w-md w-full mx-4">
+            <h2 className="text-lg font-semibold text-text-white mb-4">Modifier la réponse</h2>
+
+            <textarea
+              value={editedContent}
+              onChange={(e) => {
+                setEditedContent(e.target.value);
+                setEditError(null);
+              }}
+              className="w-full bg-surface border border-border-dark text-text-white rounded-lg p-3 mb-2 focus:outline-none focus:border-primary/50 resize-none"
+              rows={4}
+              maxLength={500}
+            />
+
+            <div className={`text-xs mb-3 ${editedContent.length > 500 ? 'text-red-500' : 'text-textSecondary'}`}>
+              {editedContent.length}/500 caractères
+            </div>
+
+            {editError && (
+              <div className="text-sm text-red-400 mb-3 bg-red-500/10 px-3 py-2 rounded-lg">
+                {editError}
+              </div>
+            )}
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => {
+                  setShowEditModal(false);
+                  setEditedContent(reply.content);
+                  setEditError(null);
+                }}
+                disabled={editLoading}
+                className="flex-1 px-4 py-2 text-sm text-text-white border border-border-dark rounded-lg hover:bg-surface-light transition disabled:opacity-50"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleEditSubmit}
+                disabled={editLoading || editedContent.length === 0 || editedContent.length > 500}
+                className="flex-1 px-4 py-2 text-sm text-white bg-primary rounded-lg hover:bg-primary/80 transition disabled:opacity-50"
+              >
+                {editLoading ? '...' : 'Enregistrer'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-surface-dark border border-border-dark rounded-lg p-6 max-w-sm w-full mx-4">
+            <h2 className="text-lg font-semibold text-text-white mb-4">Supprimer la réponse?</h2>
+            
+            <p className="text-textSecondary text-sm mb-6">
+              Êtes-vous sûr de vouloir supprimer cette réponse? Cette action est irréversible.
+            </p>
+
+            <div className="flex gap-2">
+              <button
+                onClick={() => setDeleteConfirm(false)}
+                disabled={isDeleting}
+                className="flex-1 px-4 py-2 text-sm text-text-white border border-border-dark rounded-lg hover:bg-surface-light transition disabled:opacity-50"
+              >
+                Annuler
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={isDeleting}
+                className="flex-1 px-4 py-2 text-sm text-white bg-red-600 rounded-lg hover:bg-red-700 transition disabled:opacity-50"
+              >
+                {isDeleting ? '...' : 'Supprimer'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

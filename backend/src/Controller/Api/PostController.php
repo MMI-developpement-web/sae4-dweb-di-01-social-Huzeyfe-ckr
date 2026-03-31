@@ -226,7 +226,7 @@ class PostController extends AbstractController
      * PUT /api/posts/{id}
      */
     #[Route('/{id}', name: 'posts.update', methods: ['PUT'])]
-    public function update(Post $post, Request $request, EntityManagerInterface $em, SerializerInterface $serializer, HashtagService $hashtagService): JsonResponse
+    public function update(Post $post, Request $request, EntityManagerInterface $em, HashtagService $hashtagService): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
 
@@ -238,6 +238,10 @@ class PostController extends AbstractController
             $post->setTime(new \DateTime($data['time']));
         }
 
+        if (isset($data['mediaUrl'])) {
+            $post->setMediaUrl($data['mediaUrl']);
+        }
+
         $em->flush();
 
         // Extract and apply hashtags if content was updated
@@ -245,8 +249,24 @@ class PostController extends AbstractController
             $hashtagService->extractAndApplyHashtags($post);
         }
 
-        $json = $serializer->serialize($post, 'json', ['groups' => 'detail']);
-        return new JsonResponse(json_decode($json, true));
+        // Build response manually like in create()
+        $response = [
+            'id' => $post->getId(),
+            'content' => $post->getContent(),
+            'time' => $post->getTime()?->format('Y-m-d'),
+            'createdAt' => $post->getCreatedAt()->format(\DateTime::ATOM),
+            'mediaUrl' => $post->getMediaUrl(),
+            'user' => $post->getUser() ? [
+                'id' => $post->getUser()->getId(),
+                'name' => $post->getUser()->getName(),
+                'user' => $post->getUser()->getUser(),
+                'pp' => $post->getUser()->getPp(),
+            ] : null,
+            'censored' => $post->isCensored(),
+            'hashtags' => $post->getHashtags()->map(fn($h) => ['id' => $h->getId(), 'name' => $h->getName()])->toArray(),
+        ];
+
+        return $this->json($response);
     }
 
     /**

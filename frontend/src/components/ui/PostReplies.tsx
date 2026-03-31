@@ -60,6 +60,12 @@ export function PostReplies({
     setReplies(replies.filter((r) => r.id !== replyId));
   };
 
+  const handleReplyUpdated = (replyId: number, newContent: string) => {
+    setReplies(replies.map((r) => 
+      r.id === replyId ? { ...r, content: newContent } : r
+    ));
+  };
+
   return (
     <>
       {/* Reply Form Toggle Button */}
@@ -112,6 +118,7 @@ export function PostReplies({
                   key={reply.id}
                   reply={reply}
                   onDelete={handleReplyDeleted}
+                  onUpdate={handleReplyUpdated}
                   isOwner={reply.user?.id === currentUserId}
                   isAdmin={false}
                 />

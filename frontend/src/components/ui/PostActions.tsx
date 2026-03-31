@@ -63,6 +63,7 @@ export function PostActions({
             liked ? "text-error hover:text-error/90" : "text-text-muted hover:text-error"
           }`}
           aria-label={liked ? "Unlike" : "Like"}
+          title=""
         >
           <svg
             width="16"
@@ -91,7 +92,7 @@ export function PostActions({
           title={
             retweeted
               ? "Supprimer le retweet"
-              : "Retweet avec commentaire optional"
+              : "Retweet avec commentaire optionnel"
           }
         >
           <svg

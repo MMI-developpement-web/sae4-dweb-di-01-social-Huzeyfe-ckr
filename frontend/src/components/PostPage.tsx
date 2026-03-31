@@ -16,6 +16,7 @@ export default function PostPage() {
   const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
+  const [fileType, setFileType] = useState<string | null>(null);
   const navigate = useNavigate();
 
   const MAX = 280;
@@ -25,6 +26,7 @@ export default function PostPage() {
     const file = e.target.files?.[0];
     if (file) {
       setSelectedFile(file);
+      setFileType(file.type);
       setError("");
       // Create preview
       const reader = new FileReader();
@@ -46,7 +48,7 @@ export default function PostPage() {
       if (result.mediaUrl) {
         setMediaUrl(result.mediaUrl);
         setSelectedFile(null);
-        //setPreviewUrl(null); // Keep preview visible
+        // Keep previewUrl and fileType for display
       } else {
         setError(result.error || "Erreur lors du téléchargement");
       }
@@ -62,6 +64,7 @@ export default function PostPage() {
     setMediaUrl(null);
     setSelectedFile(null);
     setPreviewUrl(null);
+    setFileType(null);
   };
 
   // Check if user is authenticated
@@ -103,10 +106,10 @@ export default function PostPage() {
         navigate("/home");
       } else {
         setError("Erreur lors de la création du post");
+        setLoading(false);
       }
     } catch (err) {
       setError("Erreur lors de la création du post");
-    } finally {
       setLoading(false);
     }
   };
@@ -189,9 +192,9 @@ export default function PostPage() {
             {/* Media preview */}
             {(previewUrl || mediaUrl) && (
               <div className="relative bg-surface-dark rounded-lg overflow-hidden">
-                {previewUrl && selectedFile && (
+                {previewUrl && (
                   <div className="relative">
-                    {selectedFile.type.startsWith('image/') ? (
+                    {fileType?.startsWith('image/') ? (
                       <img src={previewUrl} alt="Preview" className="w-full h-auto max-h-96 object-cover" />
                     ) : (
                       <video src={previewUrl} controls className="w-full h-auto max-h-96" />
