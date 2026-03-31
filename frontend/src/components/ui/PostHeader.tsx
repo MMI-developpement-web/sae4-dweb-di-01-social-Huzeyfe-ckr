@@ -45,7 +45,7 @@ export function PostHeader({
         </div>
       </button>
 
-      <div className="flex-1 min-w-0">
+      <div className="flex-1">
         <div className="flex items-center gap-1 flex-wrap">
           <span className="font-bold text-text-white text-sm md:text-base truncate">
             {userBlocked ? "Utilisateur banni" : name}

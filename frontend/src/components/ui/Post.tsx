@@ -129,6 +129,7 @@ export default function Post({
 
   // Replies State
   const [repliesCount, setRepliesCount] = useState(0);
+  const [showReplyForm, setShowReplyForm] = useState(false);
 
   // Load replies count on mount
   useEffect(() => {
@@ -335,7 +336,7 @@ export default function Post({
   return (
     <article className="w-full">
       <div className="flex items-start gap-2 md:gap-3">
-        {/* Header */}
+        {/* Header - includes avatar and name/handle/time */}
         <PostHeader
           name={name}
           handle={handle}
@@ -346,92 +347,93 @@ export default function Post({
           isPinned={isPinned}
         />
 
-        <div className="flex-1 min-w-0">
-          <div className="flex items-start justify-between gap-2">
-            {/* Actions + Menu */}
-            <PostActions
-              liked={liked}
-              likeCount={likeCount}
-              likingLoading={likingLoading}
-              retweeted={retweeted}
-              retweetCount={retweetCount}
-              retweetingLoading={retweetingLoading}
-              repliesCount={repliesCount}
-              userReadOnly={userReadOnly}
-              onLikeClick={handleLikeClick}
-              onRetweetClick={() => {
-                if (retweeted) {
-                  handleRetweetClick();
-                } else {
-                  setShowRetweetModal(true);
-                }
-              }}
-              onReplyFormToggle={() => {}}
-            />
+        {/* Menu Button - positioned top right */}
+        {isOwnPost && (
+          <div className="relative ml-auto">
+            <button
+              onClick={() => setShowMenu(!showMenu)}
+              className="text-text-muted hover:text-tick transition p-1.5 md:p-2 rounded-full hover:bg-tick/10"
+              aria-label="Options du tweet"
+            >
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+                className="md:w-4 md:h-4"
+              >
+                <circle cx="5" cy="12" r="2" />
+                <circle cx="12" cy="12" r="2" />
+                <circle cx="19" cy="12" r="2" />
+              </svg>
+            </button>
 
-            {/* Menu Button */}
-            {isOwnPost && (
-              <div className="relative">
-                <button
-                  onClick={() => setShowMenu(!showMenu)}
-                  className="text-text-muted hover:text-tick transition p-1.5 md:p-2 rounded-full hover:bg-tick/10"
-                  aria-label="Options du tweet"
-                >
-                  <svg
-                    width="16"
-                    height="16"
-                    viewBox="0 0 24 24"
-                    fill="currentColor"
-                    className="md:w-4 md:h-4"
-                  >
-                    <circle cx="5" cy="12" r="2" />
-                    <circle cx="12" cy="12" r="2" />
-                    <circle cx="19" cy="12" r="2" />
-                  </svg>
-                </button>
-
-                <PostMenu
-                  isOpen={showMenu}
-                  isOwnPost={isOwnPost}
-                  isAdmin={isAdmin}
-                  isCensored={isCensored}
-                  isPinned={isPinned}
-                  censoringPost={censoringPost}
-                  onClose={() => setShowMenu(false)}
-                  onEditClick={() => {
-                    setShowEditModal(true);
-                    setEditedContent(text || "");
-                    setEditError(null);
-                  }}
-                  onDeleteClick={() => setConfirmDelete(true)}
-                  onCensorClick={handleCensorPost}
-                  onPinClick={handlePinClick}
-                />
-              </div>
-            )}
-          </div>
-
-          {/* Content */}
-          <PostContent
-            text={text}
-            image={image}
-            isCensored={isCensored}
-            userBlocked={userBlocked}
-            retweetedFromPost={retweetedFromPost}
-            likeError={likeError}
-          />
-
-          {/* Replies */}
-          {!isCensored && repliesCount > 0 && (
-            <PostReplies
-              postId={id}
-              repliesCount={repliesCount}
+            <PostMenu
+              isOpen={showMenu}
+              isOwnPost={isOwnPost}
+              isAdmin={isAdmin}
               isCensored={isCensored}
-              currentUserId={currentUserId}
-              onReplyCreated={handleReplyCreated}
+              isPinned={isPinned}
+              censoringPost={censoringPost}
+              onClose={() => setShowMenu(false)}
+              onEditClick={() => {
+                setShowEditModal(true);
+                setEditedContent(text || "");
+                setEditError(null);
+              }}
+              onDeleteClick={() => setConfirmDelete(true)}
+              onCensorClick={handleCensorPost}
+              onPinClick={handlePinClick}
             />
-          )}
-        </div>
+          </div>
+        )}
+      </div>
+
+      {/* Content Section */}
+      <div className="ml-[calc(48px_+_0.5rem)] md:ml-[calc(48px_+_0.75rem)]">
+        {/* Content */}
+        <PostContent
+          text={text}
+          image={image}
+          isCensored={isCensored}
+          userBlocked={userBlocked}
+          retweetedFromPost={retweetedFromPost}
+          likeError={likeError}
+        />
+
+        {/* Actions */}
+        <PostActions
+          liked={liked}
+          likeCount={likeCount}
+          likingLoading={likingLoading}
+          retweeted={retweeted}
+          retweetCount={retweetCount}
+          retweetingLoading={retweetingLoading}
+          repliesCount={repliesCount}
+          userReadOnly={userReadOnly}
+          onLikeClick={handleLikeClick}
+          onRetweetClick={() => {
+            if (retweeted) {
+              handleRetweetClick();
+            } else {
+              setShowRetweetModal(true);
+            }
+          }}
+          onReplyFormToggle={() => setShowReplyForm(!showReplyForm)}
+        />
+
+        {/* Replies */}
+        {!isCensored && (
+          <PostReplies
+            postId={id}
+            repliesCount={repliesCount}
+            isCensored={isCensored}
+            currentUserId={currentUserId}
+            showReplyForm={showReplyForm}
+            onShowReplyForm={setShowReplyForm}
+            onReplyCreated={handleReplyCreated}
+          />
+        )}
       </div>
 
       {/* Modals */}

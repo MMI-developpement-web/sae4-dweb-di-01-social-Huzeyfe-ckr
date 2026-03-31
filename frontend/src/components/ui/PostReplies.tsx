@@ -8,10 +8,12 @@ interface PostRepliesDataProps {
   repliesCount: number;
   isCensored: boolean;
   currentUserId?: number;
+  showReplyForm?: boolean;
 }
 
 interface PostRepliesViewProps {
   onReplyCreated?: (reply: ReplyType) => void;
+  onShowReplyForm?: (show: boolean) => void;
 }
 
 export function PostReplies({
@@ -19,12 +21,14 @@ export function PostReplies({
   repliesCount,
   isCensored,
   currentUserId,
+  showReplyForm: externalShowReplyForm = false,
   onReplyCreated,
+  onShowReplyForm,
 }: PostRepliesDataProps & PostRepliesViewProps) {
   const [showReplies, setShowReplies] = useState(false);
   const [replies, setReplies] = useState<ReplyType[]>([]);
   const [loadingReplies, setLoadingReplies] = useState(false);
-  const [showReplyForm, setShowReplyForm] = useState(false);
+  const showReplyForm = externalShowReplyForm;
 
   const loadReplies = async () => {
     if (!postId) return;
@@ -48,7 +52,7 @@ export function PostReplies({
 
   const handleReplyCreated = (newReply: ReplyType) => {
     setReplies([newReply, ...replies]);
-    setShowReplyForm(false);
+    onShowReplyForm?.(false);
     onReplyCreated?.(newReply);
   };
 
@@ -58,7 +62,15 @@ export function PostReplies({
 
   return (
     <>
-      {/* Reply Form Toggle */}
+      {/* Reply Form Toggle Button */}
+      <button
+        onClick={() => onShowReplyForm?.(!showReplyForm)}
+        className="flex items-center gap-2 text-primary hover:underline text-xs md:text-sm mt-3"
+      >
+        {showReplyForm ? "Masquer" : "Répondre"}
+      </button>
+
+      {/* Existing Replies Toggle */}
       <div className="flex items-center justify-between mt-4">
         {repliesCount > 0 && (
           <button
@@ -72,15 +84,13 @@ export function PostReplies({
       </div>
 
       {/* Reply Form */}
-      {!isCensored && (
+      {!isCensored && showReplyForm && (
         <div className="mt-3">
-          {showReplyForm && (
-            <ReplyForm
-              postId={Number(postId) || 0}
-              onReplyCreated={handleReplyCreated}
-              onCancel={() => setShowReplyForm(false)}
-            />
-          )}
+          <ReplyForm
+            postId={Number(postId) || 0}
+            onReplyCreated={handleReplyCreated}
+            onCancel={() => onShowReplyForm?.(false)}
+          />
         </div>
       )}
 
