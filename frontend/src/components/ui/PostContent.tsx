@@ -44,20 +44,18 @@ export function PostContent({
   return (
     <>
       {isCensored ? (
-        <div className="mt-3 bg-red-900/40 border-2 border-red-600 rounded-lg p-4 md:p-5">
-          <p className="text-red-300 font-bold text-base md:text-lg">
-            🚫 CONTENU CENSURÉ{" "}
-          </p>
+        <div className="mt-3 p-4 md:p-5 rounded-lg bg-red-900/40 border-2 border-red-600">
+          <p className="text-red-300 font-bold text-base md:text-lg">🚫 CONTENU CENSURÉ</p>
           <p className="text-red-200 text-sm md:text-base mt-2">
             Ce message enfreint les conditions d'utilisation de la plateforme
           </p>
         </div>
       ) : userBlocked ? (
-        <div className="mt-3 bg-red-100 border border-red-400 rounded-lg p-3 md:p-4">
-          <p className="text-red-800 font-semibold text-sm md:text-base">
+        <div className="mt-3 p-3 md:p-4 rounded-lg bg-red-100 dark:bg-red-900/20 border border-red-400">
+          <p className="text-red-800 dark:text-red-300 font-semibold text-sm md:text-base">
             ⛔ Cet utilisateur a été banni
           </p>
-          <p className="text-red-700 text-xs md:text-sm italic mt-1">
+          <p className="text-red-700 dark:text-red-400 text-xs md:text-sm italic mt-1">
             son compte a été suspendu pour non respect des conditions d'utilisation
           </p>
         </div>

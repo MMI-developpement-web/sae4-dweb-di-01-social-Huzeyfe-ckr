@@ -51,7 +51,9 @@ class AuthController extends AbstractController
         }
 
         if ($user->isBlocked()) {
-            return $this->json(['error' => 'Ce compte a été bloqué'], Response::HTTP_UNAUTHORIZED);
+            return $this->json([
+                'error' => 'Votre compte a été désactivé. Veuillez contacter un administrateur pour plus d\'informations.'
+            ], Response::HTTP_UNAUTHORIZED);
         }
 
         // Generate access token (7 days expiration)

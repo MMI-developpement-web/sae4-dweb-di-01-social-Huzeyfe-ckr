@@ -290,11 +290,16 @@ export default function Post({
         },
       });
       if (res.ok) {
-        setIsCensored(!isCensored);
-        onCensored?.(!isCensored);
+        const newCensorState = !isCensored;
+        setIsCensored(newCensorState);
+        onCensored?.(newCensorState);
+        // Don't reload - state is properly updated
+      } else {
+        alert("Erreur lors du changement de censure");
       }
     } catch (error) {
       console.error("Error censoring post:", error);
+      alert("Erreur lors du changement de censure");
     } finally {
       setCensoringPost(false);
     }
