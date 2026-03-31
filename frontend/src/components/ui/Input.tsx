@@ -30,9 +30,7 @@ export const inputVariants = cva(
 
 
 // Types et props
-interface InputDataProps extends VariantProps<typeof inputVariants>  {
-    children?: React.ReactNode;
-  className?: string;
+interface InputDataProps extends VariantProps<typeof inputVariants> {
   type?: "text" | "password" | "email";
   placeholder?: string;
   name?: string;
@@ -40,10 +38,12 @@ interface InputDataProps extends VariantProps<typeof inputVariants>  {
   onChange?: (value: string) => void;
   as?: "input" | "textarea";
   showToggle?: boolean;
+  children?: React.ReactNode;
 }
 
-interface InputViewProps {className?: string; }
-
+interface InputViewProps {
+  className?: string;
+}
 
 export default function Input({ className = "", ...rest }: InputDataProps & InputViewProps) {
   const {

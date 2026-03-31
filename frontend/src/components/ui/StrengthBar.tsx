@@ -5,7 +5,15 @@ type Strength = {
   score: number;
 };
 
-export default function StrengthBar({ passwordStrength }: { passwordStrength: Strength }) {
+// StrengthBar Data Props - contient les données de force du mot de passe
+interface StrengthBarDataProps {
+  passwordStrength: Strength;
+}
+
+// StrengthBar View Props - propriétés de présentation (vide pour ce composant)
+interface StrengthBarViewProps {}
+
+export default function StrengthBar({ passwordStrength }: StrengthBarDataProps & StrengthBarViewProps) {
   const getStrengthColor = () => {
     switch (passwordStrength.level) {
       case 'very-weak': return 'bg-error';

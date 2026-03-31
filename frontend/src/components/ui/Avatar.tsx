@@ -28,14 +28,17 @@ export const AvatarVariants = cva(
   }
 );
 
-export interface AvatarProps extends VariantProps<typeof AvatarVariants> {
-  children?: ReactNode;
-  className?: string;
+interface AvatarDataProps extends VariantProps<typeof AvatarVariants> {
   src?: string;
   alt?: string;
+  children?: ReactNode;
 }
 
-export default function Avatar({ children, size, className, src, alt }: AvatarProps) {
+interface AvatarViewProps {
+  className?: string;
+}
+
+export default function Avatar({ children, size, className = "", src, alt }: AvatarDataProps & AvatarViewProps) {
   const [imageError, setImageError] = useState(false);
   const fullSrc = getMediaUrl(src);
   useEffect(() => {

@@ -7,14 +7,17 @@ import { useNavigate } from "react-router-dom";
 // Composant de profil utilisateur affichant l'avatar, le nom et le handle, avec redirection vers la page de profil au clic, et gestion des valeurs par défaut pour les utilisateurs non connect
 
 
-export interface ProfileProps {
-  // optional override props in case caller wants to force values
+// Profile Data Props - contient les données du profil
+interface ProfileDataProps {
   name?: string;
   handle?: string;
   image?: string;
 }
 
-export default function Profile({ name: propName, handle: propHandle, image: propImage }: ProfileProps) {
+// Profile View Props - propriétés de présentation (vide pour ce composant)
+interface ProfileViewProps {}
+
+export default function Profile({ name: propName, handle: propHandle, image: propImage }: ProfileDataProps & ProfileViewProps) {
   const navigate = useNavigate();
   const current = getCurrentUser() as User | null;
 

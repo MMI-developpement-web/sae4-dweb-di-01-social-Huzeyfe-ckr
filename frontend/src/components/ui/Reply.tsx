@@ -4,14 +4,19 @@ import { type Reply as ReplyType, deleteReply, getMediaUrl } from '../../lib/api
 // Composants pour afficher une réponse individuelle (Reply)
 
 
-interface ReplyProps {
+// Reply Data Props - contient les données de la réponse
+interface ReplyDataProps {
   reply: ReplyType;
-  onDelete?: (replyId: number) => void;
   isOwner?: boolean;
   isAdmin?: boolean;
 }
 
-export const Reply: React.FC<ReplyProps> = ({ reply, onDelete, isOwner, isAdmin }) => {
+// Reply View Props - contient les callbacks
+interface ReplyViewProps {
+  onDelete?: (replyId: number) => void;
+}
+
+export const Reply: React.FC<ReplyDataProps & ReplyViewProps> = ({ reply, onDelete, isOwner, isAdmin }) => {
   const [isDeleting, setIsDeleting] = useState(false);
 
   const formatDate = (dateString: string): string => {

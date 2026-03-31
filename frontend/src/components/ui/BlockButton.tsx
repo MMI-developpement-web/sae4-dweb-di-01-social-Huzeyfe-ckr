@@ -1,13 +1,18 @@
 import { useState } from "react";
 import { blockUser, unblockUser } from "../../lib/api";
 
-interface BlockButtonProps {
+// BlockButton Data Props - contient les données du bouton
+interface BlockButtonDataProps {
   userId: number;
   isBlocked: boolean;
+}
+
+// BlockButton View Props - contient les callbacks
+interface BlockButtonViewProps {
   onBlockChange: (blocked: boolean) => void;
 }
 
-export default function BlockButton({ userId, isBlocked, onBlockChange }: BlockButtonProps) {
+export default function BlockButton({ userId, isBlocked, onBlockChange }: BlockButtonDataProps & BlockButtonViewProps) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 

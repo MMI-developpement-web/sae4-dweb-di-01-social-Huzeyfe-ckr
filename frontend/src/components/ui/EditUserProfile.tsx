@@ -9,13 +9,18 @@ import Button from "./Button";
 
 // Composant de formulaire pour éditer les informations du profil utilisateur, y compris le téléchargement d'avatar et de bannière, avec gestion des états de chargement et des messages de succès/erreur
 
-interface EditUserProfileProps {
+// EditUserProfile Data Props - contient les données utilisateur
+interface EditUserProfileDataProps {
   user: User | null;
+}
+
+// EditUserProfile View Props - contient les callbacks
+interface EditUserProfileViewProps {
   onSave?: (updatedUser: User) => void;
   onCancel?: () => void;
 }
 
-export default function EditUserProfile({ user, onSave: _onSave, onCancel }: EditUserProfileProps) {
+export default function EditUserProfile({ user, onSave: _onSave, onCancel }: EditUserProfileDataProps & EditUserProfileViewProps) {
   const navigate = useNavigate();
   const [_loading, _setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -270,7 +275,7 @@ export default function EditUserProfile({ user, onSave: _onSave, onCancel }: Edi
               </div>
 
               {/* Phone */}
-              <div>
+              {/* <div>
                 <label className="block text-sm font-semibold text-text-white mb-2">
                   Téléphone
                 </label>
@@ -283,7 +288,7 @@ export default function EditUserProfile({ user, onSave: _onSave, onCancel }: Edi
                   placeholder="+33 6 12 34 56 78"
                   maxLength={20}
                 />
-              </div>
+              </div> */}
 
               {/* Photo de profil */}
               <div>

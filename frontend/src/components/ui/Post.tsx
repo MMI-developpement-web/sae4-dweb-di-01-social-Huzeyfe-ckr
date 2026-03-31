@@ -30,7 +30,8 @@ function formatRelativeTime(dateString?: string) {
   return `${years}an${years > 1 ? 's' : ''}`;
 }
 
-export interface PostProps {
+// Post Data Props - contient toutes les données du post
+interface PostDataProps {
   id?: number | string;
   name: string;
   handle: string;
@@ -50,6 +51,10 @@ export interface PostProps {
   isAdmin?: boolean;
   isPinned?: boolean;
   retweetedFromPost?: any;  // Post original for retweets
+}
+
+// Post View Props - contient les callbacks et propriétés de présentation
+interface PostViewProps {
   onDelete?: () => void;
   onCensored?: (censored: boolean) => void;
   onLikeChange?: (liked: boolean, likeCount: number) => void;
@@ -57,7 +62,14 @@ export interface PostProps {
   onEdit?: (newContent: string) => void;
 }
 
-export default function Post({ id, name, handle, avatar, time, text, image, userId, currentUserId, likes: initialLikes = 0, liked: initialLiked = false, retweets: initialRetweets = 0, retweeted: initialRetweeted = false, userBlocked = false, userReadOnly = false, censored = false, isAdmin = false, isPinned = false, retweetedFromPost, onDelete, onCensored, onLikeChange, onRetweetChange, onEdit }: PostProps) {
+export default function Post({ 
+  id, name, handle, avatar, time, text, image, userId, currentUserId, 
+  likes: initialLikes = 0, liked: initialLiked = false, 
+  retweets: initialRetweets = 0, retweeted: initialRetweeted = false, 
+  userBlocked = false, userReadOnly = false, censored = false, 
+  isAdmin = false, isPinned = false, retweetedFromPost, 
+  onDelete, onCensored, onLikeChange, onRetweetChange, onEdit 
+}: PostDataProps & PostViewProps) {
   const navigate = useNavigate();
   const displayTime = formatRelativeTime(time);
   const handleStr = typeof handle === 'string' ? handle : String(handle);

@@ -6,15 +6,20 @@ import Post from "./Post";
 import { useNavigate } from "react-router-dom";
 import type { Post as PostType } from "../../lib/api";
 
-interface SearchBarProps {
-  onSearchChange?: (query: string) => void;
+// SearchBar Data Props - contient les données et configuration
+interface SearchBarDataProps {
   compact?: boolean; // true = compact mode (Home), false = full page mode (Search page)
+}
+
+// SearchBar View Props - contient les callbacks
+interface SearchBarViewProps {
+  onSearchChange?: (query: string) => void;
 }
 
 export default function SearchBar({
   onSearchChange,
   compact = true,
-}: SearchBarProps) {
+}: SearchBarDataProps & SearchBarViewProps) {
   const navigate = useNavigate();
   const [query, setQuery] = useState("");
   const [searchResults, setSearchResults] = useState<{

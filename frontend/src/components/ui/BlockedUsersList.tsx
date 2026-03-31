@@ -4,12 +4,17 @@ import { getBlockedUsers, unblockUser, getMediaUrl, type User } from "../../lib/
 
 // Composant pour afficher la liste des utilisateurs bloqués, avec possibilité de débloquer et gestion des états de chargement et d'erreur
 
-interface BlockedUsersListProps {
+// BlockedUsersList Data Props - contient l'ID utilisateur
+interface BlockedUsersListDataProps {
   userId: number;
+}
+
+// BlockedUsersList View Props - contient les callbacks
+interface BlockedUsersListViewProps {
   onClose: () => void;
 }
 
-export default function BlockedUsersList({ userId, onClose }: BlockedUsersListProps) {
+export default function BlockedUsersList({ userId, onClose }: BlockedUsersListDataProps & BlockedUsersListViewProps) {
   const [blockedUsers, setBlockedUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);

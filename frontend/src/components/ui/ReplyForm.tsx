@@ -4,13 +4,18 @@ import { type Reply, createReply, getCurrentUser, getMediaUrl } from '../../lib/
 // Composants pour afficher une réponse individuelle (Reply),
 
 
-interface ReplyFormProps {
+// ReplyForm Data Props - contient les données du formulaire
+interface ReplyFormDataProps {
   postId: number;
+}
+
+// ReplyForm View Props - contient les callbacks
+interface ReplyFormViewProps {
   onReplyCreated?: (reply: Reply) => void;
   onCancel?: () => void;
 }
 
-export const ReplyForm: React.FC<ReplyFormProps> = ({ postId, onReplyCreated, onCancel }) => {
+export const ReplyForm: React.FC<ReplyFormDataProps & ReplyFormViewProps> = ({ postId, onReplyCreated, onCancel }) => {
   const [content, setContent] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);

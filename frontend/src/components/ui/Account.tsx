@@ -6,12 +6,17 @@ import { getMediaUrl } from "../../lib/api";
 
 // Composant de compte utilisateur affichant les informations de base et un bouton pour modifier le profil
 
-interface AccountProps {
+// Account Data Props - contient les données de l'utilisateur
+interface AccountDataProps {
   user: User;
+}
+
+// Account View Props - contient les callbacks
+interface AccountViewProps {
   onModify: (user: User) => void;
 }
 
-export default function Account({ user, onModify }: AccountProps) {
+export default function Account({ user, onModify }: AccountDataProps & AccountViewProps) {
   const rawPp = user.pp;
   const username = user.username ?? user.user ?? "guest";
   const avatarSrc = rawPp && rawPp !== "null" ? getMediaUrl(rawPp) : `https://picsum.photos/seed/${encodeURIComponent(username)}/200`;

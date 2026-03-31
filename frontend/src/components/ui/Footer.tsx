@@ -6,12 +6,17 @@ import { cn } from "../../lib/utils.ts";
 // Composant de pied de page réutilisable, avec deux variantes : une version verticale pour le sidebar desktop et une version horizontale pour le mobile, utilisant class-variance-authority pour la gestion des classes CSS conditionnelles
 
 
-interface FooterProps {
-  className?: string;
+// Footer Data Props - contient la configuration du composant
+interface FooterDataProps {
   vertical?: boolean;
 }
 
-export default function Footer({ className = "", vertical = false }: FooterProps) {
+// Footer View Props - contient les propriétés de présentation
+interface FooterViewProps {
+  className?: string;
+}
+
+export default function Footer({ className = "", vertical = false }: FooterDataProps & FooterViewProps) {
   const navigate = useNavigate();
 
   if (vertical) {

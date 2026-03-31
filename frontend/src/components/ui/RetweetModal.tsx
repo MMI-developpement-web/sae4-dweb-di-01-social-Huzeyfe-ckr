@@ -1,13 +1,18 @@
 import { useState } from 'react';
 import Button from './Button';
 
-interface RetweetModalProps {
+// RetweetModal Data Props - contient les données du retweet
+interface RetweetModalDataProps {
   isOpen: boolean;
-  onClose: () => void;
-  onRetweet: (comment?: string) => void;
   isLoading: boolean;
   authorName: string;
   originalContent: string;
+}
+
+// RetweetModal View Props - contient les callbacks
+interface RetweetModalViewProps {
+  onClose: () => void;
+  onRetweet: (comment?: string) => void;
 }
 
 export default function RetweetModal({
@@ -17,7 +22,7 @@ export default function RetweetModal({
   isLoading,
   authorName,
   originalContent,
-}: RetweetModalProps) {
+}: RetweetModalDataProps & RetweetModalViewProps) {
   const [comment, setComment] = useState('');
 
   const handleRetweet = () => {
