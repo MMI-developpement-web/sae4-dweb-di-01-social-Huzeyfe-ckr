@@ -33,6 +33,10 @@ class Reply
     #[Groups(['default', 'detail'])]
     private \DateTimeInterface $createdAt;
 
+    #[ORM\Column(type: 'string', length: 255, nullable: true)]
+    #[Groups(['default', 'detail'])]
+    private ?string $mediaUrl = null;
+
     public function __construct()
     {
         $this->createdAt = new \DateTime();
@@ -84,6 +88,17 @@ class Reply
     public function setCreatedAt(\DateTimeInterface $createdAt): static
     {
         $this->createdAt = $createdAt;
+        return $this;
+    }
+
+    public function getMediaUrl(): ?string
+    {
+        return $this->mediaUrl;
+    }
+
+    public function setMediaUrl(?string $mediaUrl): static
+    {
+        $this->mediaUrl = $mediaUrl;
         return $this;
     }
 }

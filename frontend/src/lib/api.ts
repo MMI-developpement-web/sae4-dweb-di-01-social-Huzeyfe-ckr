@@ -456,12 +456,17 @@ export async function getReplies(postId: number): Promise<Reply[]> {
   }
 }
 
-export async function createReply(postId: number, content: string): Promise<{reply: Reply | null, error?: string}> {
+export async function createReply(postId: number, content: string, mediaUrl?: string): Promise<{reply: Reply | null, error?: string}> {
   try {
+    const body: {content: string, mediaUrl?: string} = { content };
+    if (mediaUrl) {
+      body.mediaUrl = mediaUrl;
+    }
+
     const res = await fetch(`${API_BASE}/posts/${postId}/replies`, {
       method: 'POST',
       headers: getAuthHeaders(),
-      body: JSON.stringify({ content }),
+      body: JSON.stringify(body),
     });
     if (!res.ok) {
       try {

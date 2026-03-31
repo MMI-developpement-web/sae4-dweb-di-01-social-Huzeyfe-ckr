@@ -63,6 +63,12 @@ class ReplyController extends AbstractController
                 'createdAt' => $reply->getCreatedAt()->format('c'),
                 'canDelete' => $currentUser && ($currentUser->getId() === $replyUser->getId() || $this->isGranted('ROLE_ADMIN')),
             ];
+
+            // Include mediaUrl if present
+            if ($reply->getMediaUrl()) {
+                $replyData['mediaUrl'] = $reply->getMediaUrl();
+            }
+
             $data[] = $replyData;
         }
 
@@ -136,6 +142,11 @@ class ReplyController extends AbstractController
         $reply->setContent($content);
         $reply->setCreatedAt(new \DateTime());
 
+        // Handle optional media URL
+        if (isset($data['mediaUrl']) && !empty($data['mediaUrl'])) {
+            $reply->setMediaUrl($data['mediaUrl']);
+        }
+
         // Persist to database
         $this->entityManager->persist($reply);
         $this->entityManager->flush();
@@ -153,6 +164,11 @@ class ReplyController extends AbstractController
             'content' => $reply->getContent(),
             'createdAt' => $reply->getCreatedAt()->format('c'),
         ];
+
+        // Include mediaUrl if present
+        if ($reply->getMediaUrl()) {
+            $responseData['mediaUrl'] = $reply->getMediaUrl();
+        }
 
         return $this->json($responseData, Response::HTTP_CREATED);
     }
