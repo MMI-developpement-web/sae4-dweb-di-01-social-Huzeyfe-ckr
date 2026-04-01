@@ -62,10 +62,6 @@ class JsonLoginAuthenticator extends AbstractAuthenticator
             throw new CustomUserMessageAuthenticationException('Votre compte a été bloqué pour non-respect des conditions d\'utilisation');
         }
 
-        if ($user->isBlocked()) {
-            throw new CustomUserMessageAuthenticationException('Votre compte a été bloqué pour non-respect des conditions d\'utilisation');
-        }
-
         // Return self-validating passport (we already validated)
         return new SelfValidatingPassport(
             new UserBadge($user->getUserIdentifier())
