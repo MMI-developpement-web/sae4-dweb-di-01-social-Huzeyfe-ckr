@@ -2,6 +2,7 @@ import { cn } from "../../lib/utils.ts";
 import { useNavigate } from "react-router-dom";
 import { logout } from "../../lib/api";
 import Button from "./Button";
+import BurgerMenu from "./BurgerMenu";
 
 
 // Composant de header réutilisable avec logo centré et bouton de déconnexion optionnel, adapté pour les vues mobiles, utilisant class-variance-authority pour la gestion des classes CSS conditionnelles
@@ -24,8 +25,8 @@ export default function Header({ showLogout = false, className = "" }: HeaderDat
 
   return (
     <header className={cn("w-full relative flex items-center justify-between py-3 px-6 md:hidden", className)}>
-      {/* Empty space (left) */}
-      <div className="w-10"></div>
+      {/* Burger Menu (left) */}
+      <BurgerMenu />
 
       {/* Logo (center) */}
       <span 

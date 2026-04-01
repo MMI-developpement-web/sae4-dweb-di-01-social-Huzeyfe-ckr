@@ -56,7 +56,7 @@ class TokenAuthenticator extends AbstractAuthenticator
         }
 
         if ($user->isBlocked()) {
-            throw new CustomUserMessageAuthenticationException('Ce compte a été désactivé');
+            throw new CustomUserMessageAuthenticationException('Ce compte a été désactivé pour non respect des règles de la communauté. Veuillez contacter un administrateur pour plus d\'informations.');
         }
 
         return new SelfValidatingPassport(

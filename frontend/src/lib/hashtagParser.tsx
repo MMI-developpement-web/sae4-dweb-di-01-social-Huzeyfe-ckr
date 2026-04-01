@@ -20,10 +20,10 @@ export function parseHashtagsAndMentions(text: string, onHashtagClick?: (tag: st
             e.preventDefault();
             onHashtagClick?.(hashtag);
           }}
-          className="text-primary hover:underline"
+          className="text-blue-400 hover:underline"
           title={`#${hashtag}`}
         >
-          <span className="text-primary font-semibold">{part}</span>
+          <span className="text-blue-400 font-semibold">{part}</span>
         </a>
       );
     }

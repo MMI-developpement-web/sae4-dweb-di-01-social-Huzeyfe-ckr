@@ -59,7 +59,7 @@ class JsonLoginAuthenticator extends AbstractAuthenticator
         }
 
         if ($user->isBlocked()) {
-            throw new CustomUserMessageAuthenticationException('Ce compte a été désactivé');
+            throw new CustomUserMessageAuthenticationException('Votre compte a été bloqué pour non-respect des conditions d\'utilisation');
         }
 
         if ($user->isBlocked()) {
