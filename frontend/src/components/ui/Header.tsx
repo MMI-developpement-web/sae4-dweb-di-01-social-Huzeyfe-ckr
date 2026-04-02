@@ -16,7 +16,7 @@ interface HeaderViewProps {className?: string; }
 
 export default function Header({ showLogout = false, className = "" }: HeaderDataProps & HeaderViewProps) {
   const navigate = useNavigate();
-  const { logout } = useStore();
+  const { logout, isAuthenticated } = useStore();
 
   const handleLogout = () => {
     logout();
@@ -26,8 +26,9 @@ export default function Header({ showLogout = false, className = "" }: HeaderDat
 
   return (
     <header className={cn("w-full relative flex items-center justify-between py-3 px-6 md:hidden", className)}>
-      {/* Burger Menu (left) */}
-      <BurgerMenu />
+      {/* Burger Menu (left) - only if authenticated */}
+      {isAuthenticated && <BurgerMenu />}
+      {!isAuthenticated && <div className="w-10"></div>}
 
       {/* Logo (center) */}
       <span 
