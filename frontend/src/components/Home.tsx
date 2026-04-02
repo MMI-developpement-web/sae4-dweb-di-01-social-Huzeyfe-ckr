@@ -210,6 +210,11 @@ export default function Home() {
                         );
                         setPosts(updatedPosts);
                         postsRef.current = updatedPosts;
+                        
+                        // Auto-refresh after 1 second to show new retweet comment post (if any)
+                        setTimeout(() => {
+                          handleRefresh();
+                        }, 1000);
                       }}
                       onCensored={async (censored) => {
                         // Reload the post to get updated content/image if uncensored
