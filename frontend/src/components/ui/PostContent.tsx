@@ -82,6 +82,25 @@ export function PostContent({
         )
       )}
 
+      {/* Original Post Media Display */}
+      {!isCensored && image && (
+        <div className="mt-3 rounded-lg overflow-hidden bg-surface-dark max-h-96">
+          {getMediaUrl(image)?.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
+            <img
+              src={getMediaUrl(image)}
+              alt="Post media"
+              className="w-full h-auto object-cover"
+            />
+          ) : (
+            <video
+              src={getMediaUrl(image)}
+              controls
+              className="w-full h-auto max-h-96"
+            />
+          )}
+        </div>
+      )}
+
       {/* Retweet Original Post Display */}
       {!isCensored && retweetedFromPost && (
         <div

@@ -4,6 +4,7 @@ import Header from "./ui/Header";
 import SideBar from "./ui/SideBar";
 import Post from "./ui/Post";
 import { useStore } from "../store/StoreContext";
+import { getMediaUrl } from "../lib/api";
 
 interface PostData {
   id: number;
@@ -120,29 +121,35 @@ export default function HashtagSearch() {
           {/* Posts List */}
           {!loading && !error && posts.length > 0 && (
             <div className="divide-y divide-border-dark">
-              {posts.map((post) => (
-                <div key={post.id} className="px-4 md:px-6 py-4 hover:bg-surface-dark/50 transition cursor-pointer border-b border-border-dark">
-                  <Post
-                    id={post.id}
-                    name={post.user?.name || 'Utilisateur'}
-                    handle={post.user?.user || '@unknown'}
-                    avatar={post.user?.pp}
-                    time={post.time}
-                    text={post.content}
-                    image={post.mediaUrl}
-                    userId={post.user?.id}
-                    currentUserId={currentUser?.id}
-                    likes={post.likes}
-                    liked={post.liked}
-                    retweets={post.retweets || 0}
-                    retweeted={post.retweeted || false}
-                    userBlocked={post.user?.blocked || false}
-                    userReadOnly={post.user?.readOnly || false}
-                    censored={post.censored}
-                    onDelete={() => handlePostDeleted(post.id)}
-                  />
-                </div>
-              ))}
+              {posts.map((post) => {
+                const rawPp = post.user?.pp;
+                const avatar = rawPp && rawPp !== "null" ? getMediaUrl(rawPp) : `https://picsum.photos/seed/${encodeURIComponent(post.user?.user || "unknown")}/200`;
+                const mediaUrl = post.mediaUrl ? getMediaUrl(post.mediaUrl) : undefined;
+                
+                return (
+                  <div key={post.id} className="px-4 md:px-6 py-4 hover:bg-surface-dark/50 transition cursor-pointer border-b border-border-dark">
+                    <Post
+                      id={post.id}
+                      name={post.user?.name || 'Utilisateur'}
+                      handle={post.user?.user || '@unknown'}
+                      avatar={avatar}
+                      time={post.time}
+                      text={post.content}
+                      image={mediaUrl}
+                      userId={post.user?.id}
+                      currentUserId={currentUser?.id}
+                      likes={post.likes}
+                      liked={post.liked}
+                      retweets={post.retweets || 0}
+                      retweeted={post.retweeted || false}
+                      userBlocked={post.user?.blocked || false}
+                      userReadOnly={post.user?.readOnly || false}
+                      censored={post.censored}
+                      onDelete={() => handlePostDeleted(post.id)}
+                    />
+                  </div>
+                );
+              })}
             </div>
           )}
         </div>
