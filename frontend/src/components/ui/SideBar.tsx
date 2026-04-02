@@ -85,13 +85,14 @@ export default function SideBar({ className = "" }: SideBarDataProps & SideBarVi
       <Button 
         variant="solid" 
         size="lg" 
-        className="w-full bg-error hover:bg-red/90 text-white font-bold mb-6"
+        className="flex items-center gap-2 bg-error hover:bg-red/90 text-white font-bold mb-6"
         onClick={handleLogout}
       >
-        <svg>
-          <path d="M16 13v-2H7V8l-5 4 5 4v-3zM12 3h8a2 2 0 012 2v14a2 2 0 01-2 2h-8a2 2 0 01-2-2v-4h2v4h8V5h-8v4H10V5a2 2 0 012-2z" fill="currentColor" />
-        </svg>
-
+        <span className="w-5 h-5 inline-flex">
+          <svg viewBox="0 0 24 24">
+            <path d="M16 13v-2H7V8l-5 4 5 4v-3zM12 3h8a2 2 0 012 2v14a2 2 0 01-2 2h-8a2 2 0 01-2-2v-4h2v4h8V5h-8v4H10V5a2 2 0 012-2z" fill="currentColor" />
+          </svg>
+        </span>
         Déconnection
       </Button>
 
