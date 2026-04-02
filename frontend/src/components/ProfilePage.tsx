@@ -183,29 +183,29 @@ export default function ProfilePage() {
             </div>
 
             {/* Bio / Description */}
-            <section className="text-sm md:text-base mb-4">
+            <div className="text-sm md:text-base mb-4">
               {userData?.bio ? (
                 <p className="text-text-white">{userData.bio}</p>
               ) : (
                 <p className="text-text-muted italic">Aucune bio</p>
               )}
-            </section>
+            </div>
 
             {/* Stats */}
-            <dl className="flex gap-4 md:gap-6 border-t border-b border-border-dark py-3 mb-4">
+            <div className="flex gap-4 md:gap-6 border-t border-b border-border-dark py-3 mb-4">
               <div>
-                <dt className="text-text-muted text-xs md:text-sm">Tweets</dt>
-                <dd className="font-bold text-sm md:text-base">{posts.length}</dd>
+                <p className="text-text-muted text-xs md:text-sm">Tweets</p>
+                <span className="font-bold text-sm md:text-base">{posts.length}</span>
               </div>
               <div>
-                <dt className="text-text-muted text-xs md:text-sm">Abonnés</dt>
-                <dd className="font-bold text-sm md:text-base">{userData?.followers || 0}</dd>
+                <p className="text-text-muted text-xs md:text-sm">Abonnés</p>
+                <span className="font-bold text-sm md:text-base">{userData?.followers || 0}</span>
               </div>
               <div>
-                <dt className="text-text-muted text-xs md:text-sm">Abonnements</dt>
-                <dd className="font-bold text-sm md:text-base">{userData?.following || 0}</dd>
+                <p className="text-text-muted text-xs md:text-sm">Abonnements</p>
+                <span className="font-bold text-sm md:text-base">{userData?.following || 0}</span>
               </div>
-            </dl>
+            </div>
 
             {/* Texte informations */}
             <div className="text-xs md:text-sm text-text-muted space-y-2">

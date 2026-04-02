@@ -109,10 +109,8 @@ export default function Settings({ onUserUpdate }: SettingsProps) {
         </div>
 
         {message && (
-          <output
-            className="mt-3 p-3 rounded text-sm border-l-4 block"
-            role={message.includes('activé') || message.includes('✓') ? 'status' : 'alert'}
-            aria-live="polite"
+          <div
+            className="mt-3 p-3 rounded text-sm border-l-4"
             style={{
               backgroundColor: message.includes('activé') || message.includes('✓')
                 ? 'color-mix(in srgb, var(--color-success) 10%, var(--color-bg-black) 90%)'
@@ -125,8 +123,8 @@ export default function Settings({ onUserUpdate }: SettingsProps) {
                 : 'var(--color-error)'
             }}
           >
-            {message}
-          </output>
+            <p>{message}</p>
+          </div>
         )}
       </div>
 
