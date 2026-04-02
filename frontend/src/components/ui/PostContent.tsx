@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useCallback } from "react";
 import { getUserByUsername, getMediaUrl } from "../../lib/api";
 import { InteractiveText } from "../../lib/hashtagParser";
 
@@ -45,6 +46,18 @@ export function PostContent({
 }: PostContentDataProps & PostContentViewProps) {
   const navigate = useNavigate();
 
+  // Callback for mention clicks - wrap async logic
+  const handleMentionClick = useCallback(async (mention: string) => {
+    try {
+      const user = await getUserByUsername(mention);
+      if (user) {
+        navigate(`/profile/${user.id}`);
+      }
+    } catch (error) {
+      console.error(`Error navigating to @${mention}:`, error);
+    }
+  }, [navigate]);
+
   return (
     <>
       {isCensored ? (
@@ -71,12 +84,7 @@ export function PostContent({
               onHashtagClick={(tag) =>
                 navigate(`/search/hashtag/${tag}`)
               }
-              onMentionClick={async (mention) => {
-                const user = await getUserByUsername(mention);
-                if (user) {
-                  navigate(`/profile/${user.id}`);
-                }
-              }}
+              onMentionClick={handleMentionClick}
             />
           </p>
         )
@@ -145,12 +153,7 @@ export function PostContent({
                 onHashtagClick={(tag) =>
                   navigate(`/search/hashtag/${tag}`)
                 }
-                onMentionClick={async (mention) => {
-                  const user = await getUserByUsername(mention);
-                  if (user) {
-                    navigate(`/profile/${user.id}`);
-                  }
-                }}
+                onMentionClick={handleMentionClick}
               />
             </p>
           )}
