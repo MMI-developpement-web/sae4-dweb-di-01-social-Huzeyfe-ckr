@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from 'react';
 import Button from './ui/Button';
 import Avatar from './ui/Avatar';
 import Post from './ui/Post';
+import SearchBar from './ui/SearchBar';
 import { useNavigate } from 'react-router-dom';
 import { debounce } from '../lib/utils';
 import { searchContent, getMediaUrl } from '../lib/api';
@@ -112,6 +113,8 @@ export default function Search() {
       {/* Main Content */}
       <main className="flex-1 md:ml-72 flex flex-col items-center w-full">
         <div className="w-full max-w-2xl border-r border-border-dark md:border-l md:border-border-dark pb-24 md:pb-0">
+          {/* Search Bar */}
+          <SearchBar compact={false} onSearchChange={(newQuery) => setQuery(newQuery)} />
           {/* Search Bar with filters */}
           <div className="px-4 md:px-6 py-6">
             <h1 className="text-2xl font-bold mb-4 text-text-white">Rechercher</h1>
@@ -120,7 +123,7 @@ export default function Search() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
               {/* Type filter */}
               <div className="flex flex-col gap-2">
-                <label className="text-sm text-gray-400">Type</label>
+                <label className="text-sm" style={{ color: 'var(--color-text-muted)' }}>Type</label>
                 <select
                   value={searchType}
                   onChange={(e) => setSearchType(e.target.value as 'all' | 'posts' | 'users')}
@@ -134,7 +137,7 @@ export default function Search() {
 
               {/* Sort filter */}
               <div className="flex flex-col gap-2">
-                <label className="text-sm text-gray-400">Trier par</label>
+                <label className="text-sm" style={{ color: 'var(--color-text-muted)' }}>Trier par</label>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value as 'date' | 'relevance')}
@@ -147,7 +150,7 @@ export default function Search() {
 
               {/* Date filters */}
               <div className="flex flex-col gap-2">
-                <label className="text-sm text-gray-400">Depuis</label>
+                <label className="text-sm" style={{ color: 'var(--color-text-muted)' }}>Depuis</label>
                 <input
                   type="date"
                   value={startDate}
@@ -157,7 +160,7 @@ export default function Search() {
               </div>
 
               <div className="flex flex-col gap-2">
-                <label className="text-sm text-gray-400">Jusqu'à</label>
+                <label className="text-sm" style={{ color: 'var(--color-text-muted)' }}>Jusqu'à</label>
                 <input
                   type="date"
                   value={endDate}
@@ -201,7 +204,7 @@ export default function Search() {
 
             {/* Users section */}
             {!loading && results.userCount > 0 && (searchType === 'all' || searchType === 'users') && (
-              <div className="mb-6">
+              <div className="mb-6 px-4 md:px-6 py-4">
                 <h2 className="text-xl font-bold text-text-white mb-4">
                   Utilisateurs ({results.userCount})
                 </h2>
@@ -210,14 +213,14 @@ export default function Search() {
                     <div
                       key={user.id}
                       onClick={() => handleUserClick(user.id)}
-                      className="p-4 bg-surface-dark border border-border-dark rounded-lg hover:bg-neutral-800 cursor-pointer transition-colors flex items-center gap-3"
+                      className="p-4 bg-surface-dark border border-border-dark rounded-lg cursor-pointer transition-colors flex items-center gap-3 hover:opacity-80"
                     >
                       <Avatar src={getAvatarUrl(user)} alt={user.name} size="md" />
                       <div className="flex-1 min-w-0">
                         <div className="flex items-center gap-2">
                           <p className="font-bold text-white truncate">{user.name}</p>
                           {user.readOnly && (
-                            <span className="text-xs bg-gray-700 text-gray-200 px-2 py-1 rounded">
+                            <span className="text-xs px-2 py-1 rounded" style={{ backgroundColor: 'var(--color-surface-dark)', color: 'var(--color-text-white)' }}>
                               🔒 Lecture seule
                             </span>
                           )}
@@ -235,13 +238,13 @@ export default function Search() {
 
             {/* Posts section */}
             {!loading && results.postCount > 0 && (searchType === 'all' || searchType === 'posts') && (
-              <div>
+              <div className="px-8 md:px-6 py-4">
                 <h2 className="text-xl font-bold text-text-white mb-4">
                   Posts ({results.postCount})
                 </h2>
                 <div className="space-y-4 divide-y divide-border-dark">
                   {results.posts.map((post) => (
-                    <div key={post.id} className="pt-4 first:pt-0">
+                    <div key={post.id} className="px-4 md:px-6 pt-4 first:pt-0">
                       <Post
                         id={post.id}
                         name={post.user.name}
