@@ -3,7 +3,7 @@ import react from '@vitejs/plugin-react'
 import tailwindcss from "@tailwindcss/vite";
 
 export default defineConfig({
-  base: "/",
+  base: "/~cakir4/CycleD/frontend/",
   plugins: [react(), tailwindcss()],
   preview: {
    port: 5173,
