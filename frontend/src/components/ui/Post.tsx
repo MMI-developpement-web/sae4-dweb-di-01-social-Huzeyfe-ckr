@@ -141,7 +141,7 @@ export default function Post({
   const [showReplyForm, setShowReplyForm] = useState(false);
 
   // Store access
-  const { authToken } = useStore();
+  const { authToken, currentUser, updateCurrentUser } = useStore();
 
   // Load replies count on mount
   useEffect(() => {
@@ -285,9 +285,7 @@ export default function Post({
   };
 
   const handlePinClick = async () => {
-    if (!id) return;
-    const { currentUser, updateCurrentUser } = useStore();
-    if (!currentUser) return;
+    if (!id || !currentUser) return;
 
     try {
       let success = false;

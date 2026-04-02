@@ -91,6 +91,10 @@ export default function Search() {
     setEndDate('');
   };
 
+  const handleSearchChange = useCallback((newQuery: string) => {
+    setQuery(newQuery);
+  }, []);
+
   const handleUserClick = (userId: number) => {
     navigate(`/profile/${userId}`);
   };
@@ -114,7 +118,7 @@ export default function Search() {
       <main className="flex-1 md:ml-72 flex flex-col items-center w-full">
         <div className="w-full max-w-2xl border-r border-border-dark md:border-l md:border-border-dark pb-24 md:pb-0">
           {/* Search Bar */}
-          <SearchBar compact={false} onSearchChange={(newQuery) => setQuery(newQuery)} />
+          <SearchBar compact={false} onSearchChange={handleSearchChange} />
           {/* Search Bar with filters */}
           <div className="px-4 md:px-6 py-6">
             <h1 className="text-2xl font-bold mb-4 text-text-white">Rechercher</h1>
