@@ -431,16 +431,16 @@ class PostController extends AbstractController
         // Créer une copie du post (retweet)
         $retweet = new Post();
         $retweet->setUser($user);
-        $retweet->setContent($post->getContent());
-        $retweet->setTime($post->getTime());
-        $retweet->setMediaUrl($post->getMediaUrl());
         $retweet->setRetweetedFrom($post); // Référence l'original
         $retweet->setCreatedAt(new \DateTime());
 
         // Ajouter le commentaire optionnel
         $data = json_decode($request->getContent(), true);
         if ($data && isset($data['comment']) && !empty($data['comment'])) {
-            $retweet->setRetweetComment($data['comment']);
+            $retweet->setContent($data['comment']);
+        } else {
+            // Si pas de commentaire, le contenu reste vide
+            $retweet->setContent('');
         }
 
         $em->persist($retweet);
