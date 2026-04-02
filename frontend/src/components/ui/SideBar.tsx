@@ -67,15 +67,7 @@ export default function SideBar({ className = "" }: SideBarDataProps & SideBarVi
      
       <Footer vertical={true} />
 
-      {/* Search Button */}
-      <Button 
-        variant="dark" 
-        size="lg" 
-        className="w-full border border-white text-text-white hover:bg-surface-dark font-bold mb-6"
-        onClick={() => navigate('/search')}
-      >
-        🔍 Rechercher
-      </Button>
+      
 
       {/* Publish Button */}
       <Button 
@@ -87,15 +79,7 @@ export default function SideBar({ className = "" }: SideBarDataProps & SideBarVi
         Publier
       </Button>
 
-      {/* Settings Button */}
-      <Button 
-        variant="dark" 
-        size="lg" 
-        className="w-full border border-white text-text-white hover:bg-surface-dark font-bold mb-6"
-        onClick={() => navigate('/settings')}
-      >
-         Paramètres
-      </Button>
+ 
 
     {/* log Out Button */}
       <Button 
@@ -104,6 +88,9 @@ export default function SideBar({ className = "" }: SideBarDataProps & SideBarVi
         className="w-full bg-error hover:bg-red/90 text-white font-bold mb-6"
         onClick={handleLogout}
       >
+        <svg>
+          <path d="M16 13v-2H7V8l-5 4 5 4v-3zM12 3h8a2 2 0 012 2v14a2 2 0 01-2 2h-8a2 2 0 01-2-2v-4h2v4h8V5h-8v4H10V5a2 2 0 012-2z" fill="currentColor" />
+        </svg>
 
         Déconnection
       </Button>

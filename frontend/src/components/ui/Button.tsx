@@ -38,21 +38,20 @@ export const buttonVariants = cva(
 interface ButtonDataProps extends VariantProps<typeof buttonVariants>, ButtonHTMLAttributes<HTMLButtonElement> {
     children?: ReactNode;
     icon?: ReactNode;
-    iconPosition?: "left" | "right";
+    
 }
 
 interface ButtonViewProps {
     className?: string;
 }
 
-export default function Button({ children, variant, size, icon, iconPosition = "left", className = "", ...props }: ButtonDataProps & ButtonViewProps) {
+export default function Button({ children, variant, size, icon, className = "", ...props }: ButtonDataProps & ButtonViewProps) {
     const classes = cn(buttonVariants({ variant, size }), className);
 
     return (
         <button className={classes} {...props}>
-            {icon && iconPosition === "left" && <span className="mr-2">{icon}</span>}
+            {icon && <span className="mr-2">{icon}</span>}
             {children}
-            {icon && iconPosition === "right" && <span className="ml-2">{icon}</span>}
         </button>
     );
 }

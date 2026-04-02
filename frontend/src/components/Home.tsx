@@ -241,11 +241,10 @@ export default function Home() {
         </div>
       </main>
 
-      {/* ==================== MOBILE BOTTOM NAVIGATION & FAB ==================== */}
       {/* Footer Mobile */}
       <Footer className="md:hidden z-50" />
 
-      {/* FAB - Create Post Button */}
+      {/* mobile - Create Post Button */}
       <button 
         onClick={() => navigate('/post')} 
         className="md:hidden fixed bottom-24 right-4 bg-tick hover:bg-tick/90 w-14 h-14 rounded-full flex items-center justify-center shadow-lg text-text-white font-bold text-2xl z-40 transition active:scale-95"
