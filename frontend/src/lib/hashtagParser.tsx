@@ -33,7 +33,7 @@ export function parseHashtagsAndMentions(text: string, onHashtagClick?: (tag: st
       return (
         <a
           key={index}
-          href={`/profile/${mention}`}
+          href="#"
           onClick={async (e) => {
             e.preventDefault();
             await onMentionClick?.(mention);

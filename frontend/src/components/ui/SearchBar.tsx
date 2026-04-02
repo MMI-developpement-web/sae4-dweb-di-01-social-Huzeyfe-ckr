@@ -96,7 +96,7 @@ export default function SearchBar({
       </div>
 
       {/* Search Results - Only show in compact mode */}
-      {compact && query !== undefined && (
+      {compact && query && (
         <div className="border-b border-border-dark">
           {loading && (
             <div className="p-4 text-center text-text-muted">
