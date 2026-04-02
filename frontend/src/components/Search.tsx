@@ -4,10 +4,11 @@ import Avatar from './ui/Avatar';
 import Post from './ui/Post';
 import { useNavigate } from 'react-router-dom';
 import { debounce } from '../lib/utils';
-import { searchContent, getCurrentUser, getMediaUrl } from '../lib/api';
+import { searchContent, getMediaUrl } from '../lib/api';
 import Header from './ui/Header';
 import SideBar from './ui/SideBar';
 import Footer from './ui/Footer';
+import { useStore } from '../store/StoreContext';
 
 interface SearchResult {
   posts: any[];
@@ -19,7 +20,7 @@ interface SearchResult {
 
 export default function Search() {
   const navigate = useNavigate();
-  const currentUser = getCurrentUser();
+  const { currentUser } = useStore();
   const [query, setQuery] = useState('');
   const [searchType, setSearchType] = useState<'all' | 'posts' | 'users'>('all');
   const [sortBy, setSortBy] = useState<'date' | 'relevance'>('date');

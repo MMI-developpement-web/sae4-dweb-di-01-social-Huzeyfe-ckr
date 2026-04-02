@@ -3,15 +3,15 @@ import { useState, useEffect, useRef } from "react";
 import Post from './ui/Post'
 import Footer from './ui/Footer'
 import SideBar from './ui/SideBar'
-import { getPosts, getPost, getCurrentUser, getAuthToken, getMediaUrl, type Post as PostType } from "../lib/api";
+import { getPosts, getPost, getMediaUrl, type Post as PostType } from "../lib/api";
 import Header from "./ui/Header";
 import Profile from "./ui/Profile";
 import SearchBar from "./ui/SearchBar";
+import { useStore } from "../store/StoreContext";
 
 export default function Home() {
   const navigate = useNavigate();
-  const currentUser = getCurrentUser();
-  const authToken = getAuthToken();
+  const { currentUser, isAuthenticated } = useStore();
   const [posts, setPosts] = useState<PostType[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -20,8 +20,8 @@ export default function Home() {
   const [searchQuery, setSearchQuery] = useState("");
   const postsRef = useRef<PostType[]>([]);
 
-  // Check if user is authenticated - BOTH currentUser AND authToken must exist
-  if (!currentUser || !authToken) {
+  // Check if user is authenticated
+  if (!isAuthenticated || !currentUser) {
     navigate('/login');
     return (
       <div className="min-h-screen bg-bg-black flex items-center justify-center">
@@ -159,7 +159,7 @@ export default function Home() {
 
           {/* Posts Feed */}
           {!searchQuery && (
-          <div className="divide-y divide-border-dark pb-24 md:pb-0">
+          <section className="divide-y divide-border-dark pb-24 md:pb-0">
             {loading ? (
               <div className="flex items-center justify-center py-16 px-4">
                 <p className="text-text-muted">Chargement...</p>
@@ -173,7 +173,7 @@ export default function Home() {
                 const rawPp = p.user.pp;
                 const avatar = rawPp && rawPp !== "null" ? getMediaUrl(rawPp) : `https://picsum.photos/seed/${encodeURIComponent(p.user.user)}/200`;
                 return (
-                  <div 
+                  <article 
                     key={p.id} 
                     className="px-4 py-4 md:px-6 md:py-4 hover:bg-surface-dark/20 transition cursor-pointer"
                   >
@@ -232,11 +232,11 @@ export default function Home() {
                         }
                       }}
                     />
-                  </div>
+                  </article>
                 );
               })
             )}
-          </div>
+          </section>
           )}
         </div>
       </main>

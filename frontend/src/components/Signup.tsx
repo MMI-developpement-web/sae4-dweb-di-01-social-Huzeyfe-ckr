@@ -4,11 +4,13 @@ import Button from "./ui/Button";
 import Input from "./ui/Input";
 import Header from "./ui/Header";
 import StrengthBar from "./ui/StrengthBar";
-import { register, saveCurrentUser } from "../lib/api";
+import { register } from "../lib/api";
 import { validatePasswordStrength } from "../lib/passwordValidator";
+import { useStore } from "../store/StoreContext";
 
 export default function SignupComponent() {
   const navigate = useNavigate();
+  const { login } = useStore();
 
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
@@ -65,7 +67,8 @@ export default function SignupComponent() {
       // Check for successful registration with user
       if (response.user) {
         console.log('Saving current user and redirecting to /home');
-        saveCurrentUser(response.user);
+        const token = localStorage.getItem('authToken') || '';
+        login(response.user, token);
         navigate("/home");
       } else {
         console.log('Registration failed - no user data returned');

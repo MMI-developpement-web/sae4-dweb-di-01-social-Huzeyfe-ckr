@@ -1,11 +1,11 @@
 import { useNavigate } from "react-router-dom";
 import { useEffect } from "react";
 import Footer from './Footer'
-import { getUser, getCurrentUser, getAuthToken, saveCurrentUser, logout, getMediaUrl } from "../../lib/api";
+import { getUser, getMediaUrl } from "../../lib/api";
 import Button from "./Button";
 import Avatar from "./Avatar";
-
 import { cn } from "../../lib/utils.ts";
+import { useStore } from "../../store/StoreContext";
 
 interface SideBarDataProps {
   logoSrc?: string;
@@ -18,34 +18,32 @@ interface SideBarViewProps {
 
 export default function SideBar({ className = "" }: SideBarDataProps & SideBarViewProps) {
   const navigate = useNavigate();
-  const currentUser = getCurrentUser();
-  const authToken = getAuthToken();
+  const { currentUser, updateCurrentUser, logout } = useStore();
 
   // Check if we have auth token - if not, redirect to login
   useEffect(() => {
-    if (!currentUser || !authToken) {
+    if (!currentUser) {
       console.warn('SideBar: Missing authentication. Redirecting to login');
       logout();
       navigate('/login');
       return;
     }
-  }, [authToken, currentUser, navigate]);
+  }, [currentUser, logout, navigate]);
 
   // Rafraîchir les données utilisateur
   useEffect(() => {
-    if (!currentUser?.id || !authToken) return;
+    if (!currentUser?.id) return;
     
     const refreshCurrentUser = async () => {
-      const current = getCurrentUser();
-      if (current?.id) {
-        const updated = await getUser(current.id);
+      if (currentUser?.id) {
+        const updated = await getUser(currentUser.id);
         if (updated) {
-          saveCurrentUser(updated);
+          updateCurrentUser(updated);
         }
       }
     };
     refreshCurrentUser();
-  }, [authToken]);
+  }, [currentUser?.id, updateCurrentUser]);
 
 
   const getAvatarUrl = () => {

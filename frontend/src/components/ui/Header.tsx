@@ -1,6 +1,6 @@
 import { cn } from "../../lib/utils.ts";
 import { useNavigate } from "react-router-dom";
-import { logout } from "../../lib/api";
+import { useStore } from "../../store/StoreContext";
 import Button from "./Button";
 import BurgerMenu from "./BurgerMenu";
 
@@ -16,6 +16,7 @@ interface HeaderViewProps {className?: string; }
 
 export default function Header({ showLogout = false, className = "" }: HeaderDataProps & HeaderViewProps) {
   const navigate = useNavigate();
+  const { logout } = useStore();
 
   const handleLogout = () => {
     logout();

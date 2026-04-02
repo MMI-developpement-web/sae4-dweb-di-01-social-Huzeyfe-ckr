@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { type Reply, createReply, getCurrentUser, getMediaUrl, uploadMedia } from '../../lib/api';
+import { type Reply, createReply, getMediaUrl, uploadMedia } from '../../lib/api';
+import { useStore } from '../../store/StoreContext';
 
 // Composants pour afficher une réponse individuelle (Reply),
 
@@ -23,7 +24,7 @@ export const ReplyForm: React.FC<ReplyFormDataProps & ReplyFormViewProps> = ({ p
   const [error, setError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const currentUser = getCurrentUser();
+  const { currentUser } = useStore();
   const maxLength = 500;
 
   // Auto-clear error after 5 seconds

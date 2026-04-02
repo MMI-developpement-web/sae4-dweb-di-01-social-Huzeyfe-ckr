@@ -8,10 +8,10 @@ import {
   unretweetPost,
   pinPost,
   unpinPost,
-  getCurrentUser,
   getReplies,
   uploadMedia,
 } from "../../lib/api";
+import { useStore } from "../../store/StoreContext";
 import RetweetModal from "./RetweetModal";
 import { PostHeader } from "./PostHeader";
 import { PostActions } from "./PostActions";
@@ -139,6 +139,9 @@ export default function Post({
   // Replies State
   const [repliesCount, setRepliesCount] = useState(0);
   const [showReplyForm, setShowReplyForm] = useState(false);
+
+  // Store access
+  const { authToken } = useStore();
 
   // Load replies count on mount
   useEffect(() => {
@@ -283,7 +286,7 @@ export default function Post({
 
   const handlePinClick = async () => {
     if (!id) return;
-    const currentUser = getCurrentUser();
+    const { currentUser, updateCurrentUser } = useStore();
     if (!currentUser) return;
 
     try {
@@ -292,18 +295,17 @@ export default function Post({
         const result = await unpinPost(currentUser.id, Number(id));
         success = result.success;
         if (success && result.pinnedPostIds) {
-          currentUser.pinnedPostIds = result.pinnedPostIds;
+          updateCurrentUser({ pinnedPostIds: result.pinnedPostIds });
         }
       } else {
         const result = await pinPost(currentUser.id, Number(id));
         success = result.success;
         if (success && result.pinnedPostIds) {
-          currentUser.pinnedPostIds = result.pinnedPostIds;
+          updateCurrentUser({ pinnedPostIds: result.pinnedPostIds });
         }
       }
 
       if (success) {
-        localStorage.setItem("currentUser", JSON.stringify(currentUser));
         setTimeout(() => {
           window.location.reload();
         }, 300);
@@ -324,7 +326,7 @@ export default function Post({
       const res = await fetch(`/api/admin/posts/${id}/censor`, {
         method,
         headers: {
-          Authorization: `Bearer ${localStorage.getItem("authToken")}`,
+          Authorization: `Bearer ${authToken}`,
         },
       });
       if (res.ok) {

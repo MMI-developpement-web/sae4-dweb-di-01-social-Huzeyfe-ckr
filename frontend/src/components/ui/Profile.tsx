@@ -1,8 +1,9 @@
 
 import Avatar from "./Avatar";
-import { getCurrentUser, getMediaUrl } from "../../lib/api";
+import { getMediaUrl } from "../../lib/api";
 import type { User } from "../../lib/api";
 import { useNavigate } from "react-router-dom";
+import { useStore } from "../../store/StoreContext";
 
 // Composant de profil utilisateur affichant l'avatar, le nom et le handle, avec redirection vers la page de profil au clic, et gestion des valeurs par défaut pour les utilisateurs non connect
 
@@ -19,7 +20,8 @@ interface ProfileViewProps {}
 
 export default function Profile({ name: propName, handle: propHandle, image: propImage }: ProfileDataProps & ProfileViewProps) {
   const navigate = useNavigate();
-  const current = getCurrentUser() as User | null;
+  const { currentUser } = useStore();
+  const current = currentUser as User | null;
 
   const name = propName ?? current?.name ?? "Invité";
   // Handle both 'user' and 'username' fields from API

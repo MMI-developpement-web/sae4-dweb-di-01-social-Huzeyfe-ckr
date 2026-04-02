@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { getUser, followUser, unfollowUser, getCurrentUser, getPosts, isUserBlocked, getMediaUrl, type User, type Post as PostType } from "../lib/api";
+import { getUser, followUser, unfollowUser, getPosts, isUserBlocked, getMediaUrl, type User, type Post as PostType } from "../lib/api";
+import { useStore } from "../store/StoreContext";
 import Header from "./ui/Header";
 import SideBar from "./ui/SideBar";
 import Avatar from "./ui/Avatar";
@@ -13,7 +14,7 @@ import BlockButton from "./ui/BlockButton";
 export default function UserProfile() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
-  const currentUser = getCurrentUser();
+  const { currentUser } = useStore();
 
   const [user, setUser] = useState<User | null>(null);
   const [posts, setPosts] = useState<PostType[]>([]);
@@ -222,31 +223,43 @@ export default function UserProfile() {
 
             {/* Bannissement Warning */}
             {user?.blocked && (
-              <div className="bg-red-900/30  rounded-lg p-3 md:p-4 mb-4">
-                <p className="text-red-400 font-semibold text-sm md:text-base flex items-center gap-2">
+              <aside 
+                className="rounded-lg p-3 md:p-4 mb-4 border-l-4"
+                style={{
+                  backgroundColor: 'color-mix(in srgb, var(--color-error) 10%, var(--color-bg-black) 90%)',
+                  borderLeftColor: 'var(--color-error)',
+                  color: 'var(--color-error)'
+                }}
+                role="alert"
+                aria-label="Avertissement compte banni"
+              >
+                <p className="font-semibold text-sm md:text-base flex items-center gap-2">
                   ⛔ Compte banni
                 </p>
-                <p className="text-red-300 text-xs md:text-sm mt-1">
+                <p 
+                  className="text-xs md:text-sm mt-1 opacity-90"
+                  style={{ color: 'var(--color-error)' }}
+                >
                   Cet utilisateur a été suspendu pour non respect des conditions d'utilisation.
                 </p>
-              </div>
+              </aside>
             )}
 
             {/* Stats */}
-            <div className="flex gap-4 md:gap-6 border-t border-b border-border-dark py-3 mb-4">
+            <dl className="flex gap-4 md:gap-6 border-t border-b border-border-dark py-3 mb-4">
               <div>
-                <span className="font-bold text-sm md:text-base">{posts.length}</span>
-                <p className="text-text-muted text-xs md:text-sm">Tweets</p>
+                <dt className="text-text-muted text-xs md:text-sm">Tweets</dt>
+                <dd className="font-bold text-sm md:text-base">{posts.length}</dd>
               </div>
               <div>
-                <span className="font-bold text-sm md:text-base">{user?.followers || 0}</span>
-                <p className="text-text-muted text-xs md:text-sm">Abonnés</p>
+                <dt className="text-text-muted text-xs md:text-sm">Abonnés</dt>
+                <dd className="font-bold text-sm md:text-base">{user?.followers || 0}</dd>
               </div>
               <div>
-                <span className="font-bold text-sm md:text-base">{user?.following || 0}</span>
-                <p className="text-text-muted text-xs md:text-sm">Abonnements</p>
+                <dt className="text-text-muted text-xs md:text-sm">Abonnements</dt>
+                <dd className="font-bold text-sm md:text-base">{user?.following || 0}</dd>
               </div>
-            </div>
+            </dl>
 
             {/* Texte informations */}
             <div className="text-xs md:text-sm text-text-muted space-y-2">

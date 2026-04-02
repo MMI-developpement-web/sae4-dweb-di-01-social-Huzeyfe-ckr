@@ -8,11 +8,12 @@ import Button from "./ui/Button";
 import Post from "./ui/Post";
 import EditUserProfile from "./ui/EditUserProfile";
 import BlockedUsersList from "./ui/BlockedUsersList";
-import { getCurrentUser, getUser, getPosts, getMediaUrl, type Post as PostType } from "../lib/api";
+import { getUser, getPosts, getMediaUrl, type Post as PostType } from "../lib/api";
+import { useStore } from "../store/StoreContext";
 
 export default function ProfilePage() {
   const navigate = useNavigate();
-  const currentUser = getCurrentUser();
+  const { currentUser } = useStore();
   const [userData, setUserData] = useState(currentUser);
   const [posts, setPosts] = useState<PostType[]>([]);
   const [pinnedPosts, setPinnedPosts] = useState<PostType[]>([]);
@@ -22,8 +23,6 @@ export default function ProfilePage() {
 
   useEffect(() => {
     const loadProfileData = async () => {
-      const currentUser = getCurrentUser();
-      
       if (!currentUser?.id) {
         navigate("/login");
         return;
@@ -65,8 +64,6 @@ export default function ProfilePage() {
   // Rafraîchissement automatique toutes les 30 secondes
   useEffect(() => {
     const interval = setInterval(async () => {
-      const currentUser = getCurrentUser();
-      
       if (!currentUser?.id) {
         return;
       }
@@ -168,7 +165,11 @@ export default function ProfilePage() {
                 <Button
                   onClick={() => setShowBlockedUsers(true)}
                   size="sm"
-                  className="bg-gray-700 hover:bg-gray-600 text-sm"
+                  style={{
+                    backgroundColor: 'var(--color-surface-dark)',
+                    color: 'var(--color-text-white)'
+                  }}
+                  className="hover:opacity-80 text-sm transition-opacity"
                 >
                   Utilisateurs bloqués
                 </Button>
@@ -182,29 +183,29 @@ export default function ProfilePage() {
             </div>
 
             {/* Bio / Description */}
-            <div className="text-sm md:text-base mb-4">
+            <section className="text-sm md:text-base mb-4">
               {userData?.bio ? (
                 <p className="text-text-white">{userData.bio}</p>
               ) : (
                 <p className="text-text-muted italic">Aucune bio</p>
               )}
-            </div>
+            </section>
 
             {/* Stats */}
-            <div className="flex gap-4 md:gap-6 border-t border-b border-border-dark py-3 mb-4">
+            <dl className="flex gap-4 md:gap-6 border-t border-b border-border-dark py-3 mb-4">
               <div>
-                <span className="font-bold text-sm md:text-base">{posts.length}</span>
-                <p className="text-text-muted text-xs md:text-sm">Tweets</p>
+                <dt className="text-text-muted text-xs md:text-sm">Tweets</dt>
+                <dd className="font-bold text-sm md:text-base">{posts.length}</dd>
               </div>
               <div>
-                <span className="font-bold text-sm md:text-base">{userData?.followers || 0}</span>
-                <p className="text-text-muted text-xs md:text-sm">Abonnés</p>
+                <dt className="text-text-muted text-xs md:text-sm">Abonnés</dt>
+                <dd className="font-bold text-sm md:text-base">{userData?.followers || 0}</dd>
               </div>
               <div>
-                <span className="font-bold text-sm md:text-base">{userData?.following || 0}</span>
-                <p className="text-text-muted text-xs md:text-sm">Abonnements</p>
+                <dt className="text-text-muted text-xs md:text-sm">Abonnements</dt>
+                <dd className="font-bold text-sm md:text-base">{userData?.following || 0}</dd>
               </div>
-            </div>
+            </dl>
 
             {/* Texte informations */}
             <div className="text-xs md:text-sm text-text-muted space-y-2">

@@ -1,9 +1,10 @@
 import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { toggleUserReadOnly, getCurrentUser, saveCurrentUser, type User } from '../lib/api';
+import { toggleUserReadOnly, type User } from '../lib/api';
 import Header from './ui/Header';
 import SideBar from './ui/SideBar';
 import Footer from './ui/Footer';
+import { useStore } from '../store/StoreContext';
 
 interface SettingsProps {
   user?: User | null;
@@ -12,20 +13,20 @@ interface SettingsProps {
 
 export default function Settings({ onUserUpdate }: SettingsProps) {
   const navigate = useNavigate();
-  const [user, setUser] = useState<User | null>(getCurrentUser());
+  const { currentUser, updateCurrentUser } = useStore();
+  const [user, setUser] = useState<User | null>(currentUser);
   const [readOnly, setReadOnly] = useState(user?.readOnly ?? false);
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    const currentUser = getCurrentUser();
     if (!currentUser?.id) {
       navigate('/login');
       return;
     }
     setUser(currentUser);
     setReadOnly(currentUser.readOnly ?? false);
-  }, [navigate]);
+  }, [navigate, currentUser]);
 
   const handleToggleReadOnly = async () => {
     if (!user?.id) return;
@@ -40,7 +41,7 @@ export default function Settings({ onUserUpdate }: SettingsProps) {
       if (updatedUser) {
         setReadOnly(newValue);
         setUser(updatedUser);
-        saveCurrentUser(updatedUser);
+        updateCurrentUser(updatedUser);
         setMessage(newValue ? '🔒 Mode lecture seule activé' : '✓ Mode lecture seule désactivé');
         onUserUpdate?.(updatedUser);
         // Clear message after 3 seconds
@@ -87,26 +88,45 @@ export default function Settings({ onUserUpdate }: SettingsProps) {
           <button
             onClick={handleToggleReadOnly}
             disabled={loading}
-            className={`ml-4 flex-shrink-0 px-6 py-2 rounded-full font-semibold transition-colors ${
-              readOnly
-                ? 'bg-red-600 hover:bg-red-700 text-white disabled:bg-surface-dark'
-                : 'bg-blue-600 hover:bg-blue-700 text-white disabled:bg-surface-dark'
-            }`}
+            className="ml-4 flex-shrink-0 px-6 py-2 rounded-full font-semibold transition-colors disabled:opacity-50"
+            style={{
+              backgroundColor: readOnly ? 'var(--color-error)' : 'var(--color-info)',
+              color: 'var(--color-text-white)',
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = readOnly 
+                ? 'var(--color-error-light)'
+                : 'var(--color-info-light)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = readOnly 
+                ? 'var(--color-error)'
+                : 'var(--color-info)';
+            }}
           >
             {loading ? '⏳ Mise à jour...' : readOnly ? '✓ Activé' : 'Activer'}
           </button>
         </div>
 
         {message && (
-          <div
-            className={`mt-3 p-3 rounded text-sm ${
-              message.includes('activé') || message.includes('✓')
-                ? 'bg-green-900/30 border border-green-600 text-green-400'
-                : 'bg-red-900/30 border border-red-600 text-red-400'
-            }`}
+          <output
+            className="mt-3 p-3 rounded text-sm border-l-4 block"
+            role={message.includes('activé') || message.includes('✓') ? 'status' : 'alert'}
+            aria-live="polite"
+            style={{
+              backgroundColor: message.includes('activé') || message.includes('✓')
+                ? 'color-mix(in srgb, var(--color-success) 10%, var(--color-bg-black) 90%)'
+                : 'color-mix(in srgb, var(--color-error) 10%, var(--color-bg-black) 90%)',
+              borderLeftColor: message.includes('activé') || message.includes('✓')
+                ? 'var(--color-success)'
+                : 'var(--color-error)',
+              color: message.includes('activé') || message.includes('✓')
+                ? 'var(--color-success)'
+                : 'var(--color-error)'
+            }}
           >
             {message}
-          </div>
+          </output>
         )}
       </div>
 

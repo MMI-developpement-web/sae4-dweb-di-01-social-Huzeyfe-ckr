@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { logout, getCurrentUser } from '../../lib/api';
+import { useStore } from '../../store/StoreContext';
 import Button from './Button';
 
 // SVG Icons - wrapped in spans with proper sizing
@@ -19,7 +19,7 @@ const LogoutIcon = <span className="w-5 h-5 inline-flex"><svg fill="none" stroke
 export default function BurgerMenu() {
   const [isOpen, setIsOpen] = useState(false);
   const navigate = useNavigate();
-  const currentUser = getCurrentUser();
+  const { currentUser, logout } = useStore();
 
   const handleLogout = () => {
     logout();

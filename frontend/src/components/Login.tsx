@@ -3,11 +3,13 @@ import Button from './ui/Button'
 import Header from './ui/Header'
 import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
-import { login, saveCurrentUser } from '../lib/api'
+import { login as apiLogin } from '../lib/api'
+import { useStore } from '../store/StoreContext'
 
 export default function Login() {
 
   const navigate = useNavigate();
+  const { login: storeLogin } = useStore();
 
   const [user, setUser] = useState("");
   const [password, setPassword] = useState("");
@@ -24,7 +26,7 @@ export default function Login() {
     setLoading(true);
     setError("");
     
-    const response = await login(user, password);
+    const response = await apiLogin(user, password);
     
     if (response.error) {
       setError(response.error);
@@ -33,7 +35,8 @@ export default function Login() {
     }
 
     if (response.user) {
-      saveCurrentUser(response.user);
+      const token = localStorage.getItem('authToken') || '';
+      storeLogin(response.user, token);
       navigate('/home');
     } else {
       setError("Une erreur s'est produite");

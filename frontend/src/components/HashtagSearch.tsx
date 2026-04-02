@@ -3,6 +3,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import Header from "./ui/Header";
 import SideBar from "./ui/SideBar";
 import Post from "./ui/Post";
+import { useStore } from "../store/StoreContext";
 
 interface PostData {
   id: number;
@@ -28,6 +29,7 @@ interface PostData {
 export default function HashtagSearch() {
   const { hashtag } = useParams<{ hashtag: string }>();
   const navigate = useNavigate();
+  const { authToken, currentUser } = useStore();
   const [posts, setPosts] = useState<PostData[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -47,7 +49,7 @@ export default function HashtagSearch() {
         const response = await fetch(`${import.meta.env.VITE_API_URL}/hashtags/${hashtag}/posts`, {
           method: 'GET',
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('authToken')}`,
+            'Authorization': `Bearer ${authToken}`,
             'Content-Type': 'application/json',
           },
         });
@@ -129,7 +131,7 @@ export default function HashtagSearch() {
                     text={post.content}
                     image={post.mediaUrl}
                     userId={post.user?.id}
-                    currentUserId={parseInt(localStorage.getItem('userId') || '0')}
+                    currentUserId={currentUser?.id}
                     likes={post.likes}
                     liked={post.liked}
                     retweets={post.retweets || 0}

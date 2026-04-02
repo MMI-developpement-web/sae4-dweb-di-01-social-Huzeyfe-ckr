@@ -6,7 +6,8 @@ import Avatar from "./ui/Avatar";
 import Input from "./ui/Input";
 import Button from "./ui/Button";
 import Footer from "./ui/Footer";
-import { createPost, getCurrentUser, uploadMedia, getMediaUrl } from "../lib/api";
+import { createPost, uploadMedia, getMediaUrl } from "../lib/api";
+import { useStore } from "../store/StoreContext";
 
 export default function PostPage() {
   const [content, setContent] = useState("");
@@ -18,6 +19,7 @@ export default function PostPage() {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [fileType, setFileType] = useState<string | null>(null);
   const navigate = useNavigate();
+  const { currentUser } = useStore();
 
   const MAX = 280;
 
@@ -68,7 +70,6 @@ export default function PostPage() {
   };
 
   // Check if user is authenticated
-  const currentUser = getCurrentUser();
   if (!currentUser) {
     navigate('/login');
     return (
@@ -91,7 +92,6 @@ export default function PostPage() {
     setError("");
 
     try {
-      const currentUser = getCurrentUser();
       if (!currentUser) {
         setError("Vous mustn'être connecté pour poster");
         setLoading(false);
@@ -136,7 +136,7 @@ export default function PostPage() {
             
             <div className="flex items-start gap-2 md:gap-3">
               {(() => {
-                const current = getCurrentUser();
+                const current = currentUser;
                 const rawPp = current?.pp;
                 const username = current?.username ?? current?.user ?? "guest";
                 const avatarSrc = rawPp && rawPp !== "null" ? getMediaUrl(rawPp) : current ? `https://picsum.photos/seed/${encodeURIComponent(username)}/200` : undefined;

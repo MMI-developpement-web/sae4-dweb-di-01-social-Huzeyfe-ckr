@@ -14,6 +14,7 @@ import UserProfile from "./components/UserProfile";
 import Settings from "./components/Settings";
 import Search from "./components/Search";
 import HashtagSearch from "./components/HashtagSearch";
+import { StoreProvider } from "./store/StoreContext";
 
 import "./index.css";
 
@@ -48,7 +49,9 @@ const rootElement = document.getElementById("root");
 if (rootElement) {
   ReactDOM.createRoot(rootElement).render(
     <React.StrictMode>
-      <RouterProvider router={router} />
+      <StoreProvider>
+        <RouterProvider router={router} />
+      </StoreProvider>
     </React.StrictMode>
   );
 }

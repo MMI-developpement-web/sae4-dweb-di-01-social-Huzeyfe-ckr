@@ -193,16 +193,34 @@ export default function EditUserProfile({ user, onSave: _onSave, onCancel }: Edi
           <form onSubmit={handleSave} className="divide-y divide-border-dark">
             {/* Success Message */}
             {successMessage && (
-              <div className="px-4 md:px-6 py-3 bg-green-900/30 border border-green-500/30 rounded-lg m-4">
-                <p className="text-green-400 text-sm md:text-base">{successMessage}</p>
-              </div>
+              <output 
+                className="block px-4 md:px-6 py-3 rounded-lg m-4 border-l-4 text-sm md:text-base"
+                role="status"
+                aria-live="polite"
+                style={{
+                  backgroundColor: 'color-mix(in srgb, var(--color-success) 10%, var(--color-bg-black) 90%)',
+                  borderLeftColor: 'var(--color-success)',
+                  color: 'var(--color-success)'
+                }}
+              >
+                {successMessage}
+              </output>
             )}
 
             {/* Error Message */}
             {errorMessage && (
-              <div className="px-4 md:px-6 py-3 bg-red-900/30 border border-red-500/30 rounded-lg m-4">
-                <p className="text-red-400 text-sm md:text-base">{errorMessage}</p>
-              </div>
+              <output 
+                className="block px-4 md:px-6 py-3 rounded-lg m-4 border-l-4 text-sm md:text-base"
+                role="alert"
+                aria-live="polite"
+                style={{
+                  backgroundColor: 'color-mix(in srgb, var(--color-error) 10%, var(--color-bg-black) 90%)',
+                  borderLeftColor: 'var(--color-error)',
+                  color: 'var(--color-error)'
+                }}
+              >
+                {errorMessage}
+              </output>
             )}
 
             {/* Form Fields */}
