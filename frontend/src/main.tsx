@@ -9,8 +9,12 @@ import FirstScreen from "./routes/firstscreen";
 import Login from "./routes/login";
 import Signup from "./routes/signup";
 import Post from "./routes/post";
-import Adminlogin from "./routes/adminlogin";
-import Adminmanagement from "./routes/adminmanagement";
+import Profile from "./routes/profile";
+import UserProfile from "./components/UserProfile";
+import Settings from "./components/Settings";
+import Search from "./components/Search";
+import HashtagSearch from "./components/HashtagSearch";
+import { StoreProvider } from "./store/StoreContext";
 
 import "./index.css";
 
@@ -23,11 +27,14 @@ const router = createBrowserRouter(
         { index: true, element: <FirstScreen /> },
         { path: "firstscreen", element: <FirstScreen /> },
         { path: "home", element: <Home /> },
+        { path: "profile", element: <Profile /> },
+        { path: "profile/:id", element: <UserProfile /> },
         { path: "post", element: <Post /> },
+        { path: "settings", element: <Settings /> },
+        { path: "search", element: <Search /> },
+        { path: "search/hashtag/:hashtag", element: <HashtagSearch /> },
         { path: "login", element: <Login /> },
         { path: "signup", element: <Signup /> },
-        { path: "adminlogin", element: <Adminlogin /> },
-        { path: "adminmanagement", element: <Adminmanagement /> },
       ],
     },
   ],
@@ -36,14 +43,15 @@ const router = createBrowserRouter(
     
   }
 );
-console.log("BASE_URL =", import.meta.env.BASE_URL);
 
 const rootElement = document.getElementById("root");
 
 if (rootElement) {
   ReactDOM.createRoot(rootElement).render(
     <React.StrictMode>
-      <RouterProvider router={router} />
+      <StoreProvider>
+        <RouterProvider router={router} />
+      </StoreProvider>
     </React.StrictMode>
   );
 }

@@ -40,9 +40,22 @@
   --color-surface: #0a0a0a;
   --color-surface-dark: #0b0b0b;
   --color-error: #ef4444;
+  --color-error-light: #dc2626;
+  --color-error-dark: #991b1b;
   --color-bg-black: #000000;
   --color-bg-input: #000000;
   --color-green: #4CAF50;
+  --color-green-light: #22c55e;
+  --color-green-dark: #16a34a;
+  --color-success: #4CAF50;
+  --color-success-light: #22c55e;
+  --color-success-dark: #16a34a;
+  --color-warning: #f59e0b;
+  --color-warning-light: #fbbf24;
+  --color-warning-dark: #d97706;
+  --color-info: #3b82f6;
+  --color-info-light: #60a5fa;
+  --color-info-dark: #1d4ed8;
 }
 
 

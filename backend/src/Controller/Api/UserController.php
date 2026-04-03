@@ -3,7 +3,12 @@
 namespace App\Controller\Api;
 
 use App\Entity\User;
+use App\Entity\Follow;
+use App\Entity\Post;
 use App\Repository\UserRepository;
+use App\Repository\FollowRepository;
+use App\Repository\BlockedUserRepository;
+use App\Repository\PostRepository;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -35,10 +40,17 @@ class UserController extends AbstractController
                 'email' => $u->getEmail(),
                 'name' => $u->getName(),
                 'role' => $u->getRole(),
-                'active' => $u->isActive(),
+                'blocked' => $u->isBlocked(),
+                'readOnly' => $u->isReadOnly(),
                 'phone' => $u->getPhone(),
                 'birthDate' => $u->getBirthDate() ? $u->getBirthDate()->format('Y-m-d') : null,
+                'pp' => $u->getPp(),
+                'banner' => $u->getBanner(),
+                'bio' => $u->getBio(),
+                'website' => $u->getWebsite(),
+                'location' => $u->getLocation(),
                 'createdAt' => $u->getCreatedAt() ? $u->getCreatedAt()->format(DATE_ATOM) : null,
+                'pinnedPostIds' => $u->getPinnedPosts()->map(fn(Post $p) => $p->getId())->toArray(),
             ];
         }, $users);
 
@@ -49,19 +61,37 @@ class UserController extends AbstractController
      * Récupère un utilisateur spécifique
      */
     #[Route('/{id}', name: 'users.get', methods: ['GET'])]
-    public function get(User $user): JsonResponse
+    public function get(User $user, FollowRepository $followRepository): JsonResponse
     {
+        $currentUser = $this->getUser();
+        
         $u = [
             'id' => $user->getId(),
             'user' => $user->getUser(),
             'email' => $user->getEmail(),
             'name' => $user->getName(),
             'role' => $user->getRole(),
-            'active' => $user->isActive(),
+            'blocked' => $user->isBlocked(),
+            'readOnly' => $user->isReadOnly(),
             'phone' => $user->getPhone(),
             'birthDate' => $user->getBirthDate() ? $user->getBirthDate()->format('Y-m-d') : null,
+            'pp' => $user->getPp(),
+            'banner' => $user->getBanner(),
+            'bio' => $user->getBio(),
+            'website' => $user->getWebsite(),
+            'location' => $user->getLocation(),
             'createdAt' => $user->getCreatedAt() ? $user->getCreatedAt()->format(DATE_ATOM) : null,
+            'pinnedPostIds' => $user->getPinnedPosts()->map(fn(Post $p) => $p->getId())->toArray(),
+            'followers' => $followRepository->countFollowers($user->getId()),
+            'following' => $followRepository->countFollowing($user->getId()),
+            'isFollowing' => false,
         ];
+
+        // Vérifier si l'utilisateur courant suit cet utilisateur
+        if ($currentUser instanceof User && $currentUser->getId() !== $user->getId()) {
+            $follow = $followRepository->findByFollowerAndFollowing($currentUser->getId(), $user->getId());
+            $u['isFollowing'] = $follow !== null;
+        }
 
         return $this->json($u);
     }
@@ -92,7 +122,7 @@ class UserController extends AbstractController
         $user->setPassword($data['password']);
         $user->setName($data['name']);
         $user->setRole($data['role'] ?? 'user');
-        $user->setActive($data['active'] ?? true);
+        $user->setBlocked($data['blocked'] ?? false);
         $user->setCreatedAt(new \DateTime());
 
         if (isset($data['phone'])) {
@@ -127,7 +157,7 @@ class UserController extends AbstractController
         $user->setPassword($data['password']);
         $user->setName($data['name']);
         $user->setRole($data['role'] ?? $user->getRole());
-        $user->setActive($data['active'] ?? $user->isActive());
+        $user->setBlocked($data['blocked'] ?? $user->isBlocked());
 
         $user->setPhone($data['phone'] ?? null);
         $user->setBirthDate(isset($data['birthDate']) ? new \DateTime($data['birthDate']) : null);
@@ -140,7 +170,7 @@ class UserController extends AbstractController
             'email' => $user->getEmail(),
             'name' => $user->getName(),
             'role' => $user->getRole(),
-            'active' => $user->isActive(),
+            'blocked' => $user->isBlocked(),
             'phone' => $user->getPhone(),
             'birthDate' => $user->getBirthDate() ? $user->getBirthDate()->format('Y-m-d') : null,
             'createdAt' => $user->getCreatedAt() ? $user->getCreatedAt()->format(DATE_ATOM) : null,
@@ -167,11 +197,29 @@ class UserController extends AbstractController
         if (isset($data['birthDate'])) {
             $user->setBirthDate(new \DateTime($data['birthDate']));
         }
-        if (isset($data['active'])) {
-            $user->setActive($data['active']);
+        if (isset($data['blocked'])) {
+            $user->setBlocked($data['blocked']);
+        }
+        if (isset($data['readOnly'])) {
+            $user->setReadOnly($data['readOnly']);
         }
         if (isset($data['role'])) {
             $user->setRole($data['role']);
+        }
+        if (isset($data['pp'])) {
+            $user->setPp($data['pp']);
+        }
+        if (isset($data['banner'])) {
+            $user->setBanner($data['banner']);
+        }
+        if (isset($data['bio'])) {
+            $user->setBio($data['bio']);
+        }
+        if (isset($data['website'])) {
+            $user->setWebsite($data['website']);
+        }
+        if (isset($data['location'])) {
+            $user->setLocation($data['location']);
         }
 
         $em->flush();
@@ -182,9 +230,15 @@ class UserController extends AbstractController
             'email' => $user->getEmail(),
             'name' => $user->getName(),
             'role' => $user->getRole(),
-            'active' => $user->isActive(),
+            'blocked' => $user->isBlocked(),
+            'readOnly' => $user->isReadOnly(),
             'phone' => $user->getPhone(),
             'birthDate' => $user->getBirthDate() ? $user->getBirthDate()->format('Y-m-d') : null,
+            'pp' => $user->getPp(),
+            'banner' => $user->getBanner(),
+            'bio' => $user->getBio(),
+            'website' => $user->getWebsite(),
+            'location' => $user->getLocation(),
             'createdAt' => $user->getCreatedAt() ? $user->getCreatedAt()->format(DATE_ATOM) : null,
         ]);
     }
@@ -199,5 +253,167 @@ class UserController extends AbstractController
         $em->flush();
 
         return $this->json(['message' => 'Utilisateur supprimé'], Response::HTTP_NO_CONTENT);
+    }
+
+    /**
+     * Suive un utilisateur
+     * POST /api/users/{id}/follow
+     */
+    #[Route('/{id}/follow', name: 'users.follow', methods: ['POST'])]
+    public function follow(User $userToFollow, FollowRepository $followRepository, BlockedUserRepository $blockedUserRepository, EntityManagerInterface $em): JsonResponse
+    {
+        $currentUser = $this->getUser();
+
+        if (!$currentUser instanceof User) {
+            return $this->json(['error' => 'Non authentifié'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        if ($currentUser->getId() === $userToFollow->getId()) {
+            return $this->json(['error' => 'Vous ne pouvez pas vous suivre vous-même'], Response::HTTP_BAD_REQUEST);
+        }
+
+        // Vérifier si l'utilisateur actuel est bloqué par l'utilisateur à suivre
+        if ($blockedUserRepository->isUserBlocked($userToFollow->getId(), $currentUser->getId())) {
+            return $this->json(['error' => 'Vous êtes bloqué par cet utilisateur'], Response::HTTP_FORBIDDEN);
+        }
+
+        // Vérifier si l'utilisateur actuel bloque l'utilisateur à suivre
+        if ($blockedUserRepository->isUserBlocked($currentUser->getId(), $userToFollow->getId())) {
+            return $this->json(['error' => 'Vous avez bloqué cet utilisateur'], Response::HTTP_FORBIDDEN);
+        }
+
+        // Vérifier si déjà suivi
+        $existingFollow = $followRepository->findByFollowerAndFollowing($currentUser->getId(), $userToFollow->getId());
+        if ($existingFollow) {
+            return $this->json(['error' => 'Vous suivez déjà cet utilisateur'], Response::HTTP_CONFLICT);
+        }
+
+        // Créer la relation Follow
+        $follow = new Follow();
+        $follow->setFollower($currentUser);
+        $follow->setFollowing($userToFollow);
+
+        $em->persist($follow);
+        $em->flush();
+
+        return $this->json([
+            'message' => 'Utilisateur suivi',
+            'followers' => $followRepository->countFollowers($userToFollow->getId()),
+            'following' => $followRepository->countFollowing($userToFollow->getId()),
+        ], Response::HTTP_CREATED);
+    }
+
+    /**
+     * Arrête de suivre un utilisateur
+     * DELETE /api/users/{id}/follow
+     */
+    #[Route('/{id}/follow', name: 'users.unfollow', methods: ['DELETE'])]
+    public function unfollow(User $userToUnfollow, FollowRepository $followRepository, EntityManagerInterface $em): JsonResponse
+    {
+        $currentUser = $this->getUser();
+
+        if (!$currentUser instanceof User) {
+            return $this->json(['error' => 'Non authentifié'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        // Trouver la relation Follow
+        $follow = $followRepository->findByFollowerAndFollowing($currentUser->getId(), $userToUnfollow->getId());
+        if (!$follow) {
+            return $this->json(['error' => 'Vous ne suivez pas cet utilisateur'], Response::HTTP_NOT_FOUND);
+        }
+
+        $em->remove($follow);
+        $em->flush();
+
+        return $this->json([
+            'message' => 'Utilisateur désuivi',
+            'followers' => $followRepository->countFollowers($userToUnfollow->getId()),
+            'following' => $followRepository->countFollowing($userToUnfollow->getId()),
+        ]);
+    }
+
+    /**
+     * Épingler un post sur le profil utilisateur
+     * POST /api/users/{id}/pin-post/{postId}
+     */
+    #[Route('/{id}/pin-post/{postId}', name: 'users.pin_post', methods: ['POST'])]
+    public function pinPost(
+        int $id,
+        int $postId,
+        UserRepository $userRepository,
+        PostRepository $postRepository,
+        EntityManagerInterface $em
+    ): JsonResponse {
+        $currentUser = $this->getUser();
+
+        if (!$currentUser instanceof User) {
+            return $this->json(['error' => 'Non authentifié'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        // Vérifier que l'utilisateur épingle son propre post
+        if ($currentUser->getId() !== $id) {
+            return $this->json(['error' => 'Vous ne pouvez épingler que vos propres posts'], Response::HTTP_FORBIDDEN);
+        }
+
+        $post = $postRepository->find($postId);
+        if (!$post) {
+            return $this->json(['error' => 'Post non trouvé'], Response::HTTP_NOT_FOUND);
+        }
+
+        if ($post->getUser()->getId() !== $currentUser->getId()) {
+            return $this->json(['error' => 'Vous ne pouvez épingler que vos propres posts'], Response::HTTP_FORBIDDEN);
+        }
+
+        // Ajouter le post à la collection des posts épingles
+        $currentUser->addPinnedPost($post);
+        $em->flush();
+
+        // Retourner la liste des IDs des posts épingles (pour front-end)
+        $pinnedPostIds = $currentUser->getPinnedPosts()->map(fn(Post $p) => $p->getId())->toArray();
+
+        return $this->json([
+            'message' => 'Post épinglé avec succès',
+            'pinnedPostIds' => $pinnedPostIds,
+        ]);
+    }
+
+    /**
+     * Désépingler un post spécifique
+     * DELETE /api/users/{id}/pin-post/{postId}
+     */
+    #[Route('/{id}/pin-post/{postId}', name: 'users.unpin_post', methods: ['DELETE'])]
+    public function unpinPost(
+        int $id,
+        int $postId,
+        PostRepository $postRepository,
+        EntityManagerInterface $em
+    ): JsonResponse {
+        $currentUser = $this->getUser();
+
+        if (!$currentUser instanceof User) {
+            return $this->json(['error' => 'Non authentifié'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        // Vérifier que l'utilisateur désépingle son propre post
+        if ($currentUser->getId() !== $id) {
+            return $this->json(['error' => 'Vous ne pouvez désépingler que votre propre post'], Response::HTTP_FORBIDDEN);
+        }
+
+        $post = $postRepository->find($postId);
+        if (!$post) {
+            return $this->json(['error' => 'Post non trouvé'], Response::HTTP_NOT_FOUND);
+        }
+
+        // Retirer le post de la collection des posts épingles
+        $currentUser->removePinnedPost($post);
+        $em->flush();
+
+        // Retourner la liste des IDs restants des posts épingles
+        $pinnedPostIds = $currentUser->getPinnedPosts()->map(fn(Post $p) => $p->getId())->toArray();
+
+        return $this->json([
+            'message' => 'Post désépinglé avec succès',
+            'pinnedPostIds' => $pinnedPostIds,
+        ]);
     }
 }

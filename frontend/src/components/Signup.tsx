@@ -6,9 +6,11 @@ import Header from "./ui/Header";
 import StrengthBar from "./ui/StrengthBar";
 import { register } from "../lib/api";
 import { validatePasswordStrength } from "../lib/passwordValidator";
+import { useStore } from "../store/StoreContext";
 
 export default function SignupComponent() {
   const navigate = useNavigate();
+  const { login } = useStore();
 
   const [email, setEmail] = useState("");
   const [username, setUsername] = useState("");
@@ -50,21 +52,38 @@ export default function SignupComponent() {
     setError("");
 
     try {
-      const success = await register({ user: username, email, password, name: username });
-      if (success) {
-        navigate("/login");
+      console.log('Starting registration for user:', username);
+      const response = await register({ user: username, email, password, name: username });
+      console.log('Registration response:', response);
+      
+      // Check for error response
+      if (response.error) {
+        console.log('Registration failed with error:', response.error);
+        setError(response.error);
+        setLoading(false);
+        return;
+      }
+
+      // Check for successful registration with user
+      if (response.user) {
+        console.log('Saving current user and redirecting to /home');
+        const token = localStorage.getItem('authToken') || '';
+        login(response.user, token);
+        navigate("/home");
       } else {
+        console.log('Registration failed - no user data returned');
         setError("Erreur lors de l'inscription. Veuillez réessayer.");
       }
-    } catch {
-      setError("Erreur lors de l'inscription. Veuillez réessayer.");
+    } catch (err){
+      console.error('Registration exception:', err);
+      setError("Erreur de connexion au serveur. Veuillez réessayer.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-bg-black to-surface-dark flex items-center justify-center py-4">
+    <div className="min-h-screen bg-linear-to-b from-bg-black to-surface-dark flex items-center justify-center py-4">
       {/* Mobile phone frame */}
       <div className="w-full max-w-sm bg-bg-black text-text-white rounded-3xl shadow-2xl overflow-hidden border-4 border-surface-dark">
         <div className="overflow-y-auto h-screen max-h-[812px] flex flex-col">
@@ -165,6 +184,7 @@ export default function SignupComponent() {
               {loading ? "Création..." : "Créer un compte"}
             </Button>
           </form>
+          <p className="mt-4">Avez-vous déjà un compte ? <button className="text-tick hover:underline" onClick={() => navigate("/login")}>Se connecter</button></p>
 
           <p className="text-xs text-text-muted mt-4">
             En vous inscrivant, vous acceptez les <span className="text-tick">Conditions d'utilisation</span> et la <span className="text-tick">Politique de confidentialité</span>.

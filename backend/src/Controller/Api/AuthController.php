@@ -4,6 +4,7 @@ namespace App\Controller\Api;
 
 use App\Entity\User;
 use App\Repository\UserRepository;
+use App\Service\TokenService;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\JsonResponse;
 use Symfony\Component\HttpFoundation\Request;
@@ -17,22 +18,60 @@ use Doctrine\ORM\EntityManagerInterface;
 class AuthController extends AbstractController
 {
     /**
-     * Login - Endpoint that receives JSON credentials and returns JWT token
-     * This route is handled by the JSON Login authenticator configured in security.yaml
+     * Login - Endpoint that receives JSON credentials and returns access token
      * POST /api/auth/login
-     * 
-     * Note: This endpoint is intercepted by the firewall's JSON Login authenticator.
-     * The authenticator validates credentials and calls LoginSuccessHandler to generate JWT.
-     * This action exists primarily for routing/documentation purposes.
      */
     #[Route('/login', name: 'auth_login', methods: ['POST'], format: 'json')]
-    public function login(): Response
-    {
-        // This method should never actually execute because the Security firewall intercepts the request
-        // before it reaches this controller action and handles it via JSON Login.
-        // If we get here, just return a 200 OK - the real response is handled by LoginSuccessHandler.
+    public function login(
+        Request $request, 
+        UserRepository $userRepository, 
+        UserPasswordHasherInterface $passwordHasher,
+        TokenService $tokenService
+    ): JsonResponse {
+        $data = json_decode($request->getContent(), true);
+
+        // Validate input
+        if (!isset($data['user']) || !isset($data['password'])) {
+            return $this->json(
+                ['error' => 'user et password sont requis'],
+                Response::HTTP_BAD_REQUEST
+            );
+        }
+
+        // Load user from database
+        $user = $userRepository->findOneBy(['user' => $data['user']]);
+
+        if (!$user) {
+            return $this->json(['error' => 'Identifiant ou mot de passe incorrect'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        // Verify password
+        if (!$passwordHasher->isPasswordValid($user, $data['password'])) {
+            return $this->json(['error' => 'Identifiant ou mot de passe incorrect'], Response::HTTP_UNAUTHORIZED);
+        }
+
+        if ($user->isBlocked()) {
+            return $this->json([
+                'error' => 'Votre compte a été désactivé. Veuillez contacter un administrateur pour plus d\'informations.'
+            ], Response::HTTP_UNAUTHORIZED);
+        }
+
+        // Generate access token (7 days expiration)
+        $expiresAt = (new \DateTimeImmutable())->modify('+7 days');
+        $accessToken = $tokenService->generateToken($user, $expiresAt);
+
         return $this->json([
-            'message' => 'Login successful - handled by security firewall'
+            'token' => $accessToken,
+            'user' => [
+                'id' => $user->getId(),
+                'user' => $user->getUser(),
+                'email' => $user->getEmail(),
+                'name' => $user->getName(),
+                'role' => $user->getRole(),
+                'blocked' => $user->isBlocked(),
+                'readOnly' => $user->isReadOnly(),
+                'pinnedPostIds' => $user->getPinnedPosts()->map(fn(Post $p) => $p->getId())->toArray(),
+            ],
         ]);
     }
 
@@ -41,7 +80,7 @@ class AuthController extends AbstractController
      * POST /api/auth/register
      */
     #[Route('/register', name: 'auth_register', methods: ['POST'], format: 'json')]
-    public function register(Request $request, UserRepository $userRepository, EntityManagerInterface $em, UserPasswordHasherInterface $passwordHasher): JsonResponse
+    public function register(Request $request, UserRepository $userRepository, EntityManagerInterface $em, UserPasswordHasherInterface $passwordHasher, TokenService $tokenService): JsonResponse
     {
         $data = json_decode($request->getContent(), true);
 
@@ -74,7 +113,7 @@ class AuthController extends AbstractController
         $user->setPassword($hashedPassword);
         $user->setName($data['name']);
         $user->setRole('user'); // Par défaut, nouveau utilisateur = user
-        $user->setActive(true);
+        $user->setBlocked(false);
         $user->setCreatedAt(new \DateTime());
 
         // Champs optionnels
@@ -89,13 +128,22 @@ class AuthController extends AbstractController
         $em->persist($user);
         $em->flush();
 
+        // Generate access token (7 days expiration) like in login
+        $expiresAt = (new \DateTimeImmutable())->modify('+7 days');
+        $accessToken = $tokenService->generateToken($user, $expiresAt);
+
         return $this->json([
-            'id' => $user->getId(),
-            'user' => $user->getUser(),
-            'email' => $user->getEmail(),
-            'name' => $user->getName(),
-            'role' => $user->getRole(),
-            'active' => $user->isActive(),
+            'token' => $accessToken,
+            'user' => [
+                'id' => $user->getId(),
+                'user' => $user->getUser(),
+                'email' => $user->getEmail(),
+                'name' => $user->getName(),
+                'role' => $user->getRole(),
+                'blocked' => $user->isBlocked(),
+                'readOnly' => $user->isReadOnly(),
+                'pinnedPostIds' => $user->getPinnedPosts()->map(fn(Post $p) => $p->getId())->toArray(),
+            ],
         ], Response::HTTP_CREATED);
     }
 }

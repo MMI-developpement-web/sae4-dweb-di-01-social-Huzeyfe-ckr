@@ -2,6 +2,9 @@ import React, { useState } from "react";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../../lib/utils.ts";
 
+// Composant d'input réutilisable avec variantes de style et de taille, gestion des types d'input (text, password, email) et possibilité d'afficher ou masquer le mot de passe
+
+
 export const inputVariants = cva(
   "w-full rounded border bg-transparent text-text-white placeholder-text-muted focus:outline-none focus:ring-2",
   {
@@ -27,9 +30,7 @@ export const inputVariants = cva(
 
 
 // Types et props
-interface InputDataProps extends VariantProps<typeof inputVariants>  {
-    children?: React.ReactNode;
-  className?: string;
+interface InputDataProps extends VariantProps<typeof inputVariants> {
   type?: "text" | "password" | "email";
   placeholder?: string;
   name?: string;
@@ -37,10 +38,12 @@ interface InputDataProps extends VariantProps<typeof inputVariants>  {
   onChange?: (value: string) => void;
   as?: "input" | "textarea";
   showToggle?: boolean;
+  children?: React.ReactNode;
 }
 
-interface InputViewProps {className?: string; }
-
+interface InputViewProps {
+  className?: string;
+}
 
 export default function Input({ className = "", ...rest }: InputDataProps & InputViewProps) {
   const {

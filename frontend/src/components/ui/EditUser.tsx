@@ -3,14 +3,22 @@ import Input from "./Input";
 import Button from "./Button";
 import type { User } from "../../lib/api";
 
-interface EditUserProps {
+// Composant de formulaire pour éditer les informations d'un utilisateur, avec gestion des champs de saisie et de l'état local
+
+
+// EditUser Data Props - contient l'état du modal et les données utilisateur
+interface EditUserDataProps {
   user: User | null;
   isOpen: boolean;
+}
+
+// EditUser View Props - contient les callbacks
+interface EditUserViewProps {
   onClose: () => void;
   onSave: (updatedUser: User) => void;
 }
 
-export default function EditUser({ user, isOpen, onClose, onSave }: EditUserProps) {
+export default function EditUser({ user, isOpen, onClose, onSave }: EditUserDataProps & EditUserViewProps) {
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");

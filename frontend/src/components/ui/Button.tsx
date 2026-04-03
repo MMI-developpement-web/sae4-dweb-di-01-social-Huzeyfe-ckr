@@ -3,6 +3,9 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "../../lib/utils.ts";
 import type { ReactNode, ButtonHTMLAttributes } from "react";
 
+// Composant de bouton réutilisable avec variantes de style et de taille, utilisant class-variance-authority pour la gestion des classes CSS conditionnelles
+
+
 export const buttonVariants = cva(
     // classes de base pour les boutons (pills)
     "inline-flex items-center justify-center rounded-full font-extrabold transition-colors focus:outline-none focus:ring-2",
@@ -32,30 +35,23 @@ export const buttonVariants = cva(
 );
 
 // Types et props
-interface ButtonDataProps {
+interface ButtonDataProps extends VariantProps<typeof buttonVariants>, ButtonHTMLAttributes<HTMLButtonElement> {
     children?: ReactNode;
-}
-
-
-export interface ButtonProps
-    extends ButtonDataProps,
-        VariantProps<typeof buttonVariants>,
-        ButtonHTMLAttributes<HTMLButtonElement> {
     icon?: ReactNode;
-    iconPosition?: "left" | "right";
+    
 }
 
+interface ButtonViewProps {
+    className?: string;
+}
 
-
-
-export default function Button({ children, variant, size, icon, iconPosition = "left", className, ...props }: ButtonProps) {
+export default function Button({ children, variant, size, icon, className = "", ...props }: ButtonDataProps & ButtonViewProps) {
     const classes = cn(buttonVariants({ variant, size }), className);
 
     return (
         <button className={classes} {...props}>
-            {icon && iconPosition === "left" && <span className="mr-2">{icon}</span>}
+            {icon && <span className="mr-2">{icon}</span>}
             {children}
-            {icon && iconPosition === "right" && <span className="ml-2">{icon}</span>}
         </button>
     );
 }

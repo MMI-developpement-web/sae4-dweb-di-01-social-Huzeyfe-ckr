@@ -26,19 +26,13 @@ security:
                 path: admin_logout
                 target: /
 
-        # Firewall for login endpoint - validates credentials and generates access token
-        api_login:
-            pattern: ^/api/auth/login$
+        # Main firewall with custom JSON authenticator + access token
+        api:
+            pattern: ^/api
             stateless: true
             provider: app_user_provider
             custom_authenticators:
                 - App\Security\JsonLoginAuthenticator
-
-        # Main firewall with access token validation
-        main:
-            pattern: ^/api
-            stateless: true
-            provider: app_user_provider
             access_token:
                 token_handler: App\Security\AccessTokenHandler
 

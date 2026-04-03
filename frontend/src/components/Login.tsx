@@ -3,11 +3,13 @@ import Button from './ui/Button'
 import Header from './ui/Header'
 import { useNavigate } from 'react-router-dom'
 import { useState } from 'react'
-import { login, saveCurrentUser } from '../lib/api'
+import { login as apiLogin } from '../lib/api'
+import { useStore } from '../store/StoreContext'
 
 export default function Login() {
 
   const navigate = useNavigate();
+  const { login: storeLogin } = useStore();
 
   const [user, setUser] = useState("");
   const [password, setPassword] = useState("");
@@ -24,18 +26,20 @@ export default function Login() {
     setLoading(true);
     setError("");
     
-    const loggedInUser = await login(user, password);
+    const response = await apiLogin(user, password);
     
-    if (loggedInUser) {
-      saveCurrentUser(loggedInUser);
-      // Rediriger selon le rôle
-      if (loggedInUser.role === 'admin') {
-        navigate('/adminmanagement');
-      } else {
-        navigate('/home');
-      }
+    if (response.error) {
+      setError(response.error);
+      setLoading(false);
+      return;
+    }
+
+    if (response.user) {
+      const token = localStorage.getItem('authToken') || '';
+      storeLogin(response.user, token);
+      navigate('/home');
     } else {
-      setError("Identifiant ou mot de passe incorrect");
+      setError("Une erreur s'est produite");
     }
     
     setLoading(false);
@@ -54,7 +58,7 @@ export default function Login() {
 
         <form className="w-full" onSubmit={submit}>
           <div className="space-y-4">
-            <Input variant="default" type="text" placeholder="Identifiant" value={user} onChange={setUser} />
+            <Input variant="default" type="text" placeholder="Nom d'utilisateur" value={user} onChange={setUser} />
             <Input variant="default" type="password" placeholder="Mot de passe" value={password} onChange={setPassword} />
           </div>
           {error && <p className="text-error text-sm mt-2">{error}</p>}

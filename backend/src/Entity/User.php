@@ -41,7 +41,11 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
 
     #[ORM\Column(type: 'boolean')]
     #[Groups(['default', 'detail'])]
-    private bool $active = true;
+    private bool $blocked = false;
+
+    #[ORM\Column(type: 'boolean')]
+    #[Groups(['default', 'detail'])]
+    private bool $readOnly = false;
 
     #[ORM\Column(length: 20, nullable: true)]
     #[Groups(['default', 'detail'])]
@@ -55,20 +59,58 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     #[Groups(['default', 'detail'])]
     private ?string $pp = null;
 
+    #[ORM\Column(length: 1000, nullable: true)]
+    #[Groups(['default', 'detail'])]
+    private ?string $banner = null;
+
+    #[ORM\Column(length: 500, nullable: true)]
+    #[Groups(['default', 'detail'])]
+    private ?string $bio = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['default', 'detail'])]
+    private ?string $website = null;
+
+    #[ORM\Column(length: 255, nullable: true)]
+    #[Groups(['default', 'detail'])]
+    private ?string $location = null;
+
     #[ORM\Column(type: 'datetime')]
     #[Groups(['default', 'detail'])]
     private \DateTimeInterface $createdAt;
 
     #[ORM\OneToMany(targetEntity: Post::class, mappedBy: 'user', orphanRemoval: true)]
-    #[Groups(['detail'])]
     private Collection $posts;
+
+    #[ORM\ManyToMany(targetEntity: Post::class)]
+    #[ORM\JoinTable(name: 'user_pinned_posts')]
+    #[ORM\OrderBy(['id' => 'DESC'])]
+    #[Groups(['default', 'detail'])]
+    private Collection $pinnedPosts;
 
     #[ORM\OneToOne(targetEntity: AccessToken::class, mappedBy: 'user', orphanRemoval: true)]
     private ?AccessToken $accessToken = null;
 
+    #[ORM\OneToMany(targetEntity: Like::class, mappedBy: 'user', orphanRemoval: true)]
+    private Collection $likes;
+
+    #[ORM\OneToMany(targetEntity: Follow::class, mappedBy: 'follower', orphanRemoval: true)]
+    private Collection $following;
+
+    #[ORM\OneToMany(targetEntity: Follow::class, mappedBy: 'following', orphanRemoval: true)]
+    private Collection $followers;
+
+    #[ORM\OneToMany(targetEntity: BlockedUser::class, mappedBy: 'user', orphanRemoval: true)]
+    private Collection $blockedUsers;
+
     public function __construct()
     {
         $this->posts = new ArrayCollection();
+        $this->pinnedPosts = new ArrayCollection();
+        $this->likes = new ArrayCollection();
+        $this->following = new ArrayCollection();
+        $this->followers = new ArrayCollection();
+        $this->blockedUsers = new ArrayCollection();
         $this->createdAt = new \DateTime();
     }
 
@@ -127,14 +169,25 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
-    public function isActive(): bool
+    public function isBlocked(): bool
     {
-        return $this->active;
+        return $this->blocked;
     }
 
-    public function setActive(bool $active): static
+    public function setBlocked(bool $blocked): static
     {
-        $this->active = $active;
+        $this->blocked = $blocked;
+        return $this;
+    }
+
+    public function isReadOnly(): bool
+    {
+        return $this->readOnly;
+    }
+
+    public function setReadOnly(bool $readOnly): static
+    {
+        $this->readOnly = $readOnly;
         return $this;
     }
 
@@ -171,6 +224,50 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         return $this;
     }
 
+    public function getBanner(): ?string
+    {
+        return $this->banner;
+    }
+
+    public function setBanner(?string $banner): static
+    {
+        $this->banner = $banner;
+        return $this;
+    }
+
+    public function getBio(): ?string
+    {
+        return $this->bio;
+    }
+
+    public function setBio(?string $bio): static
+    {
+        $this->bio = $bio;
+        return $this;
+    }
+
+    public function getWebsite(): ?string
+    {
+        return $this->website;
+    }
+
+    public function setWebsite(?string $website): static
+    {
+        $this->website = $website;
+        return $this;
+    }
+
+    public function getLocation(): ?string
+    {
+        return $this->location;
+    }
+
+    public function setLocation(?string $location): static
+    {
+        $this->location = $location;
+        return $this;
+    }
+
     public function getCreatedAt(): \DateTimeInterface
     {
         return $this->createdAt;
@@ -204,6 +301,33 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
         if ($this->posts->removeElement($post)) {
             if ($post->getUser() === $this) {
                 $post->setUser(null);
+            }
+        }
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Like>
+     */
+    public function getLikes(): Collection
+    {
+        return $this->likes;
+    }
+
+    public function addLike(Like $like): static
+    {
+        if (!$this->likes->contains($like)) {
+            $this->likes->add($like);
+            $like->setUser($this);
+        }
+        return $this;
+    }
+
+    public function removeLike(Like $like): static
+    {
+        if ($this->likes->removeElement($like)) {
+            if ($like->getUser() === $this) {
+                $like->setUser(null);
             }
         }
         return $this;
@@ -271,5 +395,85 @@ class User implements UserInterface, PasswordAuthenticatedUserInterface
     public function getPassword(): string
     {
         return $this->password;
+    }
+
+    public function getFollowing(): Collection
+    {
+        return $this->following;
+    }
+
+    public function addFollowing(Follow $follow): self
+    {
+        if (!$this->following->contains($follow)) {
+            $this->following->add($follow);
+            $follow->setFollower($this);
+        }
+        return $this;
+    }
+
+    public function removeFollowing(Follow $follow): self
+    {
+        if ($this->following->removeElement($follow)) {
+            if ($follow->getFollower() === $this) {
+                $follow->setFollower(null);
+            }
+        }
+        return $this;
+    }
+
+    public function getFollowers(): Collection
+    {
+        return $this->followers;
+    }
+
+    public function addFollowers(Follow $follow): self
+    {
+        if (!$this->followers->contains($follow)) {
+            $this->followers->add($follow);
+            $follow->setFollowing($this);
+        }
+        return $this;
+    }
+
+    public function removeFollowers(Follow $follow): self
+    {
+        if ($this->followers->removeElement($follow)) {
+            if ($follow->getFollowing() === $this) {
+                $follow->setFollowing(null);
+            }
+        }
+        return $this;
+    }
+
+    /**
+     * @return Collection<int, Post>
+     */
+    public function getPinnedPosts(): Collection
+    {
+        return $this->pinnedPosts;
+    }
+
+    public function addPinnedPost(Post $pinnedPost): static
+    {
+        // Validate that the pinned post belongs to this user
+        if ($pinnedPost->getUser() !== $this) {
+            throw new \InvalidArgumentException('Cannot pin a post that does not belong to you');
+        }
+        if (!$this->pinnedPosts->contains($pinnedPost)) {
+            $this->pinnedPosts->add($pinnedPost);
+        }
+        return $this;
+    }
+
+    public function removePinnedPost(Post $pinnedPost): static
+    {
+        $this->pinnedPosts->removeElement($pinnedPost);
+        return $this;
+    }
+
+    // Legacy getter for backward compatibility
+    public function getPinnedPost(): ?Post
+    {
+        return $this->pinnedPosts->first() ?: null;
     }
 }

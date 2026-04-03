@@ -9,6 +9,7 @@ use EasyCorp\Bundle\EasyAdminBundle\Field\TextEditorField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\DateTimeField;
 use EasyCorp\Bundle\EasyAdminBundle\Field\AssociationField;
+use EasyCorp\Bundle\EasyAdminBundle\Field\BooleanField;
 
 class PostCrudController extends AbstractCrudController
 {
@@ -26,6 +27,7 @@ class PostCrudController extends AbstractCrudController
             DateTimeField::new('createdAt', 'Date de création')->onlyOnIndex(),
             // AssociationField permet de choisir l'auteur du post dans une liste déroulante
             AssociationField::new('user', 'Auteur'),
+            BooleanField::new('censored', 'Censuré'),
         ];
     }
 }
