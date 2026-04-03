@@ -30,7 +30,7 @@ export default function SideBar({ className = "" }: SideBarDataProps & SideBarVi
     }
   }, [currentUser, logout, navigate]);
 
-  // Rafraîchir les données utilisateur
+  // Rafraîchir les données utilisateur user
   useEffect(() => {
     if (!currentUser?.id) return;
     

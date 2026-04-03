@@ -46,7 +46,7 @@ class JsonLoginAuthenticator extends AbstractAuthenticator
             throw new CustomUserMessageAuthenticationException('Identifiant ou mot de passe incorrect');
         }
 
-        // Load user from database
+        // Load user from databaseee
         $user = $this->userRepository->findOneBy(['user' => $data['user']]);
 
         if (!$user) {
